@@ -1,4 +1,4 @@
-> Forked ClimSim repository for exploring ideas of sparsity, compositional generalisability and invariance, specific details for this version of the repository can be found at the bottom of the readme
+> Forked ClimSim repository for exploring ideas of sparsity, compositional generalisability and invariance, specific details for this version of the repository can be found at the bottom of the readme.
 
 
 [![Dataset: E3SM-MMF High-Resolution Real Geography](https://img.shields.io/badge/Dataset-%20High%20Resolution%20Real%20Geography-yellow?logo=🤗&style=flat-square)](https://huggingface.co/datasets/LEAP/ClimSim_high-res)
