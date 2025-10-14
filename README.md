@@ -1,3 +1,6 @@
+> Forked ClimSim repository for exploring ideas of sparsity, compositional generalisability and invariance, specific details for this version of the repository can be found at the bottom of the readme
+
+
 [![Dataset: E3SM-MMF High-Resolution Real Geography](https://img.shields.io/badge/Dataset-%20High%20Resolution%20Real%20Geography-yellow?logo=🤗&style=flat-square)](https://huggingface.co/datasets/LEAP/ClimSim_high-res)
 [![Dataset: E3SM-MMF Low-Resolution Real Geography](https://img.shields.io/badge/Dataset-%20Low%20Resolution%20Real%20Geography-yellow?logo=🤗&style=flat-square)](https://huggingface.co/datasets/LEAP/ClimSim_low-res)
 [![Dataset: E3SM-MMF Low-Resolution Aquaplanet](https://img.shields.io/badge/Dataset-%20Low%20Resolution%20Aquaplanet-yellow?logo=🤗&style=flat-square)](https://huggingface.co/datasets/LEAP/ClimSim_low-res_aqua-planet)
@@ -8,7 +11,6 @@ ClimSim is the largest-ever dataset designed for hybrid ML-physics research. It 
 The dataset is global in coverage, spans multiple years at high sampling frequency, and is designed such that resulting emulators are compatible with downstream coupling into operational climate simulators. 
 We implement a range of deterministic and stochastic regression baselines to highlight the ML challenges and their scoring. 
 
-> Forked ClimSim repository for exploring ideas of sparsity, compositional generalisability and invariance, specific details for this version of the repository can be found at the bottom of the readme
 
 ![fig_1](figures/fig_1.png)
 
