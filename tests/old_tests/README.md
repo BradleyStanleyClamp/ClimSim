@@ -1,0 +1,1 @@
+Bradley: I have moved the existing ClimSim testing files in to this repository to keep things tidy - they have not been tested to see if they work.
