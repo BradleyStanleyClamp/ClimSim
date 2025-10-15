@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "climsim"
+version = "0.0.1"
+description = "Adapted ClimSim code from Jerry Lin's original repository."
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [{name = "Jerry Lin", email = "jerryl9@uci.edu"}]
+license = {text = "MIT"}
+
+dependencies = [
+  "xarray>=2023.11",
+  "numpy>=1.23",
+  "pandas>=1.5",
+  "matplotlib>=3.7",
+  "netCDF4>=1.6",
+  "h5py>=3.8",
+  "tqdm>=4.65"
+]
+
+[project.optional-dependencies]
+tensorflow = ["tensorflow>=2.12"]
+pytorch = ["torch>=2.1"]

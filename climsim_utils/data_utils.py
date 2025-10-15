@@ -1,3 +1,7 @@
+# Change import order due to H5PY dependency issuesw
+import netCDF4
+import h5py
+
 import xarray as xr
 import numpy as np
 import pandas as pd
@@ -6,12 +10,12 @@ import pickle
 import glob, os
 import re
 import tensorflow as tf
-import netCDF4
 import copy
 import string
-import h5py
 from tqdm import tqdm
 from typing import Literal
+
+
 
 MLBackendType = Literal["tensorflow", "pytorch"]
 
