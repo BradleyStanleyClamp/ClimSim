@@ -12,6 +12,8 @@ authors = [{name = "Jerry Lin", email = "jerryl9@uci.edu"}]
 license = "Apache-2.0"
 
 dependencies = [
+  "hydra-core>=1.1.0",
+  "hydra-submitit-launcher>=1.2.0",
   "xarray>=2023.11",
   "numpy>=1.23",
   "pandas>=1.5",
