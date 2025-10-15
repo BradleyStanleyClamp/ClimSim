@@ -23,12 +23,12 @@ dependencies = [
   "tqdm>=4.65",
   "torch>=2.8.0",
   "lightning>=2.5.5",
-  "wandb>=0.22.0"
+  "wandb>=0.22.2",
 ]
 
 [project.optional-dependencies]
 tensorflow = ["tensorflow>=2.12"]
 pytorch = ["torch>=2.1"]
 
-[tool.setuptools.packages.find]
-where = ["climsim_utils"]
+[tool.setuptools]
+packages = ["climsim_utils", "train", "models"]

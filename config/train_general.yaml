@@ -9,4 +9,6 @@ defaults:
   - override hydra/launcher: slurm
 
 
+model_name: mlp
 multirun_dir_name: ${model_name}
+

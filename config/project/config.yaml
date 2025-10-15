@@ -4,3 +4,4 @@ task: '3'
 name: finding_a_home
 timestamp: ${now:%Y-%m-%d-%H-%M-%S}
 
+seed: 0 # High level seed for general code reproducibility, this will not be used for multiseed runs or sweeps
