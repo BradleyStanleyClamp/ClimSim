@@ -1,0 +1,25 @@
+#config/hydra/launcher/slurm.yaml
+
+defaults:
+  - submitit_slurm
+
+_target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
+submitit_folder: ${hydra.sweep.dir}/.submitit/%j
+timeout_min: 1440
+mem_gb: 16
+cpus_per_task: 1
+
+partition: orchid
+qos: orchid
+account: orchid
+
+# tasks_per_node: 4 
+gres: gpu:1
+# name: ${name}_${iteration}_${parameter}
+
+exclude: gpuhost004,gpuhost009,gpuhost012
+
+
+#additional_parameters:
+
+# https://help.jasmin.ac.uk/docs/batch-computing/how-to-submit-a-job/

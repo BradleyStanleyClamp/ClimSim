@@ -1,0 +1,13 @@
+# General training configuration that is used to train a selected model (with other selected parameters e.g sweep options)
+
+defaults:
+  - _self_
+  - project: config
+  - wandb/wkey: wkey
+  - debug: debug
+  - models: models
+  - hydra: default
+  - override hydra/launcher: slurm
+
+
+multirun_dir_name: ${model_name}
