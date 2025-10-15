@@ -171,3 +171,4 @@ cython_debug/
 
 # Bradley Added ignores
 uv.lock
+logs/

@@ -4,7 +4,6 @@ defaults:
   - _self_
   - project: config
   - wandb/wkey: wkey
-  - debug: debug
   - models: models
   - hydra: default
   - override hydra/launcher: slurm
