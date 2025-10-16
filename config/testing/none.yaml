@@ -1,0 +1,16 @@
+# None: no testing, run script as normal 
+
+
+
+hydra:
+  run:
+    dir: ${hydra:runtime.cwd}/logs/${project.project}/${project.task}/${project.name}_${project.timestamp}
+  sweep:
+    dir: logs/${project.project}/${project.task}/${project.name}_${project.timestamp}
+
+
+wandb_mode: enabled 
+dataset: full
+epochs: ${epochs}
+plotting: False
+timings: False

@@ -43,7 +43,21 @@ def main(cfg: DictConfig):
     model_name = cfg.model_name
     model_cfg = models.model_selection.get_model_config(cfg, model_name)
 
-    logging.info(f"working with model: {model_name}, for a test run: {test_run}")
+
+    # -- inside sweep
+    # Load model
+
+    # Load data 
+
+    # Setup trainer #maybe outside sweep?
+
+    # Train model
+
+    # Test model 
+
+    # -- outside sweep
+
+    # Save model 
 
 
     

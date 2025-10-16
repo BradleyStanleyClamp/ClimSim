@@ -1,9 +1,9 @@
-# output directory, generated dynamically on each run
+
+
 run:
-  dir: ${hydra:runtime.cwd}/logs/${project.project}/${project.task}/${project.name}_${project.timestamp}
+  dir: ${testing.hydra.run.dir}
 sweep:
-  dir: logs/${project.project}/${project.task}/${project.name}_${project.timestamp}
+  dir: ${testing.hydra.sweep.dir}
   subdir: ${multirun_dir_name}
 job:
-  chdir: True # change to the output directory on each run
-
+  chdir: True

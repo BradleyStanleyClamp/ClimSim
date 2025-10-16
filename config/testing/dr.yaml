@@ -1,0 +1,14 @@
+# Dress rehearsal: A more serious 'flush through' of system, but they should result in meaningful results, i.e loss curves and comparable metrics
+
+
+hydra:
+  run:
+    dir: ${hydra:runtime.cwd}/logs/${project.project}/${project.task}/testing/dress_rehearsal/${project.timestamp}
+  sweep:
+    dir: logs/${project.project}/${project.task}/testing/dress_rehearsal/${project.timestamp}
+
+wandb_mode: enabled 
+dataset: reduced
+epochs: 10
+plotting: True
+timings: False

@@ -6,7 +6,9 @@ defaults:
   - wandb/wkey: wkey
   - models: models
   - hydra: default
+  - testing: none
   - override hydra/launcher: slurm
+
 
 
 model_name: mlp

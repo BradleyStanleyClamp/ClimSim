@@ -1,0 +1,17 @@
+# Quick tests: mostly for debugging purposes
+
+
+
+hydra:
+  run:
+    dir: ${hydra:runtime.cwd}/logs/${project.project}/${project.task}/testing/quick_test/${project.timestamp}
+  sweep:
+    dir: logs/${project.project}/${project.task}/testing/quick_test/${project.timestamp}
+
+
+
+wandb_mode: disabled 
+dataset: quick
+epochs: 2
+plotting: False
+timings: False
