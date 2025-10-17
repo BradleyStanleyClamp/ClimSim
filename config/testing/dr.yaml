@@ -8,8 +8,8 @@ hydra:
   sweep:
     dir: logs/${project.project}/${project.task}/testing/dress_rehearsal/${project.timestamp}
 
-wandb_mode: online 
-dataset: reduced
+wandb_mode: online
+dataset_testing_type: reduced
 epochs: 10
 plotting: True
 timings: False

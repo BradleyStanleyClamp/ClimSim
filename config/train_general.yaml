@@ -4,13 +4,14 @@ defaults:
   - _self_
   - project: config
   - wandb/wkey: wkey
-  - models: models
+  - model: mlp
+  - dataset: sub_sampled_low_res
   - hydra: default
-  - testing: none
+  - testing: qt
   - override hydra/launcher: slurm
 
 
 
-model_name: mlp
-multirun_dir_name: ${model_name}
+multirun_dir_name: ${model.name}
 
+max_epochs: 2000

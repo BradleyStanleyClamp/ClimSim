@@ -11,7 +11,7 @@ hydra:
 
 
 wandb_mode: disabled 
-dataset: quick
+dataset_testing_type: quick
 epochs: 2
 plotting: False
 timings: False

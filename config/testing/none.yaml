@@ -10,7 +10,7 @@ hydra:
 
 
 wandb_mode: online 
-dataset: full
+dataset_testing_type: full
 epochs: ${epochs}
 plotting: False
 timings: False

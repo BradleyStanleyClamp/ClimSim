@@ -21,9 +21,14 @@ class SubSampledLowResDataset(Dataset):
             dataset_config: (DictConfig) configuration for the dataset
         """
 
-        self.data_path = dataset_config.data_path
         self.mode = mode
         self.dataset_testing_type = dataset_testing_type
+        if dataset_testing_type == "quick":
+            base_dir = Path(__file__).resolve().parents[1]
+            self.data_path = os.path.join(base_dir, dataset_config.precomputed_quick_data_path)
+
+        else:
+            self.data_path = dataset_config.data_path
 
         # Setup ClimSim data class (not sure if necessary but may be useful in the future)
         self.setup_data_class()

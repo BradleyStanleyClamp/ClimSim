@@ -9,7 +9,7 @@ hydra:
     dir: logs/${project.project}/${project.task}/testing/functional_test/${project.timestamp}
 
 wandb_mode: online 
-dataset: full
+dataset_testing_type: full
 epochs: ${epochs}
 plotting: True
 timings: True

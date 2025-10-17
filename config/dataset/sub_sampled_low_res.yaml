@@ -1,11 +1,14 @@
 
 dataset_name: 'subsampled_low_res'
 data_path: '/gws/nopw/j04/iecdt/bstanleyclamp/climsim_data/subsampled_low_res/'
+precomputed_quick_data_path: 'test/unit_test_sets/sub_sampled_low_res/'
 
+input_dim: 124
+output_dim: 128
 
 
 dataset_testing_fractions:
   unit_test: 3840
   quick: 0.1
-  reduced: 0.5
+  reduced: 0.1
   full: 1.0

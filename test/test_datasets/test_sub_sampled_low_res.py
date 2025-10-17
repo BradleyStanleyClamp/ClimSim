@@ -8,7 +8,7 @@ from omegaconf import OmegaConf, DictConfig
 from pathlib import Path
 import os
 
-def test_sub_sampled_low_res_dataset_initialization(sub_sampled_low_res_config_path: str = "../../config/datasets/sub_sampled_low_res.yaml"):
+def test_sub_sampled_low_res_dataset_initialization(sub_sampled_low_res_config_path: str = "../../config/dataset/sub_sampled_low_res.yaml"):
     base_dir = Path(__file__).resolve().parents[1]
     data_path = os.path.join(base_dir, "unit_test_sets", "sub_sampled_low_res/")
     dataset_cfg: DictConfig = OmegaConf.create({
@@ -32,7 +32,7 @@ def test_sub_sampled_low_res_dataset_initialization(sub_sampled_low_res_config_p
 
     assert len(dataset) == config.dataset_testing_fractions.unit_test
 
-def test_sub_sampled_low_res_dataset_initialization_test(sub_sampled_low_res_config_path: str = "../../config/datasets/sub_sampled_low_res.yaml"):
+def test_sub_sampled_low_res_dataset_initialization_test(sub_sampled_low_res_config_path: str = "../../config/dataset/sub_sampled_low_res.yaml"):
     base_dir = Path(__file__).resolve().parents[1]
     data_path = os.path.join(base_dir, "unit_test_sets", "sub_sampled_low_res/")
     dataset_cfg: DictConfig = OmegaConf.create({
@@ -57,7 +57,7 @@ def test_sub_sampled_low_res_dataset_initialization_test(sub_sampled_low_res_con
     assert len(dataset) == config.dataset_testing_fractions.unit_test
 
 
-def test_sub_sampled_low_res_dataset_initialization_val(sub_sampled_low_res_config_path: str = "../../config/datasets/sub_sampled_low_res.yaml"):
+def test_sub_sampled_low_res_dataset_initialization_val(sub_sampled_low_res_config_path: str = "../../config/dataset/sub_sampled_low_res.yaml"):
     base_dir = Path(__file__).resolve().parents[1]
     data_path = os.path.join(base_dir, "unit_test_sets", "sub_sampled_low_res/")
     dataset_cfg: DictConfig = OmegaConf.create({
