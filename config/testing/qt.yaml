@@ -1,6 +1,6 @@
 # Quick tests: mostly for debugging purposes
 
-
+test_name: quick_test
 
 hydra:
   run:

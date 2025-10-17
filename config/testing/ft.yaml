@@ -1,5 +1,6 @@
 # Functional test: A proper run through of the full system, but perhaps not full training or sweeps, the purpose is to assess for bottle necks, functional performance and a basic understanding of behavior to finetune sweeps
 
+test_name: functional_test
 
 hydra:
   run:
@@ -7,7 +8,7 @@ hydra:
   sweep:
     dir: logs/${project.project}/${project.task}/testing/functional_test/${project.timestamp}
 
-wandb_mode: enabled 
+wandb_mode: online 
 dataset: full
 epochs: ${epochs}
 plotting: True

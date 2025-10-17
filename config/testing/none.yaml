@@ -1,6 +1,6 @@
 # None: no testing, run script as normal 
 
-
+test_name: none
 
 hydra:
   run:
@@ -9,7 +9,7 @@ hydra:
     dir: logs/${project.project}/${project.task}/${project.name}_${project.timestamp}
 
 
-wandb_mode: enabled 
+wandb_mode: online 
 dataset: full
 epochs: ${epochs}
 plotting: False

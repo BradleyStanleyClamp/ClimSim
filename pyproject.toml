@@ -24,6 +24,7 @@ dependencies = [
   "torch>=2.8.0",
   "lightning>=2.5.5",
   "wandb>=0.22.2",
+  "pytest>=8.4.2",
 ]
 
 [project.optional-dependencies]
@@ -31,4 +32,4 @@ tensorflow = ["tensorflow>=2.12"]
 pytorch = ["torch>=2.1"]
 
 [tool.setuptools]
-packages = ["climsim_utils", "train", "models"]
+packages = ["climsim_utils", "train", "models", "data_preparation"]
