@@ -111,7 +111,7 @@ def sample_data_based_on_testing_type(data: tuple, dataset_testing_type: str, da
     testing_value = dataset_testing_fraction_cfg[dataset_testing_type]
 
     if testing_value > 1.0:
-        return select_first_n_samples(data, int(testing_value))
+        return select_first_n_samples(data, [int(testing_value)])
 
     elif testing_value == 1.0:
         return data

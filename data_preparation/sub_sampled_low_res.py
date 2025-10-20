@@ -37,7 +37,6 @@ class SubSampledLowResDataset(Dataset):
         input, target = self.load_data()
 
         # Subsample data based on dataset_testing_type
-
         self.input, self.target = sample_data_based_on_testing_type(
             (input, target),
             self.dataset_testing_type,
