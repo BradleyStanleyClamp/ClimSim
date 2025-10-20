@@ -3,7 +3,7 @@ Script for selecting datasets and data loaders
 """
 
 import logging
-from typing import List
+from typing import List, Tuple
 from torch.utils.data import DataLoader, Dataset
 from omegaconf import DictConfig
 import data_preparation
@@ -62,7 +62,6 @@ def get_all_datasets(dataset_cfg, dataset_testing_type: str) -> tuple[Dataset, D
     Returns:
         tuple[Dataset, Dataset, Dataset]: train, val and test datasets
     """
-    logging.info("loading trainset")
     train_dataset = get_dataset(dataset_cfg, "train", dataset_testing_type)
     logging.info(f'trainset loaded with {len(train_dataset)} samples')
     val_dataset = get_dataset(dataset_cfg, "val", dataset_testing_type)
@@ -74,25 +73,28 @@ def get_all_datasets(dataset_cfg, dataset_testing_type: str) -> tuple[Dataset, D
     
     
 
-def get_all_dataloaders(dataset_cfg, batch_size: int, dataset_testing_type: str) -> tuple[DataLoader, DataLoader, DataLoader]:
+def get_all_dataloaders(dataset_cfg, batch_size: int, dataset_testing_type: str, datasets: Tuple[Dataset, Dataset, Dataset]) -> tuple[DataLoader, DataLoader, DataLoader]:
     """
-    Function that gets you train, val and test dataloaders
+    Function that gets you train, val and test dataloaders, with the option of precomputed datasets
     Args:
         dataset_cfg: configuration for the dataset to be selected containing:
             dataset_name: (str) name of the dataset to be selected
             dataset_testing_fractions: (DictConfig) configuration containing the fractions for quick and reduced datasets
         batch_size: (int) batch size for the dataloaders
         dataset_testing_type: (str) size of dataset to be used, related to the type of testing e.g quick, reduced, full
+        datasets: (Tuple[Dataset, Dataset, Dataset]) tuple containing the train, val and test datasets
 
     Returns:
         tuple[DataLoader, DataLoader, DataLoader]: train, val and test dataloaders
     """
-    logging.info("Loading datasets...")
-    trainset, valset, testset = get_all_datasets(dataset_cfg, dataset_testing_type)
+    if datasets is not None:
+        trainset, valset, testset = datasets
+    else:
+        trainset, valset, testset = get_all_datasets(dataset_cfg, dataset_testing_type)
 
-    train_dataloader = DataLoader(trainset, batch_size=batch_size, shuffle=True)
-    val_dataloader = DataLoader(valset, batch_size=batch_size, shuffle=False)
-    test_dataloader = DataLoader(testset, batch_size=batch_size, shuffle=False)
+    train_dataloader = DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=dataset_cfg.general_dataset_config.num_workers)
+    val_dataloader = DataLoader(valset, batch_size=batch_size, shuffle=False, num_workers=dataset_cfg.general_dataset_config.num_workers)
+    test_dataloader = DataLoader(testset, batch_size=batch_size, shuffle=False, num_workers=dataset_cfg.general_dataset_config.num_workers)
 
     return train_dataloader, val_dataloader, test_dataloader
 

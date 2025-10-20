@@ -2,6 +2,7 @@
 High level training script that is configured using config/train_general.yaml
 """
 
+import json
 import warnings
 
 
@@ -9,6 +10,8 @@ import hydra
 from omegaconf import DictConfig
 import omegaconf
 
+import netCDF4
+import yaml # Another weird import issue that is only triggered if netCDF4 imported after wandb 
 with (
     warnings.catch_warnings()
 ):  # To catch annoying pydantic x wandb warning - looks like it should be adressed soon: https://github.com/wandb/wandb/issues/10662
@@ -22,7 +25,7 @@ import logging
 import os
 import train
 import models
-
+import torch
 import data_preparation
 
 
@@ -34,6 +37,8 @@ def main(cfg: DictConfig):
 
     # Seeding everything
     train.seed_everything(cfg.project.seed)
+    
+    torch.set_float32_matmul_precision('medium')
 
     # TODO: plotting init
 
@@ -49,15 +54,23 @@ def main(cfg: DictConfig):
 
     logging.info("Setup complete, starting training")
 
-    model, test_result = train.standard_training_from_cfg(
+    datasets = data_preparation.get_all_datasets(cfg.dataset, cfg.testing.dataset_testing_type)
+
+    test_result, run_cfg = train.standard_training_from_cfg(
         cfg,
+        datasets,
         wandb_config,
         f"{cfg.project.name}_{cfg.project.timestamp}",
-        cfg.model.single_run_configuration,
         enable_checkpointing=False,
     )
 
-    # Save model
+
+    with open("run_config.yaml", "w") as f:
+        yaml.safe_dump(run_cfg.as_dict(), f)
+
+    with open("test_results.json", 'w') as f:
+        json.dump(test_result, f, indent=4, default=str)
+    
 
 
 if __name__ == "__main__":

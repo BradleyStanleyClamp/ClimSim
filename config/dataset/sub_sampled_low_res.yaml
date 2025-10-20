@@ -9,6 +9,7 @@ output_dim: 128
 
 dataset_testing_fractions:
   unit_test: 3840
-  quick: 1 # Note: for sub_sampled_low_res dataset, quick test will just load the unittest data of 3840 samples
-  reduced: 0.5
+  quick: 1.0 # Note: for sub_sampled_low_res dataset, quick test will just load the unittest data of 3840 samples
+  reduced: 38400
   full: 1.0
+

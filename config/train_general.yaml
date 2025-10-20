@@ -6,12 +6,16 @@ defaults:
   - wandb/wkey: wkey
   - model: mlp
   - dataset: sub_sampled_low_res
+  - dataset/general_dataset_config: general_dataset_config
   - hydra: default
   - testing: qt
   - override hydra/launcher: slurm
 
-
-
+# Naming 
 multirun_dir_name: ${model.name}
 
+# Training parameters
 max_epochs: 2000
+
+# Sweep options 
+sweep: false

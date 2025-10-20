@@ -1,0 +1,2 @@
+
+num_workers: 1 # Based on warning from running on Jasmin slurm GPU nodes about too many workers, but other locations could use more

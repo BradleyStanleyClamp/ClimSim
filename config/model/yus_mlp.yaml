@@ -1,4 +1,4 @@
-name: mlp
+name: yus_mlp
 early_stopping_patience: 200
 
 sweep_configuration:
@@ -20,9 +20,10 @@ sweep_configuration:
       values: [1, 2, 3, 4, 5, 6, 7, 8]
 
 single_run_configuration:
-  lr: 0.001
-  batch_size: 512
+  lr: 2.5e-4
+  batch_size: 3072
   hidden_dims: [768, 640, 512, 640, 640]
   activation: leaky_relu
-  
+  optimizer: RAdam
+  scheduler: cyclic
   

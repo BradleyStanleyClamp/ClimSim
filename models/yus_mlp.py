@@ -1,5 +1,7 @@
 """
-Implementation of a simple Multi-Layer Perceptron (MLP) model using PyTorch.
+Implementation of a Yu, Hannah, et al., 2024's Multi-Layer Perceptron (MLP). This model was optimised through a 8257 sweep and is designed for the standard input case, this model is implemented in PyTorch.
+
+[ClimSim-Online: Dataset and Framework for Hybrid Climate Emulation](https://arxiv.org/abs/2306.08754)
 """
 
 from typing import List
@@ -8,13 +10,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class MLP(nn.Module):
+class YusMLP(nn.Module):
     def __init__(
         self,
         input_dim: int,
         hidden_dims: List[int],
         output_dim: int,
-        activation=F.relu,
+        activation=F.leaky_relu,
     ):
         """
         Initializes the MLP model.
@@ -33,7 +35,15 @@ class MLP(nn.Module):
         self.hidden_layers = nn.ModuleList(
             [nn.Linear(hidden_dims[i], hidden_dims[i + 1]) for i in range(self.nhidden - 1)]
         )
-        self.output_layer = nn.Linear(hidden_dims[-1], output_dim)
+
+        self.last_hidden_layer = nn.Linear(hidden_dims[-1], output_dim)
+
+        self.output_lin = nn.Linear(output_dim, 120)  # linear branch
+        self.output_relu = nn.Sequential(             # relu branch
+            nn.Linear(output_dim, 8),
+            nn.ReLU()
+        )
+
         self.activation = activation
 
     def forward(self, x):
@@ -47,5 +57,6 @@ class MLP(nn.Module):
         x = self.activation(self.input_layer(x))
         for layer in self.hidden_layers:
             x = self.activation(layer(x))
-        x = self.output_layer(x)
+        x = self.activation(self.last_hidden_layer(x))
+        x = torch.cat([self.output_lin(x), self.output_relu(x)], dim=-1)
         return x
