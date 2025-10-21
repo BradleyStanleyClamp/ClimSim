@@ -22,7 +22,9 @@ sweep_configuration:
 single_run_configuration:
   lr: 0.001
   batch_size: 512
-  hidden_dims: [768, 640, 512, 640, 640]
-  activation: leaky_relu
+  hidden_dims: [256, 128]
+  activation: relu
+  optimizer: Adam
+  scheduler: None
   
   

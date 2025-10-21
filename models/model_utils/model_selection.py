@@ -7,9 +7,9 @@ import models
 import torch
 
 
-def select_model(model_name: str, model_params: dict, data_params: dict):
+def select_base_model(model_name: str, model_params: dict, data_params: dict) -> torch.nn.Module:
     """
-    Selects and returns a model class based on the provided model name.
+    Selects and returns a base model (nn.Module) class based on the provided model name.
     Args:
         model_name (str): Name of the model to be selected.
         model_params (dict): Dictionary of parameters to initialize the model.
@@ -21,16 +21,37 @@ def select_model(model_name: str, model_params: dict, data_params: dict):
     """
     if model_name == "mlp":
         mlp = models.mlp.MLP(hidden_dims=model_params.hidden_dims, input_dim=data_params.input_dim, output_dim=data_params.output_dim)
-        return models.LightningWrapper(mlp)
+        return mlp
     
     elif model_name == "yus_mlp":
         yus_mlp = models.yus_mlp.YusMLP(hidden_dims=model_params.hidden_dims, input_dim=data_params.input_dim, output_dim=data_params.output_dim)
-        optimizer = select_optimizer(model_params.optimizer)
-        return models.LightningWrapper(yus_mlp, optimizer=optimizer, lr=model_params.lr, scheduler=model_params.scheduler)
-
+        return yus_mlp
     else:
         raise ValueError(f"Model {model_name} not recognized.")
     
+def select_model(model_name: str, model_params: dict, data_params: dict) -> L.LightningModule:
+    """
+    Selects and returns a lightning wrapped model class based on the provided model name.
+    Args:
+        model_name (str): Name of the model to be selected.
+        model_params (dict): Dictionary of parameters to initialize the model.
+        data_params (dict): Dictionary of data-related parameters.
+    Returns:
+        model (L.LightningModule): An instance of the selected model class.
+    """
+
+    base_model = select_base_model(model_name, model_params, data_params)
+
+    lightning_model = models.LightningWrapper(
+        base_model,
+        optimizer=select_optimizer(model_params.optimizer),
+        lr=model_params.lr,
+        scheduler=model_params.scheduler,
+    )
+
+    return lightning_model
+
+
 def select_optimizer(optimizer_name: str):
     """
     Selects and returns an optimizer based on the provided optimizer name.
@@ -45,3 +66,25 @@ def select_optimizer(optimizer_name: str):
         return torch.optim.RAdam
     else:
         raise ValueError(f"Optimizer {optimizer_name} not recognized.")
+    
+
+def load_model_from_checkpoint(checkpoint_path: str, model_name: str, model_params: dict, data_params: dict):
+    """
+    Loads a model from a checkpoint file.
+    Args:
+        checkpoint_path (str): Path to the checkpoint file.
+        model_name (str): Name of the model to be loaded.
+        model_params (dict): Dictionary of parameters to initialize the model.
+        data_params (dict): Dictionary of data-related parameters.
+    Returns:
+        model (nn.Module): An instance of the loaded model class.
+    """
+    base_model = select_base_model(model_name, model_params, data_params)
+    model = models.LightningWrapper.load_from_checkpoint(
+        checkpoint_path,
+        model=base_model,
+        optimizer=select_optimizer(model_params.optimizer),
+        lr=model_params.lr,
+        scheduler=model_params.scheduler,
+    )
+    return model

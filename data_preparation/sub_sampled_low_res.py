@@ -23,6 +23,7 @@ class SubSampledLowResDataset(Dataset):
 
         self.mode = mode
         self.dataset_testing_type = dataset_testing_type
+        self.dataset_config = dataset_config
         if dataset_testing_type == "quick":
             base_dir = Path(__file__).resolve().parents[1]
             self.data_path = os.path.join(base_dir, dataset_config.precomputed_quick_data_path)
@@ -33,15 +34,8 @@ class SubSampledLowResDataset(Dataset):
         # Setup ClimSim data class (not sure if necessary but may be useful in the future)
         self.setup_data_class()
 
-        # Loading data based on mode
-        input, target = self.load_data()
-
-        # Subsample data based on dataset_testing_type
-        self.input, self.target = sample_data_based_on_testing_type(
-            (input, target),
-            self.dataset_testing_type,
-            dataset_config.dataset_testing_fractions,
-        )
+        # Loading data based on mode and sample based on testing type
+        self.input, self.target = self.load_data()
 
     def setup_data_class(self):
         # Resolve paths relative to this file so imports from other CWDs work
@@ -63,34 +57,53 @@ class SubSampledLowResDataset(Dataset):
             input_min=input_min,
             output_scale=output_scale,
         )
+        self.data_class.set_to_v1_vars()
+
 
     def load_data(self):
         if self.mode == "train":
             train_input_path = self.data_path + "train_input.npy"
             train_target_path = self.data_path + "train_target.npy"
-            self.data_class.input_train = self.data_class.load_npy_file(
-                train_input_path
+            train_input = np.load(train_input_path)
+            train_target = np.load(train_target_path)
+            train_input, train_target = sample_data_based_on_testing_type(
+                (train_input, train_target),
+                self.dataset_testing_type,
+                self.dataset_config.dataset_testing_fractions,
             )
-            self.data_class.target_train = self.data_class.load_npy_file(
-                train_target_path
-            )
+
+            self.data_class.input_train = train_input
+            self.data_class.target_train = train_target
             return self.data_class.input_train, self.data_class.target_train
 
         elif self.mode == "val":
             val_input_path = self.data_path + "val_input.npy"
             val_target_path = self.data_path + "val_target.npy"
-            self.data_class.input_val = self.data_class.load_npy_file(val_input_path)
-            self.data_class.target_val = self.data_class.load_npy_file(val_target_path)
+            val_input = np.load(val_input_path)
+            val_target = np.load(val_target_path)
+            val_input, val_target = sample_data_based_on_testing_type(
+                (val_input, val_target),
+                self.dataset_testing_type,
+                self.dataset_config.dataset_testing_fractions,
+            )
+            self.data_class.input_val = val_input
+            self.data_class.target_val = val_target
             return self.data_class.input_val, self.data_class.target_val
 
         elif self.mode == "test":
             test_input_path = self.data_path + "scoring_input.npy"
             test_target_path = self.data_path + "scoring_target.npy"
-            self.data_class.input_test = self.data_class.load_npy_file(test_input_path)
-            self.data_class.target_test = self.data_class.load_npy_file(
-                test_target_path
+            test_input = np.load(test_input_path)
+            test_target = np.load(test_target_path)
+            test_input, test_target = sample_data_based_on_testing_type(
+                (test_input, test_target),
+                self.dataset_testing_type,
+                self.dataset_config.dataset_testing_fractions,
             )
-            return self.data_class.input_test, self.data_class.target_test
+
+            self.data_class.input_scoring = test_input
+            self.data_class.target_scoring = test_target
+            return self.data_class.input_scoring, self.data_class.target_scoring
 
     def __len__(self):
         return len(self.input)

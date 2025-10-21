@@ -1,1 +1,15 @@
 # General evaluation configuration that is used for rigorous evaluation of a selected model
+
+defaults:
+  - _self_
+  - project: config
+  - wandb/wkey: wkey
+  - model: yus_mlp
+  - dataset: sub_sampled_low_res
+  - dataset/general_dataset_config: general_dataset_config
+  - hydra: default
+  - testing: qt
+  - override hydra/launcher: slurm
+
+run_cfg_file_path: /home/users/bradlesc/projects/ClimSim/logs/p2.1.1/4/yus_mlp_18_epoch_sucess_v1/yus_mlp/run_config.yaml
+checkpoint_path: /home/users/bradlesc/projects/ClimSim/logs/p2.1.1/4/yus_mlp_18_epoch_sucess_v1/yus_mlp/yus_mlp_2025-10-20-15-50-02.ckpt
