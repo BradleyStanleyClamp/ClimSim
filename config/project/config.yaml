@@ -1,7 +1,7 @@
 project: p2.1.1
 
-task: '4'
-name: implementing_yus_mlp
+task: '5'
+name: base_mlp
 timestamp: ${now:%Y-%m-%d-%H-%M-%S}
 
 seed: 0 # High level seed for general code reproducibility, this will not be used for multiseed runs or sweeps

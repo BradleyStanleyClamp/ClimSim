@@ -15,7 +15,7 @@ defaults:
 multirun_dir_name: ${model.name}
 
 # Training parameters
-max_epochs: 2000
+max_epochs: 10
 
 # Sweep options 
 sweep: false

@@ -11,5 +11,7 @@ defaults:
   - testing: qt
   - override hydra/launcher: slurm
 
+multirun_dir_name: ${model.name}
+
 run_cfg_file_path: /home/users/bradlesc/projects/ClimSim/logs/p2.1.1/4/yus_mlp_18_epoch_sucess_v1/yus_mlp/run_config.yaml
 checkpoint_path: /home/users/bradlesc/projects/ClimSim/logs/p2.1.1/4/yus_mlp_18_epoch_sucess_v1/yus_mlp/yus_mlp_2025-10-20-15-50-02.ckpt
