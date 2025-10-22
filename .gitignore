@@ -174,3 +174,4 @@ uv.lock
 logs/
 settings.json
 wandb/
+baseline_models/
