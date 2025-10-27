@@ -1,0 +1,11 @@
+submitit INFO (2025-10-23 09:28:58,777) - Starting with JobEnvironment(job_id=47733289, hostname=gpuhost006.jc.rl.ac.uk, local_rank=0(1), node=0(1), global_rank=0(1))
+submitit INFO (2025-10-23 09:28:58,777) - Loading pickle: /home/users/bradlesc/projects/ClimSim/logs/p2.1.1/5/testing/quick_test/2025-10-23-09-28-45/.submitit/47733289/47733289_submitted.pkl
+[2025-10-23 09:29:41,139][root][INFO] - Loading dataset for evaluation
+[2025-10-23 09:29:41,384][root][INFO] - Starting evaluation of models
+[2025-10-23 09:29:41,805][root][INFO] - Completed evaluation for model: mlp
+[2025-10-23 09:29:42,420][root][INFO] - Completed evaluation for model: yus_mlp
+[2025-10-23 09:29:42,421][root][INFO] - Calculating metrics and generating plots
+submitit INFO (2025-10-23 09:29:43,526) - Job completed successfully
+[2025-10-23 09:29:43,526][submitit][INFO] - Job completed successfully
+submitit INFO (2025-10-23 09:29:43,553) - Exiting after successful completion
+[2025-10-23 09:29:43,553][submitit][INFO] - Exiting after successful completion

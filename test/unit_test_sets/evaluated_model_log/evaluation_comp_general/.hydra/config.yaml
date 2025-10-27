@@ -1,0 +1,38 @@
+multirun_dir_name: evaluation_comp_general
+models_to_evaluate:
+  mlp: /home/users/bradlesc/projects/ClimSim/logs/p2.1.1/5/base_mlp_10_epoch_sucess_v1
+  yus_mlp: /home/users/bradlesc/projects/ClimSim/logs/p2.1.1/4/yus_mlp_18_epoch_sucess_v1/
+project:
+  project: p2.1.1
+  task: '5'
+  name: base_mlp
+  timestamp: ${now:%Y-%m-%d-%H-%M-%S}
+  seed: 0
+wandb:
+  wkey:
+    wkey: d162c7366b8f497517106439f80ecee449b45d07
+dataset:
+  dataset_name: subsampled_low_res
+  data_path: /gws/nopw/j04/iecdt/bstanleyclamp/climsim_data/subsampled_low_res/
+  precomputed_quick_data_path: test/unit_test_sets/sub_sampled_low_res/
+  input_dim: 124
+  output_dim: 128
+  dataset_testing_fractions:
+    unit_test: 3840
+    quick: 1.0
+    reduced: 38400
+    full: 1.0
+  general_dataset_config:
+    num_workers: 1
+testing:
+  test_name: quick_test
+  hydra:
+    run:
+      dir: ${hydra:runtime.cwd}/logs/${project.project}/${project.task}/testing/quick_test/${project.timestamp}
+    sweep:
+      dir: logs/${project.project}/${project.task}/testing/quick_test/${project.timestamp}
+  wandb_mode: disabled
+  dataset_testing_type: quick
+  epochs: 2
+  plotting: false
+  timings: false

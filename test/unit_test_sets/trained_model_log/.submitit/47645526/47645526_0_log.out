@@ -1,0 +1,253 @@
+submitit INFO (2025-10-22 16:10:02,236) - Starting with JobEnvironment(job_id=47645526, hostname=gpuhost010.jc.rl.ac.uk, local_rank=0(1), node=0(1), global_rank=0(1))
+submitit INFO (2025-10-22 16:10:02,236) - Loading pickle: /home/users/bradlesc/projects/ClimSim/logs/p2.1.1/5/testing/dress_rehearsal/2025-10-22-16-09-51/.submitit/47645526/47645526_submitted.pkl
+[2025-10-22 16:10:10,368][root][INFO] - Setup complete, starting training
+[2025-10-22 16:10:27,338][root][INFO] - trainset loaded with 38400 samples
+[2025-10-22 16:10:31,316][root][INFO] - valset loaded with 38400 samples
+[2025-10-22 16:10:36,347][root][INFO] - testset loaded with 38400 samples
+[2025-10-22 16:10:37,439][root][INFO] - Running training with run name: implementing_base_mlp_2025-10-22-16-09-51
+[2025-10-22 16:10:37,440][root][INFO] - Data loaders obtained
+[2025-10-22 16:10:37,442][root][INFO] - Model mlp loaded
+[2025-10-22 16:10:37,465][root][INFO] - Starting training
+Sanity Checking: |          | 0/? [00:00<?, ?it/s]Sanity Checking: |          | 0/? [00:00<?, ?it/s]Sanity Checking DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s]Sanity Checking DataLoader 0:  50%|█████     | 1/2 [00:00<00:00,  5.17it/s]Sanity Checking DataLoader 0: 100%|██████████| 2/2 [00:00<00:00,  9.26it/s]                                                                           Training: |          | 0/? [00:00<?, ?it/s]Training: |          | 0/? [00:00<?, ?it/s]Epoch 0:   0%|          | 0/19 [00:00<?, ?it/s]Epoch 0:   5%|▌         | 1/19 [00:00<00:03,  4.94it/s]Epoch 0:   5%|▌         | 1/19 [00:00<00:03,  4.92it/s, v_num=qhxb]Epoch 0:  11%|█         | 2/19 [00:00<00:01,  8.83it/s, v_num=qhxb]Epoch 0:  11%|█         | 2/19 [00:00<00:01,  8.80it/s, v_num=qhxb]Epoch 0:  16%|█▌        | 3/19 [00:00<00:01, 12.54it/s, v_num=qhxb]Epoch 0:  16%|█▌        | 3/19 [00:00<00:01, 12.49it/s, v_num=qhxb]Epoch 0:  21%|██        | 4/19 [00:00<00:00, 15.91it/s, v_num=qhxb]Epoch 0:  21%|██        | 4/19 [00:00<00:00, 15.88it/s, v_num=qhxb]Epoch 0:  26%|██▋       | 5/19 [00:00<00:00, 19.00it/s, v_num=qhxb]Epoch 0:  26%|██▋       | 5/19 [00:00<00:00, 18.96it/s, v_num=qhxb]Epoch 0:  32%|███▏      | 6/19 [00:00<00:00, 20.94it/s, v_num=qhxb]Epoch 0:  32%|███▏      | 6/19 [00:00<00:00, 20.89it/s, v_num=qhxb]Epoch 0:  37%|███▋      | 7/19 [00:00<00:00, 22.67it/s, v_num=qhxb]Epoch 0:  37%|███▋      | 7/19 [00:00<00:00, 22.61it/s, v_num=qhxb]Epoch 0:  42%|████▏     | 8/19 [00:00<00:00, 24.15it/s, v_num=qhxb]Epoch 0:  42%|████▏     | 8/19 [00:00<00:00, 24.11it/s, v_num=qhxb]Epoch 0:  47%|████▋     | 9/19 [00:00<00:00, 25.48it/s, v_num=qhxb]Epoch 0:  47%|████▋     | 9/19 [00:00<00:00, 25.44it/s, v_num=qhxb]Epoch 0:  53%|█████▎    | 10/19 [00:00<00:00, 26.68it/s, v_num=qhxb]Epoch 0:  53%|█████▎    | 10/19 [00:00<00:00, 26.64it/s, v_num=qhxb]Epoch 0:  58%|█████▊    | 11/19 [00:00<00:00, 27.75it/s, v_num=qhxb]Epoch 0:  58%|█████▊    | 11/19 [00:00<00:00, 27.71it/s, v_num=qhxb]Epoch 0:  63%|██████▎   | 12/19 [00:00<00:00, 28.70it/s, v_num=qhxb]Epoch 0:  63%|██████▎   | 12/19 [00:00<00:00, 28.66it/s, v_num=qhxb]Epoch 0:  68%|██████▊   | 13/19 [00:00<00:00, 29.60it/s, v_num=qhxb]Epoch 0:  68%|██████▊   | 13/19 [00:00<00:00, 29.56it/s, v_num=qhxb]Epoch 0:  74%|███████▎  | 14/19 [00:00<00:00, 30.42it/s, v_num=qhxb]Epoch 0:  74%|███████▎  | 14/19 [00:00<00:00, 30.38it/s, v_num=qhxb]Epoch 0:  79%|███████▉  | 15/19 [00:00<00:00, 31.15it/s, v_num=qhxb]Epoch 0:  79%|███████▉  | 15/19 [00:00<00:00, 31.12it/s, v_num=qhxb]Epoch 0:  84%|████████▍ | 16/19 [00:00<00:00, 31.79it/s, v_num=qhxb]Epoch 0:  84%|████████▍ | 16/19 [00:00<00:00, 31.76it/s, v_num=qhxb]Epoch 0:  89%|████████▉ | 17/19 [00:00<00:00, 32.27it/s, v_num=qhxb]Epoch 0:  89%|████████▉ | 17/19 [00:00<00:00, 32.22it/s, v_num=qhxb]Epoch 0:  95%|█████████▍| 18/19 [00:00<00:00, 32.82it/s, v_num=qhxb]Epoch 0:  95%|█████████▍| 18/19 [00:00<00:00, 32.78it/s, v_num=qhxb]Epoch 0: 100%|██████████| 19/19 [00:00<00:00, 33.57it/s, v_num=qhxb]Epoch 0: 100%|██████████| 19/19 [00:00<00:00, 33.54it/s, v_num=qhxb]
+Validation: |          | 0/? [00:00<?, ?it/s][A
+Validation: |          | 0/? [00:00<?, ?it/s][A
+Validation DataLoader 0:   0%|          | 0/19 [00:00<?, ?it/s][A
+Validation DataLoader 0:   5%|▌         | 1/19 [00:00<00:00, 95.90it/s][A
+Validation DataLoader 0:  11%|█         | 2/19 [00:00<00:00, 93.94it/s][A
+Validation DataLoader 0:  16%|█▌        | 3/19 [00:00<00:00, 107.57it/s][A
+Validation DataLoader 0:  21%|██        | 4/19 [00:00<00:00, 83.70it/s] [A
+Validation DataLoader 0:  26%|██▋       | 5/19 [00:00<00:00, 74.23it/s][A
+Validation DataLoader 0:  32%|███▏      | 6/19 [00:00<00:00, 69.12it/s][A
+Validation DataLoader 0:  37%|███▋      | 7/19 [00:00<00:00, 65.82it/s][A
+Validation DataLoader 0:  42%|████▏     | 8/19 [00:00<00:00, 63.55it/s][A
+Validation DataLoader 0:  47%|████▋     | 9/19 [00:00<00:00, 61.82it/s][A
+Validation DataLoader 0:  53%|█████▎    | 10/19 [00:00<00:00, 60.57it/s][A
+Validation DataLoader 0:  58%|█████▊    | 11/19 [00:00<00:00, 59.71it/s][A
+Validation DataLoader 0:  63%|██████▎   | 12/19 [00:00<00:00, 59.00it/s][A
+Validation DataLoader 0:  68%|██████▊   | 13/19 [00:00<00:00, 58.43it/s][A
+Validation DataLoader 0:  74%|███████▎  | 14/19 [00:00<00:00, 57.91it/s][A
+Validation DataLoader 0:  79%|███████▉  | 15/19 [00:00<00:00, 57.27it/s][A
+Validation DataLoader 0:  84%|████████▍ | 16/19 [00:00<00:00, 56.80it/s][A
+Validation DataLoader 0:  89%|████████▉ | 17/19 [00:00<00:00, 56.37it/s][A
+Validation DataLoader 0:  95%|█████████▍| 18/19 [00:00<00:00, 56.04it/s][A
+Validation DataLoader 0: 100%|██████████| 19/19 [00:00<00:00, 56.38it/s][A
+                                                                        [AEpoch 0: 100%|██████████| 19/19 [00:01<00:00, 18.57it/s, v_num=qhxb]Epoch 0: 100%|██████████| 19/19 [00:01<00:00, 18.55it/s, v_num=qhxb]Epoch 0:   0%|          | 0/19 [00:00<?, ?it/s, v_num=qhxb]         Epoch 1:   0%|          | 0/19 [00:00<?, ?it/s, v_num=qhxb]Epoch 1:   5%|▌         | 1/19 [00:00<00:02,  8.01it/s, v_num=qhxb]Epoch 1:   5%|▌         | 1/19 [00:00<00:02,  7.90it/s, v_num=qhxb]Epoch 1:  11%|█         | 2/19 [00:00<00:01, 14.15it/s, v_num=qhxb]Epoch 1:  11%|█         | 2/19 [00:00<00:01, 14.10it/s, v_num=qhxb]Epoch 1:  16%|█▌        | 3/19 [00:00<00:00, 19.29it/s, v_num=qhxb]Epoch 1:  16%|█▌        | 3/19 [00:00<00:00, 19.22it/s, v_num=qhxb]Epoch 1:  21%|██        | 4/19 [00:00<00:00, 22.50it/s, v_num=qhxb]Epoch 1:  21%|██        | 4/19 [00:00<00:00, 22.42it/s, v_num=qhxb]Epoch 1:  26%|██▋       | 5/19 [00:00<00:00, 25.03it/s, v_num=qhxb]Epoch 1:  26%|██▋       | 5/19 [00:00<00:00, 24.95it/s, v_num=qhxb]Epoch 1:  32%|███▏      | 6/19 [00:00<00:00, 27.08it/s, v_num=qhxb]Epoch 1:  32%|███▏      | 6/19 [00:00<00:00, 27.00it/s, v_num=qhxb]Epoch 1:  37%|███▋      | 7/19 [00:00<00:00, 28.72it/s, v_num=qhxb]Epoch 1:  37%|███▋      | 7/19 [00:00<00:00, 28.65it/s, v_num=qhxb]Epoch 1:  42%|████▏     | 8/19 [00:00<00:00, 30.13it/s, v_num=qhxb]Epoch 1:  42%|████▏     | 8/19 [00:00<00:00, 30.06it/s, v_num=qhxb]Epoch 1:  47%|████▋     | 9/19 [00:00<00:00, 31.28it/s, v_num=qhxb]Epoch 1:  47%|████▋     | 9/19 [00:00<00:00, 31.22it/s, v_num=qhxb]Epoch 1:  53%|█████▎    | 10/19 [00:00<00:00, 32.30it/s, v_num=qhxb]Epoch 1:  53%|█████▎    | 10/19 [00:00<00:00, 32.23it/s, v_num=qhxb]Epoch 1:  58%|█████▊    | 11/19 [00:00<00:00, 33.21it/s, v_num=qhxb]Epoch 1:  58%|█████▊    | 11/19 [00:00<00:00, 33.15it/s, v_num=qhxb]Epoch 1:  63%|██████▎   | 12/19 [00:00<00:00, 33.95it/s, v_num=qhxb]Epoch 1:  63%|██████▎   | 12/19 [00:00<00:00, 33.89it/s, v_num=qhxb]Epoch 1:  68%|██████▊   | 13/19 [00:00<00:00, 34.67it/s, v_num=qhxb]Epoch 1:  68%|██████▊   | 13/19 [00:00<00:00, 34.61it/s, v_num=qhxb]Epoch 1:  74%|███████▎  | 14/19 [00:00<00:00, 35.28it/s, v_num=qhxb]Epoch 1:  74%|███████▎  | 14/19 [00:00<00:00, 35.22it/s, v_num=qhxb]Epoch 1:  79%|███████▉  | 15/19 [00:00<00:00, 35.78it/s, v_num=qhxb]Epoch 1:  79%|███████▉  | 15/19 [00:00<00:00, 35.73it/s, v_num=qhxb]Epoch 1:  84%|████████▍ | 16/19 [00:00<00:00, 36.28it/s, v_num=qhxb]Epoch 1:  84%|████████▍ | 16/19 [00:00<00:00, 36.23it/s, v_num=qhxb]Epoch 1:  89%|████████▉ | 17/19 [00:00<00:00, 36.53it/s, v_num=qhxb]Epoch 1:  89%|████████▉ | 17/19 [00:00<00:00, 36.48it/s, v_num=qhxb]Epoch 1:  95%|█████████▍| 18/19 [00:00<00:00, 36.96it/s, v_num=qhxb]Epoch 1:  95%|█████████▍| 18/19 [00:00<00:00, 36.90it/s, v_num=qhxb]Epoch 1: 100%|██████████| 19/19 [00:00<00:00, 37.62it/s, v_num=qhxb]Epoch 1: 100%|██████████| 19/19 [00:00<00:00, 37.58it/s, v_num=qhxb]
+Validation: |          | 0/? [00:00<?, ?it/s][A
+Validation: |          | 0/? [00:00<?, ?it/s][A
+Validation DataLoader 0:   0%|          | 0/19 [00:00<?, ?it/s][A
+Validation DataLoader 0:   5%|▌         | 1/19 [00:00<00:00, 233.80it/s][A
+Validation DataLoader 0:  11%|█         | 2/19 [00:00<00:00, 241.25it/s][A
+Validation DataLoader 0:  16%|█▌        | 3/19 [00:00<00:00, 108.76it/s][A
+Validation DataLoader 0:  21%|██        | 4/19 [00:00<00:00, 85.59it/s] [A
+Validation DataLoader 0:  26%|██▋       | 5/19 [00:00<00:00, 75.83it/s][A
+Validation DataLoader 0:  32%|███▏      | 6/19 [00:00<00:00, 69.68it/s][A
+Validation DataLoader 0:  37%|███▋      | 7/19 [00:00<00:00, 66.06it/s][A
+Validation DataLoader 0:  42%|████▏     | 8/19 [00:00<00:00, 63.70it/s][A
+Validation DataLoader 0:  47%|████▋     | 9/19 [00:00<00:00, 62.02it/s][A
+Validation DataLoader 0:  53%|█████▎    | 10/19 [00:00<00:00, 60.79it/s][A
+Validation DataLoader 0:  58%|█████▊    | 11/19 [00:00<00:00, 59.74it/s][A
+Validation DataLoader 0:  63%|██████▎   | 12/19 [00:00<00:00, 58.90it/s][A
+Validation DataLoader 0:  68%|██████▊   | 13/19 [00:00<00:00, 58.21it/s][A
+Validation DataLoader 0:  74%|███████▎  | 14/19 [00:00<00:00, 57.63it/s][A
+Validation DataLoader 0:  79%|███████▉  | 15/19 [00:00<00:00, 57.15it/s][A
+Validation DataLoader 0:  84%|████████▍ | 16/19 [00:00<00:00, 56.75it/s][A
+Validation DataLoader 0:  89%|████████▉ | 17/19 [00:00<00:00, 56.40it/s][A
+Validation DataLoader 0:  95%|█████████▍| 18/19 [00:00<00:00, 56.12it/s][A
+Validation DataLoader 0: 100%|██████████| 19/19 [00:00<00:00, 56.48it/s][A
+                                                                        [AEpoch 1: 100%|██████████| 19/19 [00:00<00:00, 19.72it/s, v_num=qhxb]Epoch 1: 100%|██████████| 19/19 [00:00<00:00, 19.70it/s, v_num=qhxb]Epoch 1:   0%|          | 0/19 [00:00<?, ?it/s, v_num=qhxb]         Epoch 2:   0%|          | 0/19 [00:00<?, ?it/s, v_num=qhxb]Epoch 2:   5%|▌         | 1/19 [00:00<00:02,  8.31it/s, v_num=qhxb]Epoch 2:   5%|▌         | 1/19 [00:00<00:02,  8.18it/s, v_num=qhxb]Epoch 2:  11%|█         | 2/19 [00:00<00:01, 14.60it/s, v_num=qhxb]Epoch 2:  11%|█         | 2/19 [00:00<00:01, 14.54it/s, v_num=qhxb]Epoch 2:  16%|█▌        | 3/19 [00:00<00:00, 19.27it/s, v_num=qhxb]Epoch 2:  16%|█▌        | 3/19 [00:00<00:00, 19.20it/s, v_num=qhxb]Epoch 2:  21%|██        | 4/19 [00:00<00:00, 22.55it/s, v_num=qhxb]Epoch 2:  21%|██        | 4/19 [00:00<00:00, 22.47it/s, v_num=qhxb]Epoch 2:  26%|██▋       | 5/19 [00:00<00:00, 25.09it/s, v_num=qhxb]Epoch 2:  26%|██▋       | 5/19 [00:00<00:00, 25.01it/s, v_num=qhxb]Epoch 2:  32%|███▏      | 6/19 [00:00<00:00, 27.15it/s, v_num=qhxb]Epoch 2:  32%|███▏      | 6/19 [00:00<00:00, 27.08it/s, v_num=qhxb]Epoch 2:  37%|███▋      | 7/19 [00:00<00:00, 28.81it/s, v_num=qhxb]Epoch 2:  37%|███▋      | 7/19 [00:00<00:00, 28.74it/s, v_num=qhxb]Epoch 2:  42%|████▏     | 8/19 [00:00<00:00, 30.19it/s, v_num=qhxb]Epoch 2:  42%|████▏     | 8/19 [00:00<00:00, 30.13it/s, v_num=qhxb]Epoch 2:  47%|████▋     | 9/19 [00:00<00:00, 31.41it/s, v_num=qhxb]Epoch 2:  47%|████▋     | 9/19 [00:00<00:00, 31.34it/s, v_num=qhxb]Epoch 2:  53%|█████▎    | 10/19 [00:00<00:00, 32.47it/s, v_num=qhxb]Epoch 2:  53%|█████▎    | 10/19 [00:00<00:00, 32.41it/s, v_num=qhxb]Epoch 2:  58%|█████▊    | 11/19 [00:00<00:00, 33.37it/s, v_num=qhxb]Epoch 2:  58%|█████▊    | 11/19 [00:00<00:00, 33.31it/s, v_num=qhxb]Epoch 2:  63%|██████▎   | 12/19 [00:00<00:00, 34.16it/s, v_num=qhxb]Epoch 2:  63%|██████▎   | 12/19 [00:00<00:00, 34.09it/s, v_num=qhxb]Epoch 2:  68%|██████▊   | 13/19 [00:00<00:00, 34.79it/s, v_num=qhxb]Epoch 2:  68%|██████▊   | 13/19 [00:00<00:00, 34.73it/s, v_num=qhxb]Epoch 2:  74%|███████▎  | 14/19 [00:00<00:00, 35.42it/s, v_num=qhxb]Epoch 2:  74%|███████▎  | 14/19 [00:00<00:00, 35.37it/s, v_num=qhxb]Epoch 2:  79%|███████▉  | 15/19 [00:00<00:00, 36.00it/s, v_num=qhxb]Epoch 2:  79%|███████▉  | 15/19 [00:00<00:00, 35.95it/s, v_num=qhxb]Epoch 2:  84%|████████▍ | 16/19 [00:00<00:00, 36.51it/s, v_num=qhxb]Epoch 2:  84%|████████▍ | 16/19 [00:00<00:00, 36.46it/s, v_num=qhxb]Epoch 2:  89%|████████▉ | 17/19 [00:00<00:00, 36.77it/s, v_num=qhxb]Epoch 2:  89%|████████▉ | 17/19 [00:00<00:00, 36.71it/s, v_num=qhxb]Epoch 2:  95%|█████████▍| 18/19 [00:00<00:00, 37.13it/s, v_num=qhxb]Epoch 2:  95%|█████████▍| 18/19 [00:00<00:00, 37.08it/s, v_num=qhxb]Epoch 2: 100%|██████████| 19/19 [00:00<00:00, 37.84it/s, v_num=qhxb]Epoch 2: 100%|██████████| 19/19 [00:00<00:00, 37.80it/s, v_num=qhxb]
+Validation: |          | 0/? [00:00<?, ?it/s][A
+Validation: |          | 0/? [00:00<?, ?it/s][A
+Validation DataLoader 0:   0%|          | 0/19 [00:00<?, ?it/s][A
+Validation DataLoader 0:   5%|▌         | 1/19 [00:00<00:00, 231.33it/s][A
+Validation DataLoader 0:  11%|█         | 2/19 [00:00<00:00, 133.04it/s][A
+Validation DataLoader 0:  16%|█▌        | 3/19 [00:00<00:00, 104.32it/s][A
+Validation DataLoader 0:  21%|██        | 4/19 [00:00<00:00, 82.63it/s] [A
+Validation DataLoader 0:  26%|██▋       | 5/19 [00:00<00:00, 73.58it/s][A
+Validation DataLoader 0:  32%|███▏      | 6/19 [00:00<00:00, 68.67it/s][A
+Validation DataLoader 0:  37%|███▋      | 7/19 [00:00<00:00, 65.38it/s][A
+Validation DataLoader 0:  42%|████▏     | 8/19 [00:00<00:00, 63.22it/s][A
+Validation DataLoader 0:  47%|████▋     | 9/19 [00:00<00:00, 61.54it/s][A
+Validation DataLoader 0:  53%|█████▎    | 10/19 [00:00<00:00, 60.31it/s][A
+Validation DataLoader 0:  58%|█████▊    | 11/19 [00:00<00:00, 59.32it/s][A
+Validation DataLoader 0:  63%|██████▎   | 12/19 [00:00<00:00, 58.49it/s][A
+Validation DataLoader 0:  68%|██████▊   | 13/19 [00:00<00:00, 57.83it/s][A
+Validation DataLoader 0:  74%|███████▎  | 14/19 [00:00<00:00, 57.28it/s][A
+Validation DataLoader 0:  79%|███████▉  | 15/19 [00:00<00:00, 56.84it/s][A
+Validation DataLoader 0:  84%|████████▍ | 16/19 [00:00<00:00, 56.46it/s][A
+Validation DataLoader 0:  89%|████████▉ | 17/19 [00:00<00:00, 56.14it/s][A
+Validation DataLoader 0:  95%|█████████▍| 18/19 [00:00<00:00, 55.86it/s][A
+Validation DataLoader 0: 100%|██████████| 19/19 [00:00<00:00, 56.25it/s][A
+                                                                        [AEpoch 2: 100%|██████████| 19/19 [00:00<00:00, 19.83it/s, v_num=qhxb]Epoch 2: 100%|██████████| 19/19 [00:00<00:00, 19.80it/s, v_num=qhxb]Epoch 2:   0%|          | 0/19 [00:00<?, ?it/s, v_num=qhxb]         Epoch 3:   0%|          | 0/19 [00:00<?, ?it/s, v_num=qhxb]Epoch 3:   5%|▌         | 1/19 [00:00<00:02,  8.36it/s, v_num=qhxb]Epoch 3:   5%|▌         | 1/19 [00:00<00:02,  8.25it/s, v_num=qhxb]Epoch 3:  11%|█         | 2/19 [00:00<00:01, 15.60it/s, v_num=qhxb]Epoch 3:  11%|█         | 2/19 [00:00<00:01, 15.54it/s, v_num=qhxb]Epoch 3:  16%|█▌        | 3/19 [00:00<00:00, 20.17it/s, v_num=qhxb]Epoch 3:  16%|█▌        | 3/19 [00:00<00:00, 20.08it/s, v_num=qhxb]Epoch 3:  21%|██        | 4/19 [00:00<00:00, 23.37it/s, v_num=qhxb]Epoch 3:  21%|██        | 4/19 [00:00<00:00, 23.26it/s, v_num=qhxb]Epoch 3:  26%|██▋       | 5/19 [00:00<00:00, 25.86it/s, v_num=qhxb]Epoch 3:  26%|██▋       | 5/19 [00:00<00:00, 25.78it/s, v_num=qhxb]Epoch 3:  32%|███▏      | 6/19 [00:00<00:00, 27.89it/s, v_num=qhxb]Epoch 3:  32%|███▏      | 6/19 [00:00<00:00, 27.82it/s, v_num=qhxb]Epoch 3:  37%|███▋      | 7/19 [00:00<00:00, 29.57it/s, v_num=qhxb]Epoch 3:  37%|███▋      | 7/19 [00:00<00:00, 29.50it/s, v_num=qhxb]Epoch 3:  42%|████▏     | 8/19 [00:00<00:00, 30.97it/s, v_num=qhxb]Epoch 3:  42%|████▏     | 8/19 [00:00<00:00, 30.90it/s, v_num=qhxb]Epoch 3:  47%|████▋     | 9/19 [00:00<00:00, 32.11it/s, v_num=qhxb]Epoch 3:  47%|████▋     | 9/19 [00:00<00:00, 32.03it/s, v_num=qhxb]Epoch 3:  53%|█████▎    | 10/19 [00:00<00:00, 33.11it/s, v_num=qhxb]Epoch 3:  53%|█████▎    | 10/19 [00:00<00:00, 33.03it/s, v_num=qhxb]Epoch 3:  58%|█████▊    | 11/19 [00:00<00:00, 33.95it/s, v_num=qhxb]Epoch 3:  58%|█████▊    | 11/19 [00:00<00:00, 33.89it/s, v_num=qhxb]Epoch 3:  63%|██████▎   | 12/19 [00:00<00:00, 34.65it/s, v_num=qhxb]Epoch 3:  63%|██████▎   | 12/19 [00:00<00:00, 34.59it/s, v_num=qhxb]Epoch 3:  68%|██████▊   | 13/19 [00:00<00:00, 35.35it/s, v_num=qhxb]Epoch 3:  68%|██████▊   | 13/19 [00:00<00:00, 35.29it/s, v_num=qhxb]Epoch 3:  74%|███████▎  | 14/19 [00:00<00:00, 35.89it/s, v_num=qhxb]Epoch 3:  74%|███████▎  | 14/19 [00:00<00:00, 35.83it/s, v_num=qhxb]Epoch 3:  79%|███████▉  | 15/19 [00:00<00:00, 36.41it/s, v_num=qhxb]Epoch 3:  79%|███████▉  | 15/19 [00:00<00:00, 36.36it/s, v_num=qhxb]Epoch 3:  84%|████████▍ | 16/19 [00:00<00:00, 36.87it/s, v_num=qhxb]Epoch 3:  84%|████████▍ | 16/19 [00:00<00:00, 36.82it/s, v_num=qhxb]Epoch 3:  89%|████████▉ | 17/19 [00:00<00:00, 37.13it/s, v_num=qhxb]Epoch 3:  89%|████████▉ | 17/19 [00:00<00:00, 37.08it/s, v_num=qhxb]Epoch 3:  95%|█████████▍| 18/19 [00:00<00:00, 37.55it/s, v_num=qhxb]Epoch 3:  95%|█████████▍| 18/19 [00:00<00:00, 37.49it/s, v_num=qhxb]Epoch 3: 100%|██████████| 19/19 [00:00<00:00, 38.19it/s, v_num=qhxb]Epoch 3: 100%|██████████| 19/19 [00:00<00:00, 38.15it/s, v_num=qhxb]
+Validation: |          | 0/? [00:00<?, ?it/s][A
+Validation: |          | 0/? [00:00<?, ?it/s][A
+Validation DataLoader 0:   0%|          | 0/19 [00:00<?, ?it/s][A
+Validation DataLoader 0:   5%|▌         | 1/19 [00:00<00:00, 232.51it/s][A
+Validation DataLoader 0:  11%|█         | 2/19 [00:00<00:00, 140.84it/s][A
+Validation DataLoader 0:  16%|█▌        | 3/19 [00:00<00:00, 105.87it/s][A
+Validation DataLoader 0:  21%|██        | 4/19 [00:00<00:00, 84.29it/s] [A
+Validation DataLoader 0:  26%|██▋       | 5/19 [00:00<00:00, 74.82it/s][A
+Validation DataLoader 0:  32%|███▏      | 6/19 [00:00<00:00, 69.26it/s][A
+Validation DataLoader 0:  37%|███▋      | 7/19 [00:00<00:00, 65.92it/s][A
+Validation DataLoader 0:  42%|████▏     | 8/19 [00:00<00:00, 63.63it/s][A
+Validation DataLoader 0:  47%|████▋     | 9/19 [00:00<00:00, 61.97it/s][A
+Validation DataLoader 0:  53%|█████▎    | 10/19 [00:00<00:00, 60.62it/s][A
+Validation DataLoader 0:  58%|█████▊    | 11/19 [00:00<00:00, 59.66it/s][A
+Validation DataLoader 0:  63%|██████▎   | 12/19 [00:00<00:00, 58.81it/s][A
+Validation DataLoader 0:  68%|██████▊   | 13/19 [00:00<00:00, 58.20it/s][A
+Validation DataLoader 0:  74%|███████▎  | 14/19 [00:00<00:00, 57.60it/s][A
+Validation DataLoader 0:  79%|███████▉  | 15/19 [00:00<00:00, 57.10it/s][A
+Validation DataLoader 0:  84%|████████▍ | 16/19 [00:00<00:00, 56.67it/s][A
+Validation DataLoader 0:  89%|████████▉ | 17/19 [00:00<00:00, 56.20it/s][A
+Validation DataLoader 0:  95%|█████████▍| 18/19 [00:00<00:00, 55.92it/s][A
+Validation DataLoader 0: 100%|██████████| 19/19 [00:00<00:00, 56.37it/s][A
+                                                                        [AEpoch 3: 100%|██████████| 19/19 [00:00<00:00, 19.96it/s, v_num=qhxb]Epoch 3: 100%|██████████| 19/19 [00:00<00:00, 19.94it/s, v_num=qhxb]Epoch 3:   0%|          | 0/19 [00:00<?, ?it/s, v_num=qhxb]         Epoch 4:   0%|          | 0/19 [00:00<?, ?it/s, v_num=qhxb]Epoch 4:   5%|▌         | 1/19 [00:00<00:02,  8.25it/s, v_num=qhxb]Epoch 4:   5%|▌         | 1/19 [00:00<00:02,  8.14it/s, v_num=qhxb]Epoch 4:  11%|█         | 2/19 [00:00<00:01, 15.62it/s, v_num=qhxb]Epoch 4:  11%|█         | 2/19 [00:00<00:01, 15.57it/s, v_num=qhxb]Epoch 4:  16%|█▌        | 3/19 [00:00<00:00, 20.04it/s, v_num=qhxb]Epoch 4:  16%|█▌        | 3/19 [00:00<00:00, 19.96it/s, v_num=qhxb]Epoch 4:  21%|██        | 4/19 [00:00<00:00, 23.32it/s, v_num=qhxb]Epoch 4:  21%|██        | 4/19 [00:00<00:00, 23.23it/s, v_num=qhxb]Epoch 4:  26%|██▋       | 5/19 [00:00<00:00, 25.69it/s, v_num=qhxb]Epoch 4:  26%|██▋       | 5/19 [00:00<00:00, 25.61it/s, v_num=qhxb]Epoch 4:  32%|███▏      | 6/19 [00:00<00:00, 27.73it/s, v_num=qhxb]Epoch 4:  32%|███▏      | 6/19 [00:00<00:00, 27.66it/s, v_num=qhxb]Epoch 4:  37%|███▋      | 7/19 [00:00<00:00, 29.33it/s, v_num=qhxb]Epoch 4:  37%|███▋      | 7/19 [00:00<00:00, 29.25it/s, v_num=qhxb]Epoch 4:  42%|████▏     | 8/19 [00:00<00:00, 30.70it/s, v_num=qhxb]Epoch 4:  42%|████▏     | 8/19 [00:00<00:00, 30.63it/s, v_num=qhxb]Epoch 4:  47%|████▋     | 9/19 [00:00<00:00, 31.92it/s, v_num=qhxb]Epoch 4:  47%|████▋     | 9/19 [00:00<00:00, 31.84it/s, v_num=qhxb]Epoch 4:  53%|█████▎    | 10/19 [00:00<00:00, 32.81it/s, v_num=qhxb]Epoch 4:  53%|█████▎    | 10/19 [00:00<00:00, 32.74it/s, v_num=qhxb]Epoch 4:  58%|█████▊    | 11/19 [00:00<00:00, 33.68it/s, v_num=qhxb]Epoch 4:  58%|█████▊    | 11/19 [00:00<00:00, 33.62it/s, v_num=qhxb]Epoch 4:  63%|██████▎   | 12/19 [00:00<00:00, 34.40it/s, v_num=qhxb]Epoch 4:  63%|██████▎   | 12/19 [00:00<00:00, 34.34it/s, v_num=qhxb]Epoch 4:  68%|██████▊   | 13/19 [00:00<00:00, 35.04it/s, v_num=qhxb]Epoch 4:  68%|██████▊   | 13/19 [00:00<00:00, 34.98it/s, v_num=qhxb]Epoch 4:  74%|███████▎  | 14/19 [00:00<00:00, 35.63it/s, v_num=qhxb]Epoch 4:  74%|███████▎  | 14/19 [00:00<00:00, 35.57it/s, v_num=qhxb]Epoch 4:  79%|███████▉  | 15/19 [00:00<00:00, 36.10it/s, v_num=qhxb]Epoch 4:  79%|███████▉  | 15/19 [00:00<00:00, 36.05it/s, v_num=qhxb]Epoch 4:  84%|████████▍ | 16/19 [00:00<00:00, 36.58it/s, v_num=qhxb]Epoch 4:  84%|████████▍ | 16/19 [00:00<00:00, 36.53it/s, v_num=qhxb]Epoch 4:  89%|████████▉ | 17/19 [00:00<00:00, 36.83it/s, v_num=qhxb]Epoch 4:  89%|████████▉ | 17/19 [00:00<00:00, 36.78it/s, v_num=qhxb]Epoch 4:  95%|█████████▍| 18/19 [00:00<00:00, 37.25it/s, v_num=qhxb]Epoch 4:  95%|█████████▍| 18/19 [00:00<00:00, 37.20it/s, v_num=qhxb]Epoch 4: 100%|██████████| 19/19 [00:00<00:00, 37.92it/s, v_num=qhxb]Epoch 4: 100%|██████████| 19/19 [00:00<00:00, 37.88it/s, v_num=qhxb]
+Validation: |          | 0/? [00:00<?, ?it/s][A
+Validation: |          | 0/? [00:00<?, ?it/s][A
+Validation DataLoader 0:   0%|          | 0/19 [00:00<?, ?it/s][A
+Validation DataLoader 0:   5%|▌         | 1/19 [00:00<00:00, 233.64it/s][A
+Validation DataLoader 0:  11%|█         | 2/19 [00:00<00:00, 133.54it/s][A
+Validation DataLoader 0:  16%|█▌        | 3/19 [00:00<00:00, 104.01it/s][A
+Validation DataLoader 0:  21%|██        | 4/19 [00:00<00:00, 82.92it/s] [A
+Validation DataLoader 0:  26%|██▋       | 5/19 [00:00<00:00, 73.87it/s][A
+Validation DataLoader 0:  32%|███▏      | 6/19 [00:00<00:00, 68.85it/s][A
+Validation DataLoader 0:  37%|███▋      | 7/19 [00:00<00:00, 65.49it/s][A
+Validation DataLoader 0:  42%|████▏     | 8/19 [00:00<00:00, 63.15it/s][A
+Validation DataLoader 0:  47%|████▋     | 9/19 [00:00<00:00, 61.44it/s][A
+Validation DataLoader 0:  53%|█████▎    | 10/19 [00:00<00:00, 60.08it/s][A
+Validation DataLoader 0:  58%|█████▊    | 11/19 [00:00<00:00, 59.00it/s][A
+Validation DataLoader 0:  63%|██████▎   | 12/19 [00:00<00:00, 58.13it/s][A
+Validation DataLoader 0:  68%|██████▊   | 13/19 [00:00<00:00, 57.48it/s][A
+Validation DataLoader 0:  74%|███████▎  | 14/19 [00:00<00:00, 56.92it/s][A
+Validation DataLoader 0:  79%|███████▉  | 15/19 [00:00<00:00, 56.43it/s][A
+Validation DataLoader 0:  84%|████████▍ | 16/19 [00:00<00:00, 56.05it/s][A
+Validation DataLoader 0:  89%|████████▉ | 17/19 [00:00<00:00, 55.70it/s][A
+Validation DataLoader 0:  95%|█████████▍| 18/19 [00:00<00:00, 55.41it/s][A
+Validation DataLoader 0: 100%|██████████| 19/19 [00:00<00:00, 55.68it/s][A
+                                                                        [AEpoch 4: 100%|██████████| 19/19 [00:00<00:00, 19.75it/s, v_num=qhxb]Epoch 4: 100%|██████████| 19/19 [00:00<00:00, 19.73it/s, v_num=qhxb]Epoch 4:   0%|          | 0/19 [00:00<?, ?it/s, v_num=qhxb]         Epoch 5:   0%|          | 0/19 [00:00<?, ?it/s, v_num=qhxb]Epoch 5:   5%|▌         | 1/19 [00:00<00:02,  8.33it/s, v_num=qhxb]Epoch 5:   5%|▌         | 1/19 [00:00<00:02,  8.22it/s, v_num=qhxb]Epoch 5:  11%|█         | 2/19 [00:00<00:01, 14.76it/s, v_num=qhxb]Epoch 5:  11%|█         | 2/19 [00:00<00:01, 14.69it/s, v_num=qhxb]Epoch 5:  16%|█▌        | 3/19 [00:00<00:00, 20.04it/s, v_num=qhxb]Epoch 5:  16%|█▌        | 3/19 [00:00<00:00, 19.97it/s, v_num=qhxb]Epoch 5:  21%|██        | 4/19 [00:00<00:00, 23.33it/s, v_num=qhxb]Epoch 5:  21%|██        | 4/19 [00:00<00:00, 23.23it/s, v_num=qhxb]Epoch 5:  26%|██▋       | 5/19 [00:00<00:00, 25.86it/s, v_num=qhxb]Epoch 5:  26%|██▋       | 5/19 [00:00<00:00, 25.77it/s, v_num=qhxb]Epoch 5:  32%|███▏      | 6/19 [00:00<00:00, 27.84it/s, v_num=qhxb]Epoch 5:  32%|███▏      | 6/19 [00:00<00:00, 27.76it/s, v_num=qhxb]Epoch 5:  37%|███▋      | 7/19 [00:00<00:00, 29.54it/s, v_num=qhxb]Epoch 5:  37%|███▋      | 7/19 [00:00<00:00, 29.46it/s, v_num=qhxb]Epoch 5:  42%|████▏     | 8/19 [00:00<00:00, 30.93it/s, v_num=qhxb]Epoch 5:  42%|████▏     | 8/19 [00:00<00:00, 30.86it/s, v_num=qhxb]Epoch 5:  47%|████▋     | 9/19 [00:00<00:00, 32.13it/s, v_num=qhxb]Epoch 5:  47%|████▋     | 9/19 [00:00<00:00, 32.06it/s, v_num=qhxb]Epoch 5:  53%|█████▎    | 10/19 [00:00<00:00, 33.16it/s, v_num=qhxb]Epoch 5:  53%|█████▎    | 10/19 [00:00<00:00, 33.08it/s, v_num=qhxb]Epoch 5:  58%|█████▊    | 11/19 [00:00<00:00, 33.98it/s, v_num=qhxb]Epoch 5:  58%|█████▊    | 11/19 [00:00<00:00, 33.92it/s, v_num=qhxb]Epoch 5:  63%|██████▎   | 12/19 [00:00<00:00, 34.76it/s, v_num=qhxb]Epoch 5:  63%|██████▎   | 12/19 [00:00<00:00, 34.70it/s, v_num=qhxb]Epoch 5:  68%|██████▊   | 13/19 [00:00<00:00, 35.47it/s, v_num=qhxb]Epoch 5:  68%|██████▊   | 13/19 [00:00<00:00, 35.41it/s, v_num=qhxb]Epoch 5:  74%|███████▎  | 14/19 [00:00<00:00, 36.08it/s, v_num=qhxb]Epoch 5:  74%|███████▎  | 14/19 [00:00<00:00, 36.03it/s, v_num=qhxb]Epoch 5:  79%|███████▉  | 15/19 [00:00<00:00, 36.62it/s, v_num=qhxb]Epoch 5:  79%|███████▉  | 15/19 [00:00<00:00, 36.57it/s, v_num=qhxb]Epoch 5:  84%|████████▍ | 16/19 [00:00<00:00, 37.02it/s, v_num=qhxb]Epoch 5:  84%|████████▍ | 16/19 [00:00<00:00, 36.96it/s, v_num=qhxb]Epoch 5:  89%|████████▉ | 17/19 [00:00<00:00, 37.23it/s, v_num=qhxb]Epoch 5:  89%|████████▉ | 17/19 [00:00<00:00, 37.18it/s, v_num=qhxb]Epoch 5:  95%|█████████▍| 18/19 [00:00<00:00, 37.62it/s, v_num=qhxb]Epoch 5:  95%|█████████▍| 18/19 [00:00<00:00, 37.57it/s, v_num=qhxb]Epoch 5: 100%|██████████| 19/19 [00:00<00:00, 38.27it/s, v_num=qhxb]Epoch 5: 100%|██████████| 19/19 [00:00<00:00, 38.22it/s, v_num=qhxb]
+Validation: |          | 0/? [00:00<?, ?it/s][A
+Validation: |          | 0/? [00:00<?, ?it/s][A
+Validation DataLoader 0:   0%|          | 0/19 [00:00<?, ?it/s][A
+Validation DataLoader 0:   5%|▌         | 1/19 [00:00<00:00, 228.93it/s][A
+Validation DataLoader 0:  11%|█         | 2/19 [00:00<00:00, 120.22it/s][A
+Validation DataLoader 0:  16%|█▌        | 3/19 [00:00<00:00, 101.98it/s][A
+Validation DataLoader 0:  21%|██        | 4/19 [00:00<00:00, 81.65it/s] [A
+Validation DataLoader 0:  26%|██▋       | 5/19 [00:00<00:00, 72.74it/s][A
+Validation DataLoader 0:  32%|███▏      | 6/19 [00:00<00:00, 67.59it/s][A
+Validation DataLoader 0:  37%|███▋      | 7/19 [00:00<00:00, 64.34it/s][A
+Validation DataLoader 0:  42%|████▏     | 8/19 [00:00<00:00, 62.13it/s][A
+Validation DataLoader 0:  47%|████▋     | 9/19 [00:00<00:00, 60.50it/s][A
+Validation DataLoader 0:  53%|█████▎    | 10/19 [00:00<00:00, 59.25it/s][A
+Validation DataLoader 0:  58%|█████▊    | 11/19 [00:00<00:00, 58.30it/s][A
+Validation DataLoader 0:  63%|██████▎   | 12/19 [00:00<00:00, 57.52it/s][A
+Validation DataLoader 0:  68%|██████▊   | 13/19 [00:00<00:00, 56.94it/s][A
+Validation DataLoader 0:  74%|███████▎  | 14/19 [00:00<00:00, 56.47it/s][A
+Validation DataLoader 0:  79%|███████▉  | 15/19 [00:00<00:00, 56.05it/s][A
+Validation DataLoader 0:  84%|████████▍ | 16/19 [00:00<00:00, 55.66it/s][A
+Validation DataLoader 0:  89%|████████▉ | 17/19 [00:00<00:00, 55.31it/s][A
+Validation DataLoader 0:  95%|█████████▍| 18/19 [00:00<00:00, 54.99it/s][A
+Validation DataLoader 0: 100%|██████████| 19/19 [00:00<00:00, 55.39it/s][A
+                                                                        [AEpoch 5: 100%|██████████| 19/19 [00:00<00:00, 19.82it/s, v_num=qhxb]Epoch 5: 100%|██████████| 19/19 [00:00<00:00, 19.79it/s, v_num=qhxb]Epoch 5:   0%|          | 0/19 [00:00<?, ?it/s, v_num=qhxb]         Epoch 6:   0%|          | 0/19 [00:00<?, ?it/s, v_num=qhxb]Epoch 6:   5%|▌         | 1/19 [00:00<00:02,  8.17it/s, v_num=qhxb]Epoch 6:   5%|▌         | 1/19 [00:00<00:02,  8.04it/s, v_num=qhxb]Epoch 6:  11%|█         | 2/19 [00:00<00:01, 15.32it/s, v_num=qhxb]Epoch 6:  11%|█         | 2/19 [00:00<00:01, 15.27it/s, v_num=qhxb]Epoch 6:  16%|█▌        | 3/19 [00:00<00:00, 19.66it/s, v_num=qhxb]Epoch 6:  16%|█▌        | 3/19 [00:00<00:00, 19.58it/s, v_num=qhxb]Epoch 6:  21%|██        | 4/19 [00:00<00:00, 22.90it/s, v_num=qhxb]Epoch 6:  21%|██        | 4/19 [00:00<00:00, 22.81it/s, v_num=qhxb]Epoch 6:  26%|██▋       | 5/19 [00:00<00:00, 25.34it/s, v_num=qhxb]Epoch 6:  26%|██▋       | 5/19 [00:00<00:00, 25.27it/s, v_num=qhxb]Epoch 6:  32%|███▏      | 6/19 [00:00<00:00, 27.37it/s, v_num=qhxb]Epoch 6:  32%|███▏      | 6/19 [00:00<00:00, 27.29it/s, v_num=qhxb]Epoch 6:  37%|███▋      | 7/19 [00:00<00:00, 28.92it/s, v_num=qhxb]Epoch 6:  37%|███▋      | 7/19 [00:00<00:00, 28.85it/s, v_num=qhxb]Epoch 6:  42%|████▏     | 8/19 [00:00<00:00, 30.27it/s, v_num=qhxb]Epoch 6:  42%|████▏     | 8/19 [00:00<00:00, 30.20it/s, v_num=qhxb]Epoch 6:  47%|████▋     | 9/19 [00:00<00:00, 31.41it/s, v_num=qhxb]Epoch 6:  47%|████▋     | 9/19 [00:00<00:00, 31.34it/s, v_num=qhxb]Epoch 6:  53%|█████▎    | 10/19 [00:00<00:00, 32.40it/s, v_num=qhxb]Epoch 6:  53%|█████▎    | 10/19 [00:00<00:00, 32.34it/s, v_num=qhxb]Epoch 6:  58%|█████▊    | 11/19 [00:00<00:00, 33.31it/s, v_num=qhxb]Epoch 6:  58%|█████▊    | 11/19 [00:00<00:00, 33.25it/s, v_num=qhxb]Epoch 6:  63%|██████▎   | 12/19 [00:00<00:00, 33.98it/s, v_num=qhxb]Epoch 6:  63%|██████▎   | 12/19 [00:00<00:00, 33.92it/s, v_num=qhxb]Epoch 6:  68%|██████▊   | 13/19 [00:00<00:00, 34.63it/s, v_num=qhxb]Epoch 6:  68%|██████▊   | 13/19 [00:00<00:00, 34.57it/s, v_num=qhxb]Epoch 6:  74%|███████▎  | 14/19 [00:00<00:00, 35.19it/s, v_num=qhxb]Epoch 6:  74%|███████▎  | 14/19 [00:00<00:00, 35.14it/s, v_num=qhxb]Epoch 6:  79%|███████▉  | 15/19 [00:00<00:00, 35.72it/s, v_num=qhxb]Epoch 6:  79%|███████▉  | 15/19 [00:00<00:00, 35.67it/s, v_num=qhxb]Epoch 6:  84%|████████▍ | 16/19 [00:00<00:00, 36.21it/s, v_num=qhxb]Epoch 6:  84%|████████▍ | 16/19 [00:00<00:00, 36.16it/s, v_num=qhxb]Epoch 6:  89%|████████▉ | 17/19 [00:00<00:00, 36.41it/s, v_num=qhxb]Epoch 6:  89%|████████▉ | 17/19 [00:00<00:00, 36.35it/s, v_num=qhxb]Epoch 6:  95%|█████████▍| 18/19 [00:00<00:00, 36.76it/s, v_num=qhxb]Epoch 6:  95%|█████████▍| 18/19 [00:00<00:00, 36.72it/s, v_num=qhxb]Epoch 6: 100%|██████████| 19/19 [00:00<00:00, 37.46it/s, v_num=qhxb]Epoch 6: 100%|██████████| 19/19 [00:00<00:00, 37.41it/s, v_num=qhxb]
+Validation: |          | 0/? [00:00<?, ?it/s][A
+Validation: |          | 0/? [00:00<?, ?it/s][A
+Validation DataLoader 0:   0%|          | 0/19 [00:00<?, ?it/s][A
+Validation DataLoader 0:   5%|▌         | 1/19 [00:00<00:00, 226.54it/s][A
+Validation DataLoader 0:  11%|█         | 2/19 [00:00<00:00, 235.75it/s][A
+Validation DataLoader 0:  16%|█▌        | 3/19 [00:00<00:00, 103.91it/s][A
+Validation DataLoader 0:  21%|██        | 4/19 [00:00<00:00, 81.16it/s] [A
+Validation DataLoader 0:  26%|██▋       | 5/19 [00:00<00:00, 72.29it/s][A
+Validation DataLoader 0:  32%|███▏      | 6/19 [00:00<00:00, 66.58it/s][A
+Validation DataLoader 0:  37%|███▋      | 7/19 [00:00<00:00, 63.65it/s][A
+Validation DataLoader 0:  42%|████▏     | 8/19 [00:00<00:00, 61.47it/s][A
+Validation DataLoader 0:  47%|████▋     | 9/19 [00:00<00:00, 59.96it/s][A
+Validation DataLoader 0:  53%|█████▎    | 10/19 [00:00<00:00, 58.91it/s][A
+Validation DataLoader 0:  58%|█████▊    | 11/19 [00:00<00:00, 58.14it/s][A
+Validation DataLoader 0:  63%|██████▎   | 12/19 [00:00<00:00, 57.49it/s][A
+Validation DataLoader 0:  68%|██████▊   | 13/19 [00:00<00:00, 56.81it/s][A
+Validation DataLoader 0:  74%|███████▎  | 14/19 [00:00<00:00, 56.28it/s][A
+Validation DataLoader 0:  79%|███████▉  | 15/19 [00:00<00:00, 55.84it/s][A
+Validation DataLoader 0:  84%|████████▍ | 16/19 [00:00<00:00, 55.40it/s][A
+Validation DataLoader 0:  89%|████████▉ | 17/19 [00:00<00:00, 55.02it/s][A
+Validation DataLoader 0:  95%|█████████▍| 18/19 [00:00<00:00, 54.74it/s][A
+Validation DataLoader 0: 100%|██████████| 19/19 [00:00<00:00, 55.12it/s][A
+                                                                        [AEpoch 6: 100%|██████████| 19/19 [00:00<00:00, 19.60it/s, v_num=qhxb]Epoch 6: 100%|██████████| 19/19 [00:00<00:00, 19.58it/s, v_num=qhxb]Epoch 6:   0%|          | 0/19 [00:00<?, ?it/s, v_num=qhxb]         Epoch 7:   0%|          | 0/19 [00:00<?, ?it/s, v_num=qhxb]Epoch 7:   5%|▌         | 1/19 [00:00<00:02,  8.36it/s, v_num=qhxb]Epoch 7:   5%|▌         | 1/19 [00:00<00:02,  8.25it/s, v_num=qhxb]Epoch 7:  11%|█         | 2/19 [00:00<00:01, 15.78it/s, v_num=qhxb]Epoch 7:  11%|█         | 2/19 [00:00<00:01, 15.72it/s, v_num=qhxb]Epoch 7:  16%|█▌        | 3/19 [00:00<00:00, 20.06it/s, v_num=qhxb]Epoch 7:  16%|█▌        | 3/19 [00:00<00:00, 19.97it/s, v_num=qhxb]Epoch 7:  21%|██        | 4/19 [00:00<00:00, 23.29it/s, v_num=qhxb]Epoch 7:  21%|██        | 4/19 [00:00<00:00, 23.19it/s, v_num=qhxb]Epoch 7:  26%|██▋       | 5/19 [00:00<00:00, 25.72it/s, v_num=qhxb]Epoch 7:  26%|██▋       | 5/19 [00:00<00:00, 25.65it/s, v_num=qhxb]Epoch 7:  32%|███▏      | 6/19 [00:00<00:00, 27.73it/s, v_num=qhxb]Epoch 7:  32%|███▏      | 6/19 [00:00<00:00, 27.65it/s, v_num=qhxb]Epoch 7:  37%|███▋      | 7/19 [00:00<00:00, 29.35it/s, v_num=qhxb]Epoch 7:  37%|███▋      | 7/19 [00:00<00:00, 29.28it/s, v_num=qhxb]Epoch 7:  42%|████▏     | 8/19 [00:00<00:00, 30.69it/s, v_num=qhxb]Epoch 7:  42%|████▏     | 8/19 [00:00<00:00, 30.61it/s, v_num=qhxb]Epoch 7:  47%|████▋     | 9/19 [00:00<00:00, 31.84it/s, v_num=qhxb]Epoch 7:  47%|████▋     | 9/19 [00:00<00:00, 31.76it/s, v_num=qhxb]Epoch 7:  53%|█████▎    | 10/19 [00:00<00:00, 32.82it/s, v_num=qhxb]Epoch 7:  53%|█████▎    | 10/19 [00:00<00:00, 32.76it/s, v_num=qhxb]Epoch 7:  58%|█████▊    | 11/19 [00:00<00:00, 33.71it/s, v_num=qhxb]Epoch 7:  58%|█████▊    | 11/19 [00:00<00:00, 33.65it/s, v_num=qhxb]Epoch 7:  63%|██████▎   | 12/19 [00:00<00:00, 34.50it/s, v_num=qhxb]Epoch 7:  63%|██████▎   | 12/19 [00:00<00:00, 34.44it/s, v_num=qhxb]Epoch 7:  68%|██████▊   | 13/19 [00:00<00:00, 35.14it/s, v_num=qhxb]Epoch 7:  68%|██████▊   | 13/19 [00:00<00:00, 35.09it/s, v_num=qhxb]Epoch 7:  74%|███████▎  | 14/19 [00:00<00:00, 35.75it/s, v_num=qhxb]Epoch 7:  74%|███████▎  | 14/19 [00:00<00:00, 35.69it/s, v_num=qhxb]Epoch 7:  79%|███████▉  | 15/19 [00:00<00:00, 36.31it/s, v_num=qhxb]Epoch 7:  79%|███████▉  | 15/19 [00:00<00:00, 36.25it/s, v_num=qhxb]Epoch 7:  84%|████████▍ | 16/19 [00:00<00:00, 36.74it/s, v_num=qhxb]Epoch 7:  84%|████████▍ | 16/19 [00:00<00:00, 36.69it/s, v_num=qhxb]Epoch 7:  89%|████████▉ | 17/19 [00:00<00:00, 37.01it/s, v_num=qhxb]Epoch 7:  89%|████████▉ | 17/19 [00:00<00:00, 36.96it/s, v_num=qhxb]Epoch 7:  95%|█████████▍| 18/19 [00:00<00:00, 37.38it/s, v_num=qhxb]Epoch 7:  95%|█████████▍| 18/19 [00:00<00:00, 37.33it/s, v_num=qhxb]Epoch 7: 100%|██████████| 19/19 [00:00<00:00, 38.08it/s, v_num=qhxb]Epoch 7: 100%|██████████| 19/19 [00:00<00:00, 38.03it/s, v_num=qhxb]
+Validation: |          | 0/? [00:00<?, ?it/s][A
+Validation: |          | 0/? [00:00<?, ?it/s][A
+Validation DataLoader 0:   0%|          | 0/19 [00:00<?, ?it/s][A
+Validation DataLoader 0:   5%|▌         | 1/19 [00:00<00:00, 233.03it/s][A
+Validation DataLoader 0:  11%|█         | 2/19 [00:00<00:00, 137.45it/s][A
+Validation DataLoader 0:  16%|█▌        | 3/19 [00:00<00:00, 105.51it/s][A
+Validation DataLoader 0:  21%|██        | 4/19 [00:00<00:00, 83.52it/s] [A
+Validation DataLoader 0:  26%|██▋       | 5/19 [00:00<00:00, 73.99it/s][A
+Validation DataLoader 0:  32%|███▏      | 6/19 [00:00<00:00, 68.84it/s][A
+Validation DataLoader 0:  37%|███▋      | 7/19 [00:00<00:00, 65.64it/s][A
+Validation DataLoader 0:  42%|████▏     | 8/19 [00:00<00:00, 63.35it/s][A
+Validation DataLoader 0:  47%|████▋     | 9/19 [00:00<00:00, 61.77it/s][A
+Validation DataLoader 0:  53%|█████▎    | 10/19 [00:00<00:00, 60.47it/s][A
+Validation DataLoader 0:  58%|█████▊    | 11/19 [00:00<00:00, 59.49it/s][A
+Validation DataLoader 0:  63%|██████▎   | 12/19 [00:00<00:00, 58.73it/s][A
+Validation DataLoader 0:  68%|██████▊   | 13/19 [00:00<00:00, 58.08it/s][A
+Validation DataLoader 0:  74%|███████▎  | 14/19 [00:00<00:00, 57.49it/s][A
+Validation DataLoader 0:  79%|███████▉  | 15/19 [00:00<00:00, 56.98it/s][A
+Validation DataLoader 0:  84%|████████▍ | 16/19 [00:00<00:00, 56.57it/s][A
+Validation DataLoader 0:  89%|████████▉ | 17/19 [00:00<00:00, 56.19it/s][A
+Validation DataLoader 0:  95%|█████████▍| 18/19 [00:00<00:00, 55.89it/s][A
+Validation DataLoader 0: 100%|██████████| 19/19 [00:00<00:00, 56.31it/s][A
+                                                                        [AEpoch 7: 100%|██████████| 19/19 [00:00<00:00, 19.89it/s, v_num=qhxb]Epoch 7: 100%|██████████| 19/19 [00:00<00:00, 19.87it/s, v_num=qhxb]Epoch 7:   0%|          | 0/19 [00:00<?, ?it/s, v_num=qhxb]         Epoch 8:   0%|          | 0/19 [00:00<?, ?it/s, v_num=qhxb]Epoch 8:   5%|▌         | 1/19 [00:00<00:02,  8.55it/s, v_num=qhxb]Epoch 8:   5%|▌         | 1/19 [00:00<00:02,  8.43it/s, v_num=qhxb]Epoch 8:  11%|█         | 2/19 [00:00<00:01, 16.15it/s, v_num=qhxb]Epoch 8:  11%|█         | 2/19 [00:00<00:01, 16.10it/s, v_num=qhxb]Epoch 8:  16%|█▌        | 3/19 [00:00<00:00, 20.60it/s, v_num=qhxb]Epoch 8:  16%|█▌        | 3/19 [00:00<00:00, 20.51it/s, v_num=qhxb]Epoch 8:  21%|██        | 4/19 [00:00<00:00, 23.80it/s, v_num=qhxb]Epoch 8:  21%|██        | 4/19 [00:00<00:00, 23.70it/s, v_num=qhxb]Epoch 8:  26%|██▋       | 5/19 [00:00<00:00, 26.30it/s, v_num=qhxb]Epoch 8:  26%|██▋       | 5/19 [00:00<00:00, 26.22it/s, v_num=qhxb]Epoch 8:  32%|███▏      | 6/19 [00:00<00:00, 28.34it/s, v_num=qhxb]Epoch 8:  32%|███▏      | 6/19 [00:00<00:00, 28.26it/s, v_num=qhxb]Epoch 8:  37%|███▋      | 7/19 [00:00<00:00, 29.98it/s, v_num=qhxb]Epoch 8:  37%|███▋      | 7/19 [00:00<00:00, 29.91it/s, v_num=qhxb]Epoch 8:  42%|████▏     | 8/19 [00:00<00:00, 31.36it/s, v_num=qhxb]Epoch 8:  42%|████▏     | 8/19 [00:00<00:00, 31.28it/s, v_num=qhxb]Epoch 8:  47%|████▋     | 9/19 [00:00<00:00, 32.47it/s, v_num=qhxb]Epoch 8:  47%|████▋     | 9/19 [00:00<00:00, 32.40it/s, v_num=qhxb]Epoch 8:  53%|█████▎    | 10/19 [00:00<00:00, 33.49it/s, v_num=qhxb]Epoch 8:  53%|█████▎    | 10/19 [00:00<00:00, 33.41it/s, v_num=qhxb]Epoch 8:  58%|█████▊    | 11/19 [00:00<00:00, 34.32it/s, v_num=qhxb]Epoch 8:  58%|█████▊    | 11/19 [00:00<00:00, 34.25it/s, v_num=qhxb]Epoch 8:  63%|██████▎   | 12/19 [00:00<00:00, 35.00it/s, v_num=qhxb]Epoch 8:  63%|██████▎   | 12/19 [00:00<00:00, 34.94it/s, v_num=qhxb]Epoch 8:  68%|██████▊   | 13/19 [00:00<00:00, 35.66it/s, v_num=qhxb]Epoch 8:  68%|██████▊   | 13/19 [00:00<00:00, 35.60it/s, v_num=qhxb]Epoch 8:  74%|███████▎  | 14/19 [00:00<00:00, 36.19it/s, v_num=qhxb]Epoch 8:  74%|███████▎  | 14/19 [00:00<00:00, 36.13it/s, v_num=qhxb]Epoch 8:  79%|███████▉  | 15/19 [00:00<00:00, 36.71it/s, v_num=qhxb]Epoch 8:  79%|███████▉  | 15/19 [00:00<00:00, 36.65it/s, v_num=qhxb]Epoch 8:  84%|████████▍ | 16/19 [00:00<00:00, 37.16it/s, v_num=qhxb]Epoch 8:  84%|████████▍ | 16/19 [00:00<00:00, 37.11it/s, v_num=qhxb]Epoch 8:  89%|████████▉ | 17/19 [00:00<00:00, 37.43it/s, v_num=qhxb]Epoch 8:  89%|████████▉ | 17/19 [00:00<00:00, 37.38it/s, v_num=qhxb]Epoch 8:  95%|█████████▍| 18/19 [00:00<00:00, 37.84it/s, v_num=qhxb]Epoch 8:  95%|█████████▍| 18/19 [00:00<00:00, 37.80it/s, v_num=qhxb]Epoch 8: 100%|██████████| 19/19 [00:00<00:00, 38.48it/s, v_num=qhxb]Epoch 8: 100%|██████████| 19/19 [00:00<00:00, 38.44it/s, v_num=qhxb]
+Validation: |          | 0/? [00:00<?, ?it/s][A
+Validation: |          | 0/? [00:00<?, ?it/s][A
+Validation DataLoader 0:   0%|          | 0/19 [00:00<?, ?it/s][A
+Validation DataLoader 0:   5%|▌         | 1/19 [00:00<00:00, 231.82it/s][A
+Validation DataLoader 0:  11%|█         | 2/19 [00:00<00:00, 201.27it/s][A
+Validation DataLoader 0:  16%|█▌        | 3/19 [00:00<00:00, 101.20it/s][A
+Validation DataLoader 0:  21%|██        | 4/19 [00:00<00:00, 81.41it/s] [A
+Validation DataLoader 0:  26%|██▋       | 5/19 [00:00<00:00, 72.97it/s][A
+Validation DataLoader 0:  32%|███▏      | 6/19 [00:00<00:00, 67.79it/s][A
+Validation DataLoader 0:  37%|███▋      | 7/19 [00:00<00:00, 64.75it/s][A
+Validation DataLoader 0:  42%|████▏     | 8/19 [00:00<00:00, 62.63it/s][A
+Validation DataLoader 0:  47%|████▋     | 9/19 [00:00<00:00, 61.12it/s][A
+Validation DataLoader 0:  53%|█████▎    | 10/19 [00:00<00:00, 58.18it/s][A
+Validation DataLoader 0:  58%|█████▊    | 11/19 [00:00<00:00, 57.50it/s][A
+Validation DataLoader 0:  63%|██████▎   | 12/19 [00:00<00:00, 56.92it/s][A
+Validation DataLoader 0:  68%|██████▊   | 13/19 [00:00<00:00, 56.41it/s][A
+Validation DataLoader 0:  74%|███████▎  | 14/19 [00:00<00:00, 55.94it/s][A
+Validation DataLoader 0:  79%|███████▉  | 15/19 [00:00<00:00, 55.61it/s][A
+Validation DataLoader 0:  84%|████████▍ | 16/19 [00:00<00:00, 55.31it/s][A
+Validation DataLoader 0:  89%|████████▉ | 17/19 [00:00<00:00, 55.04it/s][A
+Validation DataLoader 0:  95%|█████████▍| 18/19 [00:00<00:00, 54.83it/s][A
+Validation DataLoader 0: 100%|██████████| 19/19 [00:00<00:00, 55.24it/s][A
+                                                                        [AEpoch 8: 100%|██████████| 19/19 [00:00<00:00, 19.93it/s, v_num=qhxb]Epoch 8: 100%|██████████| 19/19 [00:00<00:00, 19.91it/s, v_num=qhxb]Epoch 8:   0%|          | 0/19 [00:00<?, ?it/s, v_num=qhxb]         Epoch 9:   0%|          | 0/19 [00:00<?, ?it/s, v_num=qhxb]Epoch 9:   5%|▌         | 1/19 [00:00<00:02,  7.78it/s, v_num=qhxb]Epoch 9:   5%|▌         | 1/19 [00:00<00:02,  7.68it/s, v_num=qhxb]Epoch 9:  11%|█         | 2/19 [00:00<00:01, 14.47it/s, v_num=qhxb]Epoch 9:  11%|█         | 2/19 [00:00<00:01, 14.42it/s, v_num=qhxb]Epoch 9:  16%|█▌        | 3/19 [00:00<00:00, 20.43it/s, v_num=qhxb]Epoch 9:  16%|█▌        | 3/19 [00:00<00:00, 20.37it/s, v_num=qhxb]Epoch 9:  21%|██        | 4/19 [00:00<00:00, 23.74it/s, v_num=qhxb]Epoch 9:  21%|██        | 4/19 [00:00<00:00, 23.65it/s, v_num=qhxb]Epoch 9:  26%|██▋       | 5/19 [00:00<00:00, 26.18it/s, v_num=qhxb]Epoch 9:  26%|██▋       | 5/19 [00:00<00:00, 26.09it/s, v_num=qhxb]Epoch 9:  32%|███▏      | 6/19 [00:00<00:00, 28.18it/s, v_num=qhxb]Epoch 9:  32%|███▏      | 6/19 [00:00<00:00, 28.10it/s, v_num=qhxb]Epoch 9:  37%|███▋      | 7/19 [00:00<00:00, 29.86it/s, v_num=qhxb]Epoch 9:  37%|███▋      | 7/19 [00:00<00:00, 29.78it/s, v_num=qhxb]Epoch 9:  42%|████▏     | 8/19 [00:00<00:00, 31.24it/s, v_num=qhxb]Epoch 9:  42%|████▏     | 8/19 [00:00<00:00, 31.17it/s, v_num=qhxb]Epoch 9:  47%|████▋     | 9/19 [00:00<00:00, 32.38it/s, v_num=qhxb]Epoch 9:  47%|████▋     | 9/19 [00:00<00:00, 32.31it/s, v_num=qhxb]Epoch 9:  53%|█████▎    | 10/19 [00:00<00:00, 33.31it/s, v_num=qhxb]Epoch 9:  53%|█████▎    | 10/19 [00:00<00:00, 33.24it/s, v_num=qhxb]Epoch 9:  58%|█████▊    | 11/19 [00:00<00:00, 34.19it/s, v_num=qhxb]Epoch 9:  58%|█████▊    | 11/19 [00:00<00:00, 34.11it/s, v_num=qhxb]Epoch 9:  63%|██████▎   | 12/19 [00:00<00:00, 34.92it/s, v_num=qhxb]Epoch 9:  63%|██████▎   | 12/19 [00:00<00:00, 34.86it/s, v_num=qhxb]Epoch 9:  68%|██████▊   | 13/19 [00:00<00:00, 35.61it/s, v_num=qhxb]Epoch 9:  68%|██████▊   | 13/19 [00:00<00:00, 35.56it/s, v_num=qhxb]Epoch 9:  74%|███████▎  | 14/19 [00:00<00:00, 36.21it/s, v_num=qhxb]Epoch 9:  74%|███████▎  | 14/19 [00:00<00:00, 36.15it/s, v_num=qhxb]Epoch 9:  79%|███████▉  | 15/19 [00:00<00:00, 36.71it/s, v_num=qhxb]Epoch 9:  79%|███████▉  | 15/19 [00:00<00:00, 36.65it/s, v_num=qhxb]Epoch 9:  84%|████████▍ | 16/19 [00:00<00:00, 37.09it/s, v_num=qhxb]Epoch 9:  84%|████████▍ | 16/19 [00:00<00:00, 37.04it/s, v_num=qhxb]Epoch 9:  89%|████████▉ | 17/19 [00:00<00:00, 37.35it/s, v_num=qhxb]Epoch 9:  89%|████████▉ | 17/19 [00:00<00:00, 37.29it/s, v_num=qhxb]Epoch 9:  95%|█████████▍| 18/19 [00:00<00:00, 37.71it/s, v_num=qhxb]Epoch 9:  95%|█████████▍| 18/19 [00:00<00:00, 37.66it/s, v_num=qhxb]Epoch 9: 100%|██████████| 19/19 [00:00<00:00, 38.41it/s, v_num=qhxb]Epoch 9: 100%|██████████| 19/19 [00:00<00:00, 38.37it/s, v_num=qhxb]
+Validation: |          | 0/? [00:00<?, ?it/s][A
+Validation: |          | 0/? [00:00<?, ?it/s][A
+Validation DataLoader 0:   0%|          | 0/19 [00:00<?, ?it/s][A
+Validation DataLoader 0:   5%|▌         | 1/19 [00:00<00:00, 233.29it/s][A
+Validation DataLoader 0:  11%|█         | 2/19 [00:00<00:00, 239.65it/s][A
+Validation DataLoader 0:  16%|█▌        | 3/19 [00:00<00:00, 106.34it/s][A
+Validation DataLoader 0:  21%|██        | 4/19 [00:00<00:00, 83.71it/s] [A
+Validation DataLoader 0:  26%|██▋       | 5/19 [00:00<00:00, 74.12it/s][A
+Validation DataLoader 0:  32%|███▏      | 6/19 [00:00<00:00, 68.92it/s][A
+Validation DataLoader 0:  37%|███▋      | 7/19 [00:00<00:00, 65.68it/s][A
+Validation DataLoader 0:  42%|████▏     | 8/19 [00:00<00:00, 63.43it/s][A
+Validation DataLoader 0:  47%|████▋     | 9/19 [00:00<00:00, 61.81it/s][A
+Validation DataLoader 0:  53%|█████▎    | 10/19 [00:00<00:00, 60.56it/s][A
+Validation DataLoader 0:  58%|█████▊    | 11/19 [00:00<00:00, 59.51it/s][A
+Validation DataLoader 0:  63%|██████▎   | 12/19 [00:00<00:00, 58.66it/s][A
+Validation DataLoader 0:  68%|██████▊   | 13/19 [00:00<00:00, 58.03it/s][A
+Validation DataLoader 0:  74%|███████▎  | 14/19 [00:00<00:00, 57.50it/s][A
+Validation DataLoader 0:  79%|███████▉  | 15/19 [00:00<00:00, 57.03it/s][A
+Validation DataLoader 0:  84%|████████▍ | 16/19 [00:00<00:00, 56.58it/s][A
+Validation DataLoader 0:  89%|████████▉ | 17/19 [00:00<00:00, 56.20it/s][A
+Validation DataLoader 0:  95%|█████████▍| 18/19 [00:00<00:00, 55.95it/s][A
+Validation DataLoader 0: 100%|██████████| 19/19 [00:00<00:00, 56.22it/s][A
+                                                                        [AEpoch 9: 100%|██████████| 19/19 [00:00<00:00, 20.02it/s, v_num=qhxb]Epoch 9: 100%|██████████| 19/19 [00:00<00:00, 19.99it/s, v_num=qhxb]Epoch 9: 100%|██████████| 19/19 [00:00<00:00, 19.96it/s, v_num=qhxb]
+Testing: |          | 0/? [00:00<?, ?it/s]Testing: |          | 0/? [00:00<?, ?it/s]Testing DataLoader 0:   0%|          | 0/19 [00:00<?, ?it/s]Testing DataLoader 0:   5%|▌         | 1/19 [00:00<00:00, 91.92it/s]Testing DataLoader 0:  11%|█         | 2/19 [00:00<00:00, 93.94it/s]Testing DataLoader 0:  16%|█▌        | 3/19 [00:00<00:00, 113.94it/s]Testing DataLoader 0:  21%|██        | 4/19 [00:00<00:00, 90.93it/s] Testing DataLoader 0:  26%|██▋       | 5/19 [00:00<00:00, 79.99it/s]Testing DataLoader 0:  32%|███▏      | 6/19 [00:00<00:00, 74.53it/s]Testing DataLoader 0:  37%|███▋      | 7/19 [00:00<00:00, 70.95it/s]Testing DataLoader 0:  42%|████▏     | 8/19 [00:00<00:00, 68.64it/s]Testing DataLoader 0:  47%|████▋     | 9/19 [00:00<00:00, 66.95it/s]Testing DataLoader 0:  53%|█████▎    | 10/19 [00:00<00:00, 65.68it/s]Testing DataLoader 0:  58%|█████▊    | 11/19 [00:00<00:00, 64.68it/s]Testing DataLoader 0:  63%|██████▎   | 12/19 [00:00<00:00, 63.80it/s]Testing DataLoader 0:  68%|██████▊   | 13/19 [00:00<00:00, 63.08it/s]Testing DataLoader 0:  74%|███████▎  | 14/19 [00:00<00:00, 62.43it/s]Testing DataLoader 0:  79%|███████▉  | 15/19 [00:00<00:00, 61.87it/s]Testing DataLoader 0:  84%|████████▍ | 16/19 [00:00<00:00, 61.34it/s]Testing DataLoader 0:  89%|████████▉ | 17/19 [00:00<00:00, 60.91it/s]Testing DataLoader 0:  95%|█████████▍| 18/19 [00:00<00:00, 60.52it/s]Testing DataLoader 0: 100%|██████████| 19/19 [00:00<00:00, 60.92it/s]Testing DataLoader 0: 100%|██████████| 19/19 [00:00<00:00, 60.56it/s]
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+       Test metric             DataLoader 0
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+        test/loss          0.015460397116839886
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[2025-10-22 16:10:48,494][root][INFO] - Testing complete: [{'test/loss': 0.015460397116839886}]
+[2025-10-22 16:10:48,528][root][INFO] - Model saved at: mlp_2025-10-22-16-09-51.ckpt
+submitit INFO (2025-10-22 16:10:49,366) - Job completed successfully
+[2025-10-22 16:10:49,366][submitit][INFO] - Job completed successfully
+submitit INFO (2025-10-22 16:10:49,379) - Exiting after successful completion
+[2025-10-22 16:10:49,379][submitit][INFO] - Exiting after successful completion

@@ -1,0 +1,1 @@
+/home/users/bradlesc/projects/ClimSim/test/unit_test_sets/trained_model_log/2025-10-22-16-09-51/.submitit/47645526/47645526_submission.sh

@@ -1,0 +1,18 @@
+/home/users/bradlesc/projects/ClimSim/.venv/lib/python3.12/site-packages/submitit/core/plugins.py:24: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+/home/users/bradlesc/projects/ClimSim/.venv/lib/python3.12/site-packages/pydantic/_internal/_generate_schema.py:2249: UnsupportedFieldAttributeWarning: The 'repr' attribute with value False was provided to the `Field()` function, which has no effect in the context it was used. 'repr' is field-specific metadata, and can only be attached to a model field using `Annotated` metadata or by assignment. This may have happened because an `Annotated` type alias using the `type` statement was used, or if the `Field()` function was attached to a single member of a union type.
+  warnings.warn(
+/home/users/bradlesc/projects/ClimSim/.venv/lib/python3.12/site-packages/pydantic/_internal/_generate_schema.py:2249: UnsupportedFieldAttributeWarning: The 'frozen' attribute with value True was provided to the `Field()` function, which has no effect in the context it was used. 'frozen' is field-specific metadata, and can only be attached to a model field using `Annotated` metadata or by assignment. This may have happened because an `Annotated` type alias using the `type` statement was used, or if the `Field()` function was attached to a single member of a union type.
+  warnings.warn(
+  0%|          | 0/2 [00:00<?, ?it/s] 50%|█████     | 1/2 [00:00<00:00,  8.49it/s]100%|██████████| 2/2 [00:00<00:00, 12.88it/s]
+  0%|          | 0/2 [00:00<?, ?it/s] 50%|█████     | 1/2 [00:00<00:00,  5.33it/s]100%|██████████| 2/2 [00:00<00:00,  6.62it/s]
+/home/users/bradlesc/projects/ClimSim/climsim_utils/data_utils.py:1481: RuntimeWarning: divide by zero encountered in divide
+  r_squared = 1 - sq_diff.sum(axis = 0)/tss_time.sum(axis = 0) # sum over time
+/home/users/bradlesc/projects/ClimSim/climsim_utils/data_utils.py:1481: RuntimeWarning: divide by zero encountered in divide
+  r_squared = 1 - sq_diff.sum(axis = 0)/tss_time.sum(axis = 0) # sum over time
+/home/users/bradlesc/projects/ClimSim/climsim_utils/data_utils.py:1481: RuntimeWarning: invalid value encountered in divide
+  r_squared = 1 - sq_diff.sum(axis = 0)/tss_time.sum(axis = 0) # sum over time
+/home/users/bradlesc/projects/ClimSim/.venv/lib/python3.12/site-packages/matplotlib/transforms.py:2437: RuntimeWarning: invalid value encountered in dot
+  return Affine2D(np.dot(self._b.get_affine().get_matrix(),
+/home/users/bradlesc/projects/ClimSim/.venv/lib/python3.12/site-packages/matplotlib/transforms.py:2437: RuntimeWarning: invalid value encountered in dot
+  return Affine2D(np.dot(self._b.get_affine().get_matrix(),

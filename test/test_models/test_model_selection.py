@@ -104,7 +104,7 @@ def test_select_optimizer():
         models.select_optimizer("InvalidOptimizer")
     assert "Optimizer InvalidOptimizer not recognized." in str(excinfo.value)
 
-def test_load_model_from_checkpoint(mlp_checkpoint_path: str = "saved_models_for_testing/test_mlp_checkpoint.ckpt"):
+def test_load_model_from_checkpoint(mlp_checkpoint_path: str = "../unit_test_sets/trained_model_log/mlp/test_mlp_checkpoint.ckpt"):
     model_name = "mlp"
     model_params = DictConfig({
         "lr": 0.001,

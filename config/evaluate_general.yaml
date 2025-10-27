@@ -4,14 +4,17 @@ defaults:
   - _self_
   - project: config
   - wandb/wkey: wkey
-  - model: yus_mlp
+  # - model: yus_mlp
   - dataset: sub_sampled_low_res
   - dataset/general_dataset_config: general_dataset_config
   - hydra: default
   - testing: qt
   - override hydra/launcher: slurm
 
-multirun_dir_name: ${model.name}
+multirun_dir_name: evaluation_comp_general
 
-run_cfg_file_path: /home/users/bradlesc/projects/ClimSim/logs/p2.1.1/4/yus_mlp_18_epoch_sucess_v1/yus_mlp/run_config.yaml
-checkpoint_path: /home/users/bradlesc/projects/ClimSim/logs/p2.1.1/4/yus_mlp_18_epoch_sucess_v1/yus_mlp/yus_mlp_2025-10-20-15-50-02.ckpt
+models_to_evaluate:
+  mlp: "/home/users/bradlesc/projects/ClimSim/logs/p2.1.1/5/base_mlp_10_epoch_sucess_v1"
+  yus_mlp: "/home/users/bradlesc/projects/ClimSim/logs/p2.1.1/4/yus_mlp_18_epoch_sucess_v1/"
+
+saved_evaluation_results_path: "/home/users/bradlesc/projects/ClimSim/logs/p2.1.1/5/full_eval_metrics_for_base_mlp_and_yus_mlp_2025-10-23-10-25-21/evaluation_comp_general/evaluation_results.json"

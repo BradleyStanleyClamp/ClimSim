@@ -1,0 +1,55 @@
+/home/users/bradlesc/projects/ClimSim/.venv/lib/python3.12/site-packages/submitit/core/plugins.py:24: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+/home/users/bradlesc/projects/ClimSim/.venv/lib/python3.12/site-packages/pydantic/_internal/_generate_schema.py:2249: UnsupportedFieldAttributeWarning: The 'repr' attribute with value False was provided to the `Field()` function, which has no effect in the context it was used. 'repr' is field-specific metadata, and can only be attached to a model field using `Annotated` metadata or by assignment. This may have happened because an `Annotated` type alias using the `type` statement was used, or if the `Field()` function was attached to a single member of a union type.
+  warnings.warn(
+/home/users/bradlesc/projects/ClimSim/.venv/lib/python3.12/site-packages/pydantic/_internal/_generate_schema.py:2249: UnsupportedFieldAttributeWarning: The 'frozen' attribute with value True was provided to the `Field()` function, which has no effect in the context it was used. 'frozen' is field-specific metadata, and can only be attached to a model field using `Annotated` metadata or by assignment. This may have happened because an `Annotated` type alias using the `type` statement was used, or if the `Field()` function was attached to a single member of a union type.
+  warnings.warn(
+wandb: Appending key for api.wandb.ai to your netrc file: /home/users/bradlesc/.netrc
+wandb: Currently logged in as: bradley-stanley-clamp (bradley-stanley-clamp-university-of-oxford) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: setting up run rl67qhxb
+wandb: Tracking run with wandb version 0.22.2
+wandb: Run data is saved locally in /home/users/bradlesc/projects/ClimSim/logs/p2.1.1/5/testing/dress_rehearsal/2025-10-22-16-09-51/mlp/wandb/run-20251022_161036-rl67qhxb
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run implementing_base_mlp_2025-10-22-16-09-51
+wandb: ⭐️ View project at https://wandb.ai/bradley-stanley-clamp-university-of-oxford/p2.1.1_5
+wandb: 🚀 View run at https://wandb.ai/bradley-stanley-clamp-university-of-oxford/p2.1.1_5/runs/rl67qhxb
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+HPU available: False, using: 0 HPUs
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name  | Type    | Params | Mode 
+------------------------------------------
+0 | model | MLP     | 228 K  | train
+1 | loss  | MSELoss | 0      | train
+------------------------------------------
+228 K     Trainable params
+0         Non-trainable params
+228 K     Total params
+0.913     Total estimated model params size (MB)
+6         Modules in train mode
+0         Modules in eval mode
+SLURM auto-requeueing enabled. Setting signal handlers.
+`Trainer.fit` stopped: `max_epochs=10` reached.
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+SLURM auto-requeueing enabled. Setting signal handlers.
+wandb: updating run metadata
+wandb: 
+wandb: Run history:
+wandb:               epoch ▁▁▁▁▂▂▂▂▂▂▂▃▃▃▃▄▄▄▄▄▅▅▅▅▅▅▅▆▆▆▆▇▇▇▇▇▇▇▇█
+wandb:           test/loss ▁
+wandb:          train/loss █▅▄▃▃▂▂▂▂▁▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb: trainer/global_step ▁▁▁▂▂▂▂▂▂▃▃▃▃▃▃▄▄▄▄▄▅▅▅▅▅▆▆▆▆▆▆▇▇▇▇▇▇███
+wandb:            val/loss █▃▂▁▁▁▁▁▁▂
+wandb: 
+wandb: Run summary:
+wandb:               epoch 10
+wandb:           test/loss 0.01546
+wandb:          train/loss 0.00501
+wandb: trainer/global_step 190
+wandb:            val/loss 0.01553
+wandb: 
+wandb: 🚀 View run implementing_base_mlp_2025-10-22-16-09-51 at: https://wandb.ai/bradley-stanley-clamp-university-of-oxford/p2.1.1_5/runs/rl67qhxb
+wandb: ⭐️ View project at: https://wandb.ai/bradley-stanley-clamp-university-of-oxford/p2.1.1_5
+wandb: Synced 5 W&B file(s), 0 media file(s), 0 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20251022_161036-rl67qhxb/logs

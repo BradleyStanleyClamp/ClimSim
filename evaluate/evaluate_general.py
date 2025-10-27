@@ -24,6 +24,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 import json
 from pathlib import Path
+from evaluate.evaluate_utils import run_single_model_from_log_results, save_evaluation_results_to_json
 
 
 @hydra.main(version_base=None, config_path="../config", config_name="evaluate_general")
@@ -34,51 +35,41 @@ def main(cfg: DictConfig):
 
     torch.set_float32_matmul_precision("medium")
 
+
+    logging.info("Loading dataset for evaluation")
     # Load dataset
     testset = data_preparation.get_dataset(
         cfg.dataset, "test", cfg.testing.dataset_testing_type
     )
 
-    # Get config containing model and run parameters
-    with open(cfg.run_cfg_file_path, "r") as f:
-        run_config_dict = yaml.safe_load(f)
-    run_config = DictConfig(run_config_dict)
 
-    # Load model from checkpoint
-    model = models.load_model_from_checkpoint(
-        checkpoint_path=cfg.checkpoint_path,
-        model_name=cfg.model.name,
-        model_params=run_config,
-        data_params=cfg.dataset,
-    )
 
     testset.data_class.set_pressure_grid(data_split="scoring")
     testloader = torch.utils.data.DataLoader(
         testset,
-        batch_size=run_config.batch_size,
+        batch_size=2048,
         shuffle=False,
         num_workers=cfg.dataset.general_dataset_config.num_workers,
     )
 
-    model.eval()
-    model.freeze()
-    outputs_list = []
-    for batch in tqdm(testloader):
-        input, _ = batch
-        outputs = model(input)
-        outputs_list.append(outputs)
-    
-    outputs_all = torch.cat(outputs_list, dim=0)
+    logging.info("Starting evaluation of models")
+    preds = []
+    model_names = []
+    for model_name, training_log_path in cfg.models_to_evaluate.items():
+        outputs_all = run_single_model_from_log_results(model_name, training_log_path, cfg.dataset, testloader)
 
+        preds.append(outputs_all)
+        model_names.append(model_name)
+        logging.info(f"Completed evaluation for model: {model_name}")
 
-    testset.data_class.model_names = [cfg.model.name]
-    preds = [outputs_all.cpu().numpy()]
+    testset.data_class.model_names = model_names
     testset.data_class.preds_scoring = dict(zip(testset.data_class.model_names, preds))
 
+    logging.info("Calculating metrics and generating plots")
 
     testset.data_class.reweight_target(data_split="scoring")
     testset.data_class.reweight_preds(data_split="scoring")
-    testset.data_class.metrics_names = ['MAE', 'RMSE', 'bias']
+    testset.data_class.metrics_names = ['MAE', 'RMSE', 'R2', 'bias']
     testset.data_class.create_metrics_df(data_split="scoring")
 
     letters = string.ascii_lowercase
@@ -91,10 +82,8 @@ def main(cfg: DictConfig):
                                                 index=testset.data_class.model_names)
         plot_df_byvar[metric] = plot_df_byvar[metric].rename(columns = testset.data_class.var_short_names).transpose()
 
+    save_evaluation_results_to_json(dict_var, 'evaluation_results.json')
 
-    # create pandas DataFrame from metrics dict for 'yus_mlp' and save it as CSV
-    # yus_mlp_evaluation_results = pd.DataFrame(dict_var['yus_mlp']).transpose().rename(columns=testset.data_class.var_short_names)
-    dict_var['yus_mlp'].to_csv("yus_mlp_evaluation_results.csv", index=True)
 
     # plot figure
     fig, axes = plt.subplots(nrows  = len(testset.data_class.metrics_names), sharex = True)
