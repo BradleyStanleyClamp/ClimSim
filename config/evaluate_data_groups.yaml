@@ -1,0 +1,13 @@
+
+defaults:
+  - _self_
+  - project: config
+  - wandb/wkey: wkey
+  - dataset: sub_sampled_low_res
+  - dataset/general_dataset_config: general_dataset_config
+  - hydra: default
+  - testing: qt
+  - override hydra/launcher: slurm
+
+multirun_dir_name: eval_data_groups
+

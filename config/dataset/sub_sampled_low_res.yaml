@@ -5,11 +5,15 @@ precomputed_quick_data_path: 'test/unit_test_sets/sub_sampled_low_res/'
 
 input_dim: 124
 output_dim: 128
-
+num_spatial_points: 384
 
 dataset_testing_fractions:
   unit_test: 3840
   quick: 1.0 # Note: for sub_sampled_low_res dataset, quick test will just load the unittest data of 3840 samples
   reduced: 38400
   full: 1.0
+
+samples_per_day: 72
+subsample_factors:
+  train: 7
 
