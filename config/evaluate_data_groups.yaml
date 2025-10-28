@@ -11,3 +11,4 @@ defaults:
 
 multirun_dir_name: eval_data_groups
 
+chunk_size: 1000

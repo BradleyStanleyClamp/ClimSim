@@ -26,6 +26,7 @@ dependencies = [
   "wandb>=0.22.2",
   "pytest>=8.4.2",
   "scipy>=1.13.1",
+  "seaborn>=0.13.2",
 ]
 
 [project.optional-dependencies]
@@ -33,4 +34,4 @@ tensorflow = ["tensorflow>=2.12"]
 pytorch = ["torch>=2.1"]
 
 [tool.setuptools]
-packages = ["climsim_utils", "train", "models", "data_preparation", "evaluate"]
+packages = ["climsim_utils", "train", "models", "data_preparation", "evaluate", "plotting"]
