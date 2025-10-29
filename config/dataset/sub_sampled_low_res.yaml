@@ -13,6 +13,9 @@ dataset_testing_fractions:
   reduced: 38400
   full: 1.0
 
+
+group_by_year: False # Whether to select a year of data to train on, if not false should be the year [0, 6] to select
+
 samples_per_day: 72
 subsample_factors:
   train: 7

@@ -4,7 +4,7 @@ defaults:
   - _self_
   - project: config
   - wandb/wkey: wkey
-  - model: mlp
+  - model: yus_mlp
   - dataset: sub_sampled_low_res
   - dataset/general_dataset_config: general_dataset_config
   - hydra: default
@@ -12,7 +12,7 @@ defaults:
   - override hydra/launcher: slurm
 
 # Naming 
-multirun_dir_name: ${model.name}
+multirun_dir_name: ${model.name}_year_group_${dataset.group_by_year}
 
 # Training parameters
 max_epochs: 10

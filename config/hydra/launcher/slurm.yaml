@@ -17,7 +17,7 @@ account: orchid
 gres: gpu:1
 # name: ${name}_${iteration}_${parameter}
 
-exclude: gpuhost004,gpuhost009,gpuhost012,gpuhost008
+exclude: gpuhost004,gpuhost009,gpuhost012
 
 
 #additional_parameters:

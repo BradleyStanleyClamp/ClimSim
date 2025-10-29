@@ -2,17 +2,18 @@
 Script to build pytorch dataset for the subsampled low resolution data
 """
 
+import logging
 from pathlib import Path
 from torch.utils.data import Dataset
 import xarray as xr
 from climsim_utils.data_utils import *
 from omegaconf import DictConfig
-from .select_data import sample_data_based_on_testing_type
+from .select_data import sample_data_based_on_testing_type, select_year_of_data
 import os 
 
 class SubSampledLowResDataset(Dataset):
     def __init__(
-        self, mode: str, dataset_testing_type: str, dataset_config: DictConfig
+        self, mode: str, dataset_testing_type: str, dataset_config: DictConfig, group_by_year: bool = False
     ):
         """
         Args:
@@ -24,6 +25,7 @@ class SubSampledLowResDataset(Dataset):
         self.mode = mode
         self.dataset_testing_type = dataset_testing_type
         self.dataset_config = dataset_config
+        self.group_by_year = group_by_year
         if dataset_testing_type == "quick":
             base_dir = Path(__file__).resolve().parents[1]
             self.data_path = os.path.join(base_dir, dataset_config.precomputed_quick_data_path)
@@ -71,6 +73,10 @@ class SubSampledLowResDataset(Dataset):
                 self.dataset_testing_type,
                 self.dataset_config.dataset_testing_fractions,
             )
+
+            if self.group_by_year:
+                logging.info("Selecting data for specific year as per configuration")
+                train_input, train_target = select_year_of_data((train_input,train_target), self.dataset_config.group_by_year, self.dataset_config, self.dataset_testing_type)
 
             self.data_class.input_train = train_input
             self.data_class.target_train = train_target

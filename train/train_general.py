@@ -60,7 +60,7 @@ def main(cfg: DictConfig):
         cfg,
         datasets,
         wandb_config,
-        f"{cfg.project.name}_{cfg.project.timestamp}",
+        f"{cfg.multirun_dir_name}_{cfg.project.timestamp}",
         enable_checkpointing=False,
     )
 

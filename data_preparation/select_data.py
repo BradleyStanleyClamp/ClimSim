@@ -31,7 +31,9 @@ def get_dataset(dataset_cfg, mode:str, dataset_testing_type: str) -> Dataset:
         ], "dataset_testing_type must be one of 'quick', 'reduced' or 'full'"
 
     if dataset_cfg.dataset_name == "subsampled_low_res":
-        return data_preparation.SubSampledLowResDataset(mode, dataset_testing_type, dataset_cfg)
+        group_by_year = True if dataset_cfg.group_by_year is not False else False
+
+        return data_preparation.SubSampledLowResDataset(mode, dataset_testing_type, dataset_cfg, group_by_year=group_by_year)
 
 def get_dataloader(dataset_cfg, mode, dataset_testing_type, batch_size) -> DataLoader:
     """
@@ -137,3 +139,58 @@ def select_first_n_samples(data: tuple, n_samples: List[int]) -> tuple:
         return tuple(d[:n_samples[0]] for d in data)
     else:
         return tuple(d[:n_samples[i]] for i, d in enumerate(data))
+
+
+def select_year_of_data(data: tuple, year_index: int, dataset_cfg: DictConfig, dataset_testing_type: str, days_per_year=365) -> tuple:
+    """
+    Function that selects data corresponding to a specific year, used for the sub_sampled_low_res dataset
+
+    Args:
+        data: (tuple) datasets to select samples from, usually input and target data
+        year_index: (int) index of the year to select
+        dataset_cfg: (DictConfig) configuration for the dataset
+        dataset_testing_type: (str) size of dataset to be used, related to the type of testing e.g quick, reduced, full
+        days_per_year: (int) number of days in a year, defaults to 365
+        
+    Returns:
+        tuple: the selected samples from the data corresponding to the specified year
+    """
+
+    data_group_sample_size, num_data_groups = calc_sub_sampled_low_res_yearly_group_sample_size_and_num_groups(
+        dataset_cfg, len(data[0]), dataset_testing_type, days_per_year
+    )
+    assert year_index < num_data_groups, f"year_index {year_index} out of range, only {num_data_groups} data groups available"
+    logging.info(f'Data group sample size: {data_group_sample_size}')
+
+
+    output = tuple(d[year_index * data_group_sample_size:(year_index + 1) * data_group_sample_size] for d in data)
+
+    assert all(o.shape[0] == data_group_sample_size for o in output), "Selected data does not have the correct number of samples"
+    return output
+
+def calc_sub_sampled_low_res_yearly_group_sample_size_and_num_groups(dataset_cfg: DictConfig, dataset_length: int, dataset_testing_type: str, days_per_year=365):
+    """
+    Calculate the sample size and number of groups for the sub-sampled low resolution dataset.
+
+    Args:
+        dataset_cfg: (DictConfig) configuration for the dataset
+        dataset_length: (int) length of the dataset
+        dataset_testing_type: (str) type of testing to be performed
+        days_per_year: (int) number of days in a year
+
+    Returns:
+        tuple: (data_group_sample_size, num_data_groups)
+    """
+    samples_per_day = dataset_cfg.samples_per_day
+    subsample_factor = dataset_cfg.subsample_factors.train
+    num_spatial_points = dataset_cfg.num_spatial_points
+
+    data_group_sample_size = (samples_per_day * days_per_year // subsample_factor) * num_spatial_points
+
+    data_group_sample_size = 384 if dataset_testing_type == "quick" else data_group_sample_size
+    data_group_sample_size = 38400 if dataset_testing_type == "reduced" else data_group_sample_size
+
+    num_data_groups = dataset_length // data_group_sample_size
+
+    logging.info(f'Data group sample size: {data_group_sample_size}, number of data groups: {num_data_groups}')
+    return data_group_sample_size, num_data_groups
