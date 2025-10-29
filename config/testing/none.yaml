@@ -14,3 +14,10 @@ dataset_testing_type: full
 epochs: ${max_epochs}
 plotting: False
 timings: False
+
+
+energy_distance:
+  K_cross: ${evaluate.energy_distance_standard.K_cross}
+  K_within: ${evaluate.energy_distance_standard.K_within}
+  batch_size: ${evaluate.energy_distance_standard.batch_size}
+  num_permutations: ${evaluate.energy_distance_standard.num_permutations}

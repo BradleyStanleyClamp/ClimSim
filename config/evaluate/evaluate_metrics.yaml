@@ -1,0 +1,11 @@
+energy_distance_standard: # Standard (no or full testing)
+  K_cross: 2000000
+  K_within: 2000000
+  batch_size: 200000
+  num_permutations: 10
+
+energy_distance_test: # Reduced testing settings
+  K_cross: 20
+  K_within: 20
+  batch_size: 200
+  num_permutations: 2

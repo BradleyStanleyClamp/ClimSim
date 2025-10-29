@@ -15,3 +15,9 @@ dataset_testing_type: quick
 epochs: 2
 plotting: False
 timings: False
+
+energy_distance:
+  K_cross: ${evaluate.energy_distance_test.K_cross}
+  K_within: ${evaluate.energy_distance_test.K_within}
+  batch_size: ${evaluate.energy_distance_test.batch_size}
+  num_permutations: ${evaluate.energy_distance_test.num_permutations}

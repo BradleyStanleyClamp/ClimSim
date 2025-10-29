@@ -3,6 +3,7 @@ Script containing utility functions for evaluating different data groups for dis
 """
 import logging
 import numpy as np
+from omegaconf import DictConfig
 from scipy.stats import wasserstein_distance_nd
 # from torch import cdist
 from scipy.spatial.distance import cdist
@@ -11,140 +12,61 @@ import torch
 import math
 from typing import Optional
 
-def evaluate_data_groups(train_input_group: np.ndarray, train_target_group: np.ndarray, test_input: np.ndarray, test_target: np.ndarray, evaluation_options: list[str], chunk: int = 1000):
+def evaluate_data_groups(cfg: DictConfig, train_data: np.ndarray, test_data: np.ndarray, evaluation_options: list[str]):
     """
-    Evaluate a data groups distribution shift compared to the test set using specified evaluation options. This will look at three different distributions; train only, test only and the combination of the two.
+    Evaluate a data groups distribution shift compared to the test set using specified evaluation options. 
 
     Args:
-        train_input_group (np.ndarray) (samples, input_features): Input data for the training data group.
-        train_target_group (np.ndarray) (samples, target_features): Target data for the training data group.
-        test_input (np.ndarray) (samples, input_features): Input data for the test set.
-        test_target (np.ndarray) (samples, target_features): Target data for the test set.
-        evaluation_options (list[str]): List of evaluation options to perform.
-        chunk (int): Chunk size for block computation. Defaults to 1000.
-  
-    """
-    # Evaluate input distribution shift
-    print("Evaluating input distribution shift:")
-    return evaluate_distribution_shift(train_input_group, test_input, evaluation_options, chunk)
-
-    # # Evaluate target distribution shift
-    # print("Evaluating target distribution shift:")
-    # evaluate_distribution_shift(train_target_group, test_target, evaluation_options)
-
-    # # Evaluate combined distribution shift
-    # print("Evaluating combined input-target distribution shift:")
-    # train_combined = np.hstack([train_input_group, train_target_group])
-    # test_combined = np.hstack([test_input, test_target])
-    # evaluate_distribution_shift(train_combined, test_combined, evaluation_options)
-
-
-def evaluate_distribution_shift(train_data: np.ndarray, test_data: np.ndarray, evaluation_options: list[str], chunk: int = 1000):
-    """
-    Evaluate the distribution shift between training and test data using a specified option.
-
-    Args:
+        cfg (DictConfig): Configuration object containing evaluation settings.
         train_data (np.ndarray)(samples, features): Training data.
         test_data (np.ndarray)(samples, features): Test data.
         evaluation_options (list[str]): List of evaluation options to perform.
-        chunk (int): Chunk size for block computation. Defaults to 1000.
+
     Returns:
-        Various: Results from the evaluation metrics.
-
-    
+        results (dict): Dictionary containing evaluation results for each option.
+  
     """
-    # train_distribution, test_distribution, bin_edges = compute_distributions(train_data, test_data)
-
+    results = {}
     if 'energy_distance' in evaluation_options:
-        # Compute energy distance between train and test data distributions
-        # return energy_distance_chunked(train_data, test_data, chunk=chunk)
-        # mean, std = estimate_pair_mean_distance_mc(train_data, test_data, K=2000000, batch_pairs=chunk, device=None, seed=0)
-        # return mean, std
+        energy, se_energy, pval = energy_test_permutation(train_data, test_data, num_permutations=cfg.energy_distance.num_permutations, K_cross=cfg.energy_distance.K_cross, K_within=cfg.energy_distance.K_within, batch_size=cfg.energy_distance.batch_size, seed=cfg.project.seed)
+        energy_distance = {"value": energy, "se_energy_distance": se_energy, "p_value": pval}
+        results['energy_distance'] = energy_distance
+        logging.info(f'Energy Distance: {energy_distance["value"]:.6f} ± {energy_distance["se_energy_distance"]:.6f}, p-value: {energy_distance["p_value"]:.6f}')
 
-        # return mean_pairwise_distance_full(train_data, test_data, batch_A=chunk, batch_B=chunk)
-        energy, se_energy, (mean_xy, mean_xx, mean_yy) = monte_carlo_energy_distance(train_data, test_data, K_cross=2_000_000, K_within=2_000_000, batch_pairs=chunk, device=None, seed=0)
-        logging.info(f'Energy Distance: {energy} ± {se_energy} (mean_xy: {mean_xy}, mean_xx: {mean_xx}, mean_yy: {mean_yy})')
-        return energy
-        # observed, pval = energy_test_permutation(train_data, test_data, num_permutations=500, chunk=1000)
-        # observed, pval = energy_test_permutation(train_data, test_data, num_permutations=100)
-        # logging.info(f'Energy Distance: {ed_value}, Observed: {observed}, p-value: {pval}')
-        # return observed, pval
+    if  'vis_univariates' in evaluation_options:
+        univariate_distributions = extract_univariate_distributions_for_visualization(train_data, cfg.vis_univariates, seed=cfg.project.seed)
+        results['vis_univariates'] = univariate_distributions
+        logging.info(f'Extracted univariate distributions for visualization.')
 
-    # if 'EMD' in evaluation_options:
-    #     # Compute Earth Mover's Distance (EMD) between train and test data distributions
-    #     emd_value = earth_movers_distance(train_distribution, test_distribution, bin_edges)
-    #     print(f'EMD: {emd_value}')
 
-    # if 'KL' in evaluation_options:
-    #     # Compute Kullback-Leibler (KL) divergence between train and test data distributions
-    #     pass
+    return results
 
 
 
-def earth_movers_distance(train_data: np.ndarray, test_data: np.ndarray, bin_edges: list) -> float:
-    """
-    Compute the Earth Mover's Distance (EMD) between training and test data distributions.
-
-    Args:
-        train_data (np.ndarray): Training data.
-        test_data (np.ndarray): Test data.
-        bin_edges (list): List of bin edges used for each feature.
-
-    Returns:
-        float: Computed EMD value.
-    """
-    return wasserstein_distance_nd(train_data, test_data, bin_edges)
-
-
-def energy_distance(X, Y, metric='euclidean', chunk=None):
-    """
-    Compute energy distance between X (nxd) and Y (mxd).
-    If memory is limited, set chunk to an integer to compute dXY in blocks.
-
-    Args:
-        X (np.ndarray): First dataset.
-        Y (np.ndarray): Second dataset.
-        metric (str): Distance metric to use.
-        chunk (int, optional): Chunk size for block computation. Defaults to None.
-    Returns:
-        float: Energy distance between X and Y.
-    """
-    X = np.asarray(X, dtype=float)
-    Y = np.asarray(Y, dtype=float)
-    n, m = X.shape[0], Y.shape[0]
-
-    # cross-term 2 * mean_{i,j} ||X_i - Y_j||
-    if chunk is None:
-        dXY = cdist(X, Y, metric)
-        term_xy = 2.0 * dXY.mean()
-    else:
-        # chunked computation to save memory
-        s = 0.0
-        count = 0
-        for start in range(0, n, chunk):
-            end = min(n, start + chunk)
-            block = cdist(X[start:end], Y, metric)
-            s += block.sum()
-            count += block.size
-        term_xy = 2.0 * (s / count)
-
-    # within-X
-    dXX = cdist(X, X, metric)
-    term_xx = dXX.mean()
-
-    # within-Y
-    dYY = cdist(Y, Y, metric)
-    term_yy = dYY.mean()
-
-    return term_xy - term_xx - term_yy
-
-def energy_test_permutation(X, Y, num_permutations=500, chunk=None, random_state=None):
+def energy_test_permutation(X, Y, num_permutations=500, K_cross=2_000_000, K_within=2_000_000, batch_size=200000, seed=None):
     """
     To provide a single value with significance, we can perform a permutation test.
+    H_0: X and Y are from the same distribution.
+    H_1: X and Y are from different distributions.
+    This function utilises the optimised monte_carlo_energy_distance function to allow for larger datasets.
+
+    Args: 
+        X (np.ndarray): First dataset.
+        Y (np.ndarray): Second dataset.
+        num_permutations (int): Number of permutations to perform.
+        K_cross (int): Number of random pairs for cross term estimation.
+        K_within (int): Number of random pairs for within term estimation.
+        batch_size (int): Batch size for pair computations.
+        seed (int, optional): Random seed for reproducibility. Defaults to None.
+    
+    Returns:
+        observed (float): Observed energy distance.
+        se_observed (float): Standard error of the observed energy distance.
+        pval (float): p-value from the permutation test.
     """
 
-    rng = np.random.default_rng(random_state)
-    observed = energy_distance_chunked(X, Y, chunk=chunk)
+    rng = np.random.default_rng(seed)
+    observed, se_observed = monte_carlo_energy_distance(X, Y, K_cross=K_cross, K_within=K_within, batch_pairs=batch_size, seed=seed)
     pooled = np.vstack([X, Y])
     n = X.shape[0]
     count = 0
@@ -152,15 +74,16 @@ def energy_test_permutation(X, Y, num_permutations=500, chunk=None, random_state
         idx = rng.permutation(pooled.shape[0])
         Xp = pooled[idx[:n]]
         Yp = pooled[idx[n:]]
-        stat = energy_distance_chunked(Xp, Yp, chunk=chunk)
+        stat, se_energy = monte_carlo_energy_distance(Xp, Yp, K_cross=K_cross, K_within=K_within, batch_pairs=batch_size, seed=seed)
         if stat >= observed:
             count += 1
     pval = (count + 1) / (num_permutations + 1)
-    return observed, pval
+    return observed, se_observed, pval
 
 def energy_distance_chunked(X, Y, chunk=1000):
     """
     Compute the energy distance between two datasets using chunked computation.
+    Note: This is computationally intensive and is planned only to be used for a baseline comparison to optimised versions.
 
     Args:
         X (np.ndarray): First dataset.
@@ -210,14 +133,19 @@ def energy_distance_chunked(X, Y, chunk=1000):
     # --- energy distance formula ---
     return 2 * mean_xy - mean_xx - mean_yy
 
-
 def estimate_pair_mean_distance_mc(X, Y, K=2_000_000, batch_pairs=200_000, device=None, seed=None):
     """
     Monte-Carlo estimate of mean_{i,j} ||X_i - Y_j|| by sampling K random pairs.
-    X, Y: numpy arrays or torch tensors; if numpy, converted to torch.float32 on device.
-    K: number of random pairs to sample (total).
-    batch_pairs: pairs computed per matmul call (must fit on device memory).
-    Returns estimated mean (float) and standard error (float).
+    Args:
+        X, Y: numpy arrays or torch tensors; if numpy, converted to torch.float32 on device.
+        K: number of random pairs to sample (total).
+        batch_pairs: pairs computed per matmul call (must fit on device memory).
+        device: torch device to use (CPU or GPU). If None, auto-detects.
+        seed: random seed for reproducibility.
+
+    Returns:
+        mean: estimated mean distance.
+        se: standard error of the mean estimate.
     """
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -257,105 +185,57 @@ def estimate_pair_mean_distance_mc(X, Y, K=2_000_000, batch_pairs=200_000, devic
     se = math.sqrt((var / K).cpu().item())
     return mean, se
 
-
-def mean_pairwise_distance_full(
-    A,
-    B,
-    batch_A: int = 8192,
-    batch_B: int = 8192,
-    device: Optional[torch.device] = None,
-    dtype=torch.float32,
-    exclude_diagonal: bool = False,
-):
+def monte_carlo_energy_distance(X, Y, K_cross=2_000_000, K_within=2_000_000, batch_pairs=200_000, device=None, seed=None):
     """
-    Compute the exact mean pairwise Euclidean distance between all rows of A and all rows of B,
-    using batched matrix-multiplication (no sampling).
+    Calculates the energy distance between two distributions X and Y. With the following optimisations:
+    - Monte Carlo estimation of the mean pairwise distances by sampling K random pairs.
+    - Batch computation of pairwise distances to fit in memory.
+    - Option to use GPU if available.
+    - squared distances via matmul trick for efficiency.
 
     Args:
-        A: numpy array or torch tensor of shape (n, d)
-        B: numpy array or torch tensor of shape (m, d)
-        batch_A: number of rows of A to process per outer batch
-        batch_B: number of rows of B to process per inner batch
-        device: torch.device (defaults to cuda if available else cpu)
-        dtype: torch dtype for computations (default float32)
-        exclude_diagonal: only meaningful when A and B are the same tensor (same object or identical values).
-                          If True and A and B refer to the same dataset, the mean will be computed over
-                          off-diagonal pairs only (useful for unbiased within-group term).
+        X: First input distribution (numpy array or torch tensor).
+        Y: Second input distribution (numpy array or torch tensor).
+        K_cross: Number of random pairs to sample for cross distribution.
+        K_within: Number of random pairs to sample for within distribution.
+        batch_pairs: Number of pairs to compute per batch.
+        device: Device to perform computation on (CPU or GPU).
+        seed: Random seed for reproducibility.
 
     Returns:
-        mean_distance: float, mean over all ||a_i - b_j|| (or over i!=j if exclude_diagonal=True and A==B)
+        energy: Estimated energy distance between distributions X and Y.
+        se_energy: Standard error of the estimated energy distance.
     """
-    if device is None:
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    # convert to torch tensors on device
-    if not torch.is_tensor(A):
-        A_t = torch.tensor(A, dtype=dtype, device=device)
-    else:
-        A_t = A.to(device).to(dtype)
-
-    if not torch.is_tensor(B):
-        B_t = torch.tensor(B, dtype=dtype, device=device)
-    else:
-        B_t = B.to(device).to(dtype)
-
-    n, d = A_t.shape
-    m, d2 = B_t.shape
-    assert d == d2, "feature dimension must match"
-
-    # precompute norms for batching convenience? we compute per-block norms below
-    total_sum = torch.tensor(0.0, dtype=dtype, device=device)
-    total_count = 0
-
-    # We'll loop over A in outer batches and B in inner batches to keep memory bounded.
-    # This handles the general case including A == B and very large n,m.
-    for i in range(0, n, batch_A):
-        Ai = A_t[i : min(i + batch_A, n)]       # (ba, d)
-        Ai_sq = (Ai * Ai).sum(dim=1).unsqueeze(1)  # (ba, 1)
-
-        for j in range(0, m, batch_B):
-            Bj = B_t[j : min(j + batch_B, m)]     # (bb, d)
-            Bj_sq = (Bj * Bj).sum(dim=1).unsqueeze(0)  # (1, bb)
-
-            # compute AB = Ai @ Bj^T  -> (ba, bb)
-            AB = Ai @ Bj.t()
-
-            # squared distances: Anorm + Bnorm - 2*AB
-            D2 = Ai_sq + Bj_sq - 2.0 * AB
-            # numerical stability clamp
-            D2 = torch.clamp(D2, min=0.0)
-
-            # distances
-            D = torch.sqrt(D2)
-
-            # If A and B are actually identical object (same memory) and the block aligns with itself,
-            # we may be including diagonal elements. We'll handle diagonal exclusion after loops by adjusting count
-            # because diagonal distances are zero -> they do not affect sum, only count.
-            block_sum = D.sum()
-            total_sum += block_sum
-            total_count += D.numel()
-
-    # If user requested exclude_diagonal and A and B are same (identical object or same shapes and contents),
-    # we will adjust the count to exclude n diagonal terms (which are zero in sum).
-    # Warning: we check identity by checking object identity OR if shapes equal and content equal (costly),
-    # so the safest is to set exclude_diagonal only when you passed the same tensor object for A and B.
-    if exclude_diagonal:
-        # We only adjust if n == m and A and B refer to the same data (best if caller passed same object)
-        if n == m:
-            # Reduce count by n (diagonal entries). They contributed zero to total_sum so sum is fine.
-            total_count -= n
-        else:
-            raise ValueError("exclude_diagonal=True asked but A and B have different sizes (cannot exclude diagonal)")
-
-    # Convert to python float
-    mean_dist = (total_sum / float(total_count)).item()
-    return mean_dist
-
-
-def monte_carlo_energy_distance(X, Y, K_cross=2_000_000, K_within=2_000_000, batch_pairs=200_000, device=None, seed=None):
     mean_xy, se_xy = estimate_pair_mean_distance_mc(X, Y, K=K_cross, batch_pairs=batch_pairs, device=device, seed=seed)
     mean_xx, se_xx = estimate_pair_mean_distance_mc(X, X, K=K_within, batch_pairs=batch_pairs, device=device, seed=(None if seed is None else seed+1))
     mean_yy, se_yy = estimate_pair_mean_distance_mc(Y, Y, K=K_within, batch_pairs=batch_pairs, device=device, seed=(None if seed is None else seed+2))
     energy = 2*mean_xy - mean_xx - mean_yy
     se_energy = math.sqrt((2*se_xy)**2 + se_xx**2 + se_yy**2)
-    return energy, se_energy, (mean_xy, mean_xx, mean_yy)
+    return energy, se_energy
+
+def extract_univariate_distributions_for_visualization(data: np.ndarray, vis_univariates_cfg: DictConfig, seed: Optional[int] = None):
+    """
+    Extracts univariate distributions from the dataset for visualization purposes.
+
+    Args:
+        data (np.ndarray): The input data array.
+        vis_univariates_cfg (DictConfig): Configuration for extracting univariate distributions for visualization, containing:
+            sample_size (int): Number of samples to extract for each variable.
+            variables (list): List of variable names to extract.
+        seed (Optional[int]): Random seed for reproducibility.
+
+    Returns:
+        dict: A dictionary containing the extracted univariate distributions.
+    """
+
+    rng = np.random.default_rng(seed)
+    i_idx = rng.integers(0, len(data), size=vis_univariates_cfg.sample_size)
+
+    results = {}
+    if "near_surface_specific_humidity" in vis_univariates_cfg.variables:
+        results["near_surface_specific_humidity"] = data[:,119][i_idx]
+
+    if "near_surface_air_temperature" in vis_univariates_cfg.variables:
+        results["near_surface_air_temperature"] = data[:,59][i_idx]
+
+    return results
