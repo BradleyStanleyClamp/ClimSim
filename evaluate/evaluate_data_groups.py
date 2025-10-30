@@ -50,7 +50,7 @@ def main(cfg: DictConfig):
 
     # Iterate through each data group  
     full_results = {option_name: {} for option_name in cfg.evaluation_options}
-    for group_idx in tqdm(range(num_data_groups), desc="Evaluating data groups"):
+    for group_idx in range(num_data_groups):
 
         # get data group 
         train_input_group = train_input[group_idx * data_group_sample_size:(group_idx + 1) * data_group_sample_size]

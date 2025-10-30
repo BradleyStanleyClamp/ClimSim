@@ -2,6 +2,7 @@
 Script containing utility functions for evaluating different data groups for distribution shifts.
 """
 import logging
+import time
 import numpy as np
 from omegaconf import DictConfig
 from scipy.stats import wasserstein_distance_nd
@@ -28,10 +29,22 @@ def evaluate_data_groups(cfg: DictConfig, train_data: np.ndarray, test_data: np.
     """
     results = {}
     if 'energy_distance' in evaluation_options:
+        # if cfg.testing.timings:
+        #     start_time = time.perf_counter()
+        #     observed, se_observed = monte_carlo_energy_distance(train_data, test_data, K_cross=cfg.energy_distance.K_cross, K_within=cfg.energy_distance.K_within, batch_pairs=cfg.energy_distance.batch_size, seed=cfg.project.seed)
+        #     elapsed = time.perf_counter() - start_time
+        #     logging.info(f"evaluate_data_groups took {elapsed:.3f} seconds ")
+        #     energy_distance = {"value": observed, "std_err": se_observed, "p_value": 0.0}
+
+
+        # else:
+        start_time = time.perf_counter()
         energy, se_energy, pval = energy_test_permutation(train_data, test_data, num_permutations=cfg.energy_distance.num_permutations, K_cross=cfg.energy_distance.K_cross, K_within=cfg.energy_distance.K_within, batch_size=cfg.energy_distance.batch_size, seed=cfg.project.seed)
-        energy_distance = {"value": energy, "se_energy_distance": se_energy, "p_value": pval}
+        elapsed = time.perf_counter() - start_time
+        logging.info(f"energy_test_permutation took {elapsed:.3f} seconds ")
+        energy_distance = {"value": energy, "std_err": se_energy, "p_value": pval}
         results['energy_distance'] = energy_distance
-        logging.info(f'Energy Distance: {energy_distance["value"]:.6f} ± {energy_distance["se_energy_distance"]:.6f}, p-value: {energy_distance["p_value"]:.6f}')
+        logging.info(f'Energy Distance: {energy_distance["value"]:.6f} ± {energy_distance["std_err"]:.6f}, p-value: {energy_distance["p_value"]:.6f}')
 
     if  'vis_univariates' in evaluation_options:
         univariate_distributions = extract_univariate_distributions_for_visualization(train_data, cfg.vis_univariates, seed=cfg.project.seed)
@@ -70,7 +83,7 @@ def energy_test_permutation(X, Y, num_permutations=500, K_cross=2_000_000, K_wit
     pooled = np.vstack([X, Y])
     n = X.shape[0]
     count = 0
-    for _ in tqdm(range(num_permutations)):
+    for _ in range(num_permutations):
         idx = rng.permutation(pooled.shape[0])
         Xp = pooled[idx[:n]]
         Yp = pooled[idx[n:]]
@@ -166,6 +179,7 @@ def estimate_pair_mean_distance_mc(X, Y, K=2_000_000, batch_pairs=200_000, devic
         j_idx = rng.integers(0, m, size=this_batch)
         Ai = X_t[i_idx]  # (this_batch, d)
         Bj = Y_t[j_idx]  # (this_batch, d)
+
         # squared distances via matmul trick
         # ||a-b||^2 = ||a||^2 + ||b||^2 - 2 a·b
         An = (Ai * Ai).sum(dim=1)  # (b,)
@@ -178,6 +192,7 @@ def estimate_pair_mean_distance_mc(X, Y, K=2_000_000, batch_pairs=200_000, devic
         total_sum = total_sum + s
         total_sum_sq = total_sum_sq + (D * D).sum()   # to compute variance of D if needed
         done += this_batch
+        logging.info(f"Estimated {done}/{K} pairs for mean distance MC")
 
     mean = (total_sum / float(K)).item()
     # approximate standard error of the mean
