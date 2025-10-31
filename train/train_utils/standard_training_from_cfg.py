@@ -19,6 +19,7 @@ def standard_training_from_cfg(
     wandb_cfg: Dict,
     run_name: str,
     enable_checkpointing: bool,
+    seed: int = None,
 )-> Tuple[Dict, Dict]:
     """
     Function that peforms standard pytorch-lightning training from config files. Its two main usecases are for single runs and sweeps.
@@ -29,6 +30,7 @@ def standard_training_from_cfg(
         wandb_cfg: (DictConfig) wandb config file, only used for single runs, and is just the single_run_configuration of the model
         run_name: (str) name of the run, to be used in wandb logging
         enable_checkpointing: (bool) whether to enable checkpointing in the trainer. Should be False for sweeps, True for single runs.
+        seed: (int) random seed to use for the run. If None, no seeding is done.
     
     Returns:
         test_results: (Dict) results from testing the model on the test set
@@ -83,7 +85,7 @@ def standard_training_from_cfg(
 
         # Optional Saving the model if single run
         if not cfg.sweep:
-            model_save_path = f'{cfg.model.name}_{cfg.project.timestamp}.ckpt'
+            model_save_path = f'{cfg.model.name}_{seed}_{cfg.project.timestamp}.ckpt'
             trainer.save_checkpoint(model_save_path)
             logging.info(f"Model saved at: {model_save_path}")
 

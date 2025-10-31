@@ -15,8 +15,8 @@ multirun_dir_name: eval_data_groups
 chunk_size: 1000
 
 evaluation_options: 
-  - energy_distance
-  # - vis_univariates
+  # - energy_distance
+  - vis_univariates
 
 energy_distance:
   K_cross: ${testing.energy_distance.K_cross} 

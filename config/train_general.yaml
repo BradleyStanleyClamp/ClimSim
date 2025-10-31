@@ -19,3 +19,6 @@ max_epochs: 10
 
 # Sweep options 
 sweep: false
+
+# Multi seed options
+train_seeds: [0,1,2,3,4,5,6,7,8,9]

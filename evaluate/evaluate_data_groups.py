@@ -35,6 +35,8 @@ def main(cfg: DictConfig):
     # Seeding everything
     seed_everything(cfg.project.seed)
 
+    plotting.init_plotting_settings()
+
     torch.set_float32_matmul_precision("medium")
 
 
