@@ -88,9 +88,12 @@ def main(cfg: DictConfig):
         plotting.plot_energy_distance_results(full_results['energy_distance'], save_path="energy_distance.png")
 
      
-    
+    if 'kl_divergence' in cfg.evaluation_options:
+        plotting.plot_kl_divergence_results(full_results['kl_divergence'], save_path="kl_divergence.png")
   
-    # plot results
+    
+    if 'univariate_distributions' in cfg.evaluation_options:
+        plotting.plot_dict_segments(full_results['univariate_distributions'], save_path="univariate_distribution_distances.png")
 
     
 

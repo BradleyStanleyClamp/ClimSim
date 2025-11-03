@@ -108,3 +108,41 @@ def plot_energy_distance_results_with_p_values(energy_distance_dict: dict, save_
     fig.savefig(save_path, transparent=True)
     logging.info(f"Saved plot to {save_path}")
     plt.close(fig)
+
+
+
+def plot_kl_divergence_results(kl_divergence_dict: dict, save_path: str):
+    """
+    Plots KL divergence results for different data groups.
+
+    Args:
+        kl_divergence_dict (dict): A dictionary where keys are group indices and values are KL divergence values.
+        save_path (str): The path to save the plot image.
+    """
+
+    # Plot results
+    fig, ax = plt.subplots(figsize=(8, 4))
+
+    # Accept dicts keyed by ints or strings; order by integer key when possible
+    keys = list(kl_divergence_dict.keys())
+    try:
+        keys_sorted = sorted(keys, key=lambda k: int(k))
+    except Exception:
+        keys_sorted = sorted(keys)
+
+    x = list(range(len(keys_sorted)))
+    # p_values = [kl_divergence_dict[k]['p_value'] for k in keys_sorted]
+    y = [kl_divergence_dict[k]['value'] for k in keys_sorted]
+    # y_err = [kl_divergence_dict[k]['std_err'] for k in keys_sorted]
+
+    ax.errorbar(x, y, marker="o", linestyle="-")
+    ax.set_xlabel("Data group index")
+    ax.set_ylabel("KL Divergence")
+    ax.set_title("KL Divergence vs Data group index")
+    ax.grid(True)
+    fig.tight_layout()
+
+    Path(save_path).parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(save_path, dpi=200)
+    logging.info(f"Saved plot to {save_path}")
+    plt.close(fig)

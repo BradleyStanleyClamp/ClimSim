@@ -9,3 +9,9 @@ energy_distance_test: # Reduced testing settings
   K_within: 384
   batch_size: 384
   num_permutations: 50
+
+kl_divergence:
+  n_components: 30
+  bandwidth: 0.1  # If null, will do CV to select
+  bw_grid: [0.1, 0.5, 1.0, 2.0, 5.0]  # Bandwidths to search over if bandwidth is null
+  sample_size: 50000  # If not null, subsample this many points from training data to fit KDE (for speed)

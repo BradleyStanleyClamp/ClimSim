@@ -12,7 +12,7 @@ from tqdm import tqdm
 import torch
 import math
 from typing import Optional
-
+from evaluate.evaluate_utils.kl_divergence import kde_kl_mc, pca_kde_kl_gpu
 def evaluate_data_groups(cfg: DictConfig, train_data: np.ndarray, test_data: np.ndarray, evaluation_options: list[str]):
     """
     Evaluate a data groups distribution shift compared to the test set using specified evaluation options. 
@@ -31,7 +31,7 @@ def evaluate_data_groups(cfg: DictConfig, train_data: np.ndarray, test_data: np.
     if 'energy_distance' in evaluation_options:
         # if cfg.testing.timings:
         #     start_time = time.perf_counter()
-        #     observed, se_observed = monte_carlo_energy_distance(train_data, test_data, K_cross=cfg.energy_distance.K_cross, K_within=cfg.energy_distance.K_within, batch_pairs=cfg.energy_distance.batch_size, seed=cfg.project.seed)
+        #     observed, se_observed = monte_carlo_energy_distance(train_data, test_data, K_cross=cfg.energy_distance.K_cross, K_within=cfg.energy_distance.K_within, batch_size=cfg.energy_distance.batch_size, seed=cfg.project.seed)
         #     elapsed = time.perf_counter() - start_time
         #     logging.info(f"evaluate_data_groups took {elapsed:.3f} seconds ")
         #     energy_distance = {"value": observed, "std_err": se_observed, "p_value": 0.0}
@@ -51,10 +51,34 @@ def evaluate_data_groups(cfg: DictConfig, train_data: np.ndarray, test_data: np.
         results['vis_univariates'] = univariate_distributions
         logging.info(f'Extracted univariate distributions for visualization.')
 
+    if 'kl_divergence' in evaluation_options:
+        start_time = time.perf_counter()
+        # kl_estimate, (logp_test_vals, logp_train_vals), pca_obj = kde_kl_mc(train_data, test_data, n_components=cfg.kl_divergence.n_components, bandwidth=cfg.kl_divergence.bandwidth, bw_grid=cfg.kl_divergence.bw_grid, sample_size=cfg.kl_divergence.sample_size, rng=cfg.project.seed)
+        kl_estimate, se, _ = pca_kde_kl_gpu(train_data, test_data, n_components=cfg.kl_divergence.n_components, bandwidth=cfg.kl_divergence.bandwidth, batch_ref=cfg.kl_divergence.sample_size)
+        elapsed = time.perf_counter() - start_time
+        logging.info(f"kde_kl_mc took {elapsed:.3f} seconds ")
+        kl_divergence = {"value": kl_estimate} #, "logp_test_vals": logp_test_vals, "logp_train_vals": logp_train_vals}
+        results['kl_divergence'] = kl_divergence
+        logging.info(f'KL Divergence Estimate: {kl_divergence["value"]:.6f}')
+
+    if 'univariate_distributions' in evaluation_options:
+        univariate_distances = evaluate_univariate_distributions(train_data, test_data, cfg)
+        results['univariate_distributions'] = univariate_distances
+        logging.info(f'Univariate distribution distances computed.')
 
     return results
 
 
+def evaluate_univariate_distributions(X, Y, cfg: DictConfig):
+    """ 
+    Quantifies the difference between univariate distributions of two datasets using energy distance.
+    """
+    distances = []
+    for i in range(X.shape[1]):
+        # dist = energy_distance_chunked(X[:,i:i+1], Y[:, i:i+1])
+        dist = monte_carlo_energy_distance(X[:,i:i+1], Y[:, i:i+1], K_cross=cfg.energy_distance.K_cross, K_within=cfg.energy_distance.K_within, batch_size=cfg.energy_distance.batch_size, seed=cfg.project.seed)
+        distances.append(dist)
+    return distances
 
 def energy_test_permutation(X, Y, num_permutations=500, K_cross=2_000_000, K_within=2_000_000, batch_size=200000, seed=None):
     """
@@ -79,7 +103,7 @@ def energy_test_permutation(X, Y, num_permutations=500, K_cross=2_000_000, K_wit
     """
 
     rng = np.random.default_rng(seed)
-    observed, se_observed = monte_carlo_energy_distance(X, Y, K_cross=K_cross, K_within=K_within, batch_pairs=batch_size, seed=seed)
+    observed, se_observed = monte_carlo_energy_distance(X, Y, K_cross=K_cross, K_within=K_within, batch_size=batch_size, seed=seed)
     pooled = np.vstack([X, Y])
     n = X.shape[0]
     count = 0
@@ -87,7 +111,7 @@ def energy_test_permutation(X, Y, num_permutations=500, K_cross=2_000_000, K_wit
         idx = rng.permutation(pooled.shape[0])
         Xp = pooled[idx[:n]]
         Yp = pooled[idx[n:]]
-        stat, se_energy = monte_carlo_energy_distance(Xp, Yp, K_cross=K_cross, K_within=K_within, batch_pairs=batch_size, seed=seed)
+        stat, se_energy = monte_carlo_energy_distance(Xp, Yp, K_cross=K_cross, K_within=K_within, batch_size=batch_size, seed=seed)
         if stat >= observed:
             count += 1
     pval = (count + 1) / (num_permutations + 1)
@@ -106,7 +130,7 @@ def energy_distance_chunked(X, Y, chunk=1000):
         float: Energy distance between X and Y.
     """
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    logging.info(f'Computing energy distance on device: {device}')
+    # logging.info(f'Computing energy distance on device: {device}')
 
     X = torch.tensor(X, dtype=torch.float32, device=device)
     Y = torch.tensor(Y, dtype=torch.float32, device=device)
@@ -146,13 +170,13 @@ def energy_distance_chunked(X, Y, chunk=1000):
     # --- energy distance formula ---
     return 2 * mean_xy - mean_xx - mean_yy
 
-def estimate_pair_mean_distance_mc(X, Y, K=2_000_000, batch_pairs=200_000, device=None, seed=None):
+def estimate_pair_mean_distance_mc(X, Y, K=2_000_000, batch_size=200_000, device=None, seed=None):
     """
     Monte-Carlo estimate of mean_{i,j} ||X_i - Y_j|| by sampling K random pairs.
     Args:
         X, Y: numpy arrays or torch tensors; if numpy, converted to torch.float32 on device.
         K: number of random pairs to sample (total).
-        batch_pairs: pairs computed per matmul call (must fit on device memory).
+        batch_size: pairs computed per matmul call (must fit on device memory).
         device: torch device to use (CPU or GPU). If None, auto-detects.
         seed: random seed for reproducibility.
 
@@ -173,7 +197,7 @@ def estimate_pair_mean_distance_mc(X, Y, K=2_000_000, batch_pairs=200_000, devic
     done = 0
 
     while done < K:
-        this_batch = min(batch_pairs, K - done)
+        this_batch = min(batch_size, K - done)
         # sample indices
         i_idx = rng.integers(0, n, size=this_batch)
         j_idx = rng.integers(0, m, size=this_batch)
@@ -192,7 +216,7 @@ def estimate_pair_mean_distance_mc(X, Y, K=2_000_000, batch_pairs=200_000, devic
         total_sum = total_sum + s
         total_sum_sq = total_sum_sq + (D * D).sum()   # to compute variance of D if needed
         done += this_batch
-        logging.info(f"Estimated {done}/{K} pairs for mean distance MC")
+        # logging.info(f"Estimated {done}/{K} pairs for mean distance MC")
 
     mean = (total_sum / float(K)).item()
     # approximate standard error of the mean
@@ -200,7 +224,7 @@ def estimate_pair_mean_distance_mc(X, Y, K=2_000_000, batch_pairs=200_000, devic
     se = math.sqrt((var / K).cpu().item())
     return mean, se
 
-def monte_carlo_energy_distance(X, Y, K_cross=2_000_000, K_within=2_000_000, batch_pairs=200_000, device=None, seed=None):
+def monte_carlo_energy_distance(X, Y, K_cross=2_000_000, K_within=2_000_000, batch_size=200_000, device=None, seed=None):
     """
     Calculates the energy distance between two distributions X and Y. With the following optimisations:
     - Monte Carlo estimation of the mean pairwise distances by sampling K random pairs.
@@ -213,7 +237,7 @@ def monte_carlo_energy_distance(X, Y, K_cross=2_000_000, K_within=2_000_000, bat
         Y: Second input distribution (numpy array or torch tensor).
         K_cross: Number of random pairs to sample for cross distribution.
         K_within: Number of random pairs to sample for within distribution.
-        batch_pairs: Number of pairs to compute per batch.
+        batch_size: Number of pairs to compute per batch.
         device: Device to perform computation on (CPU or GPU).
         seed: Random seed for reproducibility.
 
@@ -221,9 +245,9 @@ def monte_carlo_energy_distance(X, Y, K_cross=2_000_000, K_within=2_000_000, bat
         energy: Estimated energy distance between distributions X and Y.
         se_energy: Standard error of the estimated energy distance.
     """
-    mean_xy, se_xy = estimate_pair_mean_distance_mc(X, Y, K=K_cross, batch_pairs=batch_pairs, device=device, seed=seed)
-    mean_xx, se_xx = estimate_pair_mean_distance_mc(X, X, K=K_within, batch_pairs=batch_pairs, device=device, seed=(None if seed is None else seed+1))
-    mean_yy, se_yy = estimate_pair_mean_distance_mc(Y, Y, K=K_within, batch_pairs=batch_pairs, device=device, seed=(None if seed is None else seed+2))
+    mean_xy, se_xy = estimate_pair_mean_distance_mc(X, Y, K=K_cross, batch_size=batch_size, device=device, seed=seed)
+    mean_xx, se_xx = estimate_pair_mean_distance_mc(X, X, K=K_within, batch_size=batch_size, device=device, seed=(None if seed is None else seed+1))
+    mean_yy, se_yy = estimate_pair_mean_distance_mc(Y, Y, K=K_within, batch_size=batch_size, device=device, seed=(None if seed is None else seed+2))
     energy = 2*mean_xy - mean_xx - mean_yy
     se_energy = math.sqrt((2*se_xy)**2 + se_xx**2 + se_yy**2)
     return energy, se_energy
