@@ -5,7 +5,7 @@ import numpy as np
 
 
 
-def plot_multiple_univariate_distributions_on_single_plot(data_dict: dict, variable_name: str, save_path: str):
+def plot_multiple_marginal_distributions_on_single_plot(data_dict: dict, variable_name: str, save_path: str):
     """
     Plots multiple distributions of a variable on a single plot.
 

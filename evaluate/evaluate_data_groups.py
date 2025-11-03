@@ -78,10 +78,10 @@ def main(cfg: DictConfig):
         logging.info(f"Saved energy_distance results to {results_path}")
     
     # Plotting results 
-    if 'vis_univariates' in cfg.evaluation_options:
-        for var in cfg.vis_univariates.variables:
-            plotting.plot_multiple_univariate_distributions_on_single_plot(
-                data_dict=full_results['vis_univariates'],
+    if 'vis_marginals' in cfg.evaluation_options:
+        for var in cfg.vis_marginals.variables:
+            plotting.plot_multiple_marginal_distributions_on_single_plot(
+                data_dict=full_results['vis_marginals'],
                 variable_name=var, save_path=f"{var}_distributions.png")
     
     if 'energy_distance' in cfg.evaluation_options:
@@ -92,8 +92,8 @@ def main(cfg: DictConfig):
         plotting.plot_kl_divergence_results(full_results['kl_divergence'], save_path="kl_divergence.png")
   
     
-    if 'univariate_distributions' in cfg.evaluation_options:
-        plotting.plot_dict_segments(full_results['univariate_distributions'], save_path="univariate_distribution_distances.png")
+    if 'marginal_distributions' in cfg.evaluation_options:
+        plotting.plot_dict_segments(full_results['marginal_distributions'], save_path="marginal_distribution_distances.png")
 
     
 

@@ -1,4 +1,4 @@
 from .init_plotting_settings import *
 from .plot_distributions import *
 from .plot_energy_distance import *
-from .plot_univariate_distribution_shifts import *
+from .plot_marginal_distribution_shifts import *

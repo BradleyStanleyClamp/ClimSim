@@ -46,10 +46,10 @@ def evaluate_data_groups(cfg: DictConfig, train_data: np.ndarray, test_data: np.
         results['energy_distance'] = energy_distance
         logging.info(f'Energy Distance: {energy_distance["value"]:.6f} ± {energy_distance["std_err"]:.6f}, p-value: {energy_distance["p_value"]:.6f}')
 
-    if  'vis_univariates' in evaluation_options:
-        univariate_distributions = extract_univariate_distributions_for_visualization(train_data, cfg.vis_univariates, seed=cfg.project.seed)
-        results['vis_univariates'] = univariate_distributions
-        logging.info(f'Extracted univariate distributions for visualization.')
+    if  'vis_marginals' in evaluation_options:
+        marginal_distributions = extract_marginal_distributions_for_visualization(train_data, cfg.vis_marginals, seed=cfg.project.seed)
+        results['vis_marginals'] = marginal_distributions
+        logging.info(f'Extracted marginal distributions for visualization.')
 
     if 'kl_divergence' in evaluation_options:
         start_time = time.perf_counter()
@@ -61,17 +61,17 @@ def evaluate_data_groups(cfg: DictConfig, train_data: np.ndarray, test_data: np.
         results['kl_divergence'] = kl_divergence
         logging.info(f'KL Divergence Estimate: {kl_divergence["value"]:.6f}')
 
-    if 'univariate_distributions' in evaluation_options:
-        univariate_distances = evaluate_univariate_distributions(train_data, test_data, cfg)
-        results['univariate_distributions'] = univariate_distances
-        logging.info(f'Univariate distribution distances computed.')
+    if 'marginal_distributions' in evaluation_options:
+        marginal_distances = evaluate_marginal_distributions(train_data, test_data, cfg)
+        results['marginal_distributions'] = marginal_distances
+        logging.info(f'marginal distribution distances computed.')
 
     return results
 
 
-def evaluate_univariate_distributions(X, Y, cfg: DictConfig):
+def evaluate_marginal_distributions(X, Y, cfg: DictConfig):
     """ 
-    Quantifies the difference between univariate distributions of two datasets using energy distance.
+    Quantifies the difference between marginal distributions of two datasets using energy distance.
     """
     distances = []
     for i in range(X.shape[1]):
@@ -252,29 +252,29 @@ def monte_carlo_energy_distance(X, Y, K_cross=2_000_000, K_within=2_000_000, bat
     se_energy = math.sqrt((2*se_xy)**2 + se_xx**2 + se_yy**2)
     return energy, se_energy
 
-def extract_univariate_distributions_for_visualization(data: np.ndarray, vis_univariates_cfg: DictConfig, seed: Optional[int] = None):
+def extract_marginal_distributions_for_visualization(data: np.ndarray, vis_marginals_cfg: DictConfig, seed: Optional[int] = None):
     """
-    Extracts univariate distributions from the dataset for visualization purposes.
+    Extracts marginal distributions from the dataset for visualization purposes.
 
     Args:
         data (np.ndarray): The input data array.
-        vis_univariates_cfg (DictConfig): Configuration for extracting univariate distributions for visualization, containing:
+        vis_marginals_cfg (DictConfig): Configuration for extracting marginal distributions for visualization, containing:
             sample_size (int): Number of samples to extract for each variable.
             variables (list): List of variable names to extract.
         seed (Optional[int]): Random seed for reproducibility.
 
     Returns:
-        dict: A dictionary containing the extracted univariate distributions.
+        dict: A dictionary containing the extracted marginal distributions.
     """
 
     rng = np.random.default_rng(seed)
-    i_idx = rng.integers(0, len(data), size=vis_univariates_cfg.sample_size)
+    i_idx = rng.integers(0, len(data), size=vis_marginals_cfg.sample_size)
 
     results = {}
-    if "near_surface_specific_humidity" in vis_univariates_cfg.variables:
+    if "near_surface_specific_humidity" in vis_marginals_cfg.variables:
         results["near_surface_specific_humidity"] = data[:,119][i_idx]
 
-    if "near_surface_air_temperature" in vis_univariates_cfg.variables:
+    if "near_surface_air_temperature" in vis_marginals_cfg.variables:
         results["near_surface_air_temperature"] = data[:,59][i_idx]
 
     return results

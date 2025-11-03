@@ -16,9 +16,9 @@ chunk_size: 1000
 
 evaluation_options: 
   # - energy_distance
-  # - vis_univariates
-  - kl_divergence
-  # - univariate_distributions
+  # - vis_marginals
+  # - kl_divergence
+  - marginal_distributions
 
 energy_distance:
   K_cross: ${testing.energy_distance.K_cross} 
@@ -26,7 +26,7 @@ energy_distance:
   batch_size: ${testing.energy_distance.batch_size} 
   num_permutations: ${testing.energy_distance.num_permutations} 
 
-vis_univariates: # Univariate distributions for visualisation
+vis_marginals: # marginal distributions for visualisation
   sample_size: 100000
   variables:
     - near_surface_air_temperature
