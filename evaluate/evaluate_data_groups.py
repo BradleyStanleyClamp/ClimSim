@@ -76,6 +76,11 @@ def main(cfg: DictConfig):
         with open(results_path, "w") as f:
             json.dump(full_results['energy_distance'], f, indent=2)
         logging.info(f"Saved energy_distance results to {results_path}")
+    if 'marginal_distributions' in cfg.evaluation_options:
+        results_path = Path.cwd() / "marginal_distribution_distances.json"
+        with open(results_path, "w") as f:
+            json.dump(full_results['marginal_distributions'], f, indent=2)
+        logging.info(f"Saved marginal distribution distances results to {results_path}")
     
     # Plotting results 
     if 'vis_marginals' in cfg.evaluation_options:
@@ -93,7 +98,7 @@ def main(cfg: DictConfig):
   
     
     if 'marginal_distributions' in cfg.evaluation_options:
-        plotting.plot_dict_segments(full_results['marginal_distributions'], save_path="marginal_distribution_distances.png")
+        plotting.plot_standard_feature_marginals(full_results['marginal_distributions'], save_path="marginal_distribution_distances.png")
 
     
 

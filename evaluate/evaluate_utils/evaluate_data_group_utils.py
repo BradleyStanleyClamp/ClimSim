@@ -62,8 +62,8 @@ def evaluate_data_groups(cfg: DictConfig, train_data: np.ndarray, test_data: np.
         logging.info(f'KL Divergence Estimate: {kl_divergence["value"]:.6f}')
 
     if 'marginal_distributions' in evaluation_options:
-        marginal_distances = evaluate_marginal_distributions(train_data, test_data, cfg)
-        results['marginal_distributions'] = marginal_distances
+        marginal_distances, se_marginal_distances = evaluate_marginal_distributions(train_data, test_data, cfg)
+        results['marginal_distributions'] = {'marginal_distances': marginal_distances, 'marginal_distribution_se': se_marginal_distances}
         logging.info(f'marginal distribution distances computed.')
 
     return results
@@ -72,13 +72,23 @@ def evaluate_data_groups(cfg: DictConfig, train_data: np.ndarray, test_data: np.
 def evaluate_marginal_distributions(X, Y, cfg: DictConfig):
     """ 
     Quantifies the difference between marginal distributions of two datasets using energy distance.
+
+    Args:
+        X (np.ndarray): First dataset (samples, features).
+        Y (np.ndarray): Second dataset (samples, features).
+        cfg (DictConfig): Configuration object containing settings for marginal distribution evaluation.
     """
     distances = []
+    se_distances = []
     for i in range(X.shape[1]):
-        # dist = energy_distance_chunked(X[:,i:i+1], Y[:, i:i+1])
-        dist = monte_carlo_energy_distance(X[:,i:i+1], Y[:, i:i+1], K_cross=cfg.energy_distance.K_cross, K_within=cfg.energy_distance.K_within, batch_size=cfg.energy_distance.batch_size, seed=cfg.project.seed)
+        if cfg.marginal_distributions.metric == 'energy_distance':
+            dist, se_dist = monte_carlo_energy_distance(X[:,i:i+1], Y[:, i:i+1], K_cross=cfg.energy_distance.K_cross, K_within=cfg.energy_distance.K_within, batch_size=cfg.energy_distance.batch_size, seed=cfg.project.seed)
+        else:
+            raise ValueError(f"Unknown marginal distribution metric: {cfg.marginal_distributions.metric}, or not yet implemented.")
+        
         distances.append(dist)
-    return distances
+        se_distances.append(se_dist)
+    return distances, se_distances
 
 def energy_test_permutation(X, Y, num_permutations=500, K_cross=2_000_000, K_within=2_000_000, batch_size=200000, seed=None):
     """
