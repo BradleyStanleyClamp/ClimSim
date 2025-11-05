@@ -84,10 +84,12 @@ def main(cfg: DictConfig):
     
     # Plotting results 
     if 'vis_marginals' in cfg.evaluation_options:
-        for var in cfg.vis_marginals.variables:
+        marginal_data = full_results['vis_marginals'][0]
+        for var in marginal_data.keys():
             plotting.plot_multiple_marginal_distributions_on_single_plot(
                 data_dict=full_results['vis_marginals'],
-                variable_name=var, save_path=f"{var}_distributions.png")
+                variable_name=var, save_path=f"{var}_distributions.png", groups_to_plot=cfg.vis_marginals.groups_to_plot)
+
     
     if 'energy_distance' in cfg.evaluation_options:
         plotting.plot_energy_distance_results(full_results['energy_distance'], save_path="energy_distance.png")

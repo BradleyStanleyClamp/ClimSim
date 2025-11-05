@@ -5,19 +5,19 @@ defaults:
 
 _target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
 submitit_folder: ${hydra.sweep.dir}/.submitit/%j
-timeout_min: 1440
+timeout_min: 60 #1440
 mem_gb: 16
 cpus_per_task: 1
 
-partition: orchid
-qos: orchid
-account: orchid
+partition: standard #orchid
+qos: short #orchid
+account: iecdt #orchid
 
 # tasks_per_node: 4 
-gres: gpu:1
+# gres: gpu:1
 # name: ${name}_${iteration}_${parameter}
 
-exclude: gpuhost004,gpuhost009,gpuhost012
+# exclude: gpuhost004,gpuhost009,gpuhost012
 
 
 #additional_parameters:
