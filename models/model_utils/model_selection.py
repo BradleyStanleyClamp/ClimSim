@@ -26,6 +26,9 @@ def select_base_model(model_name: str, model_params: dict, data_params: dict) ->
     elif model_name == "yus_mlp":
         yus_mlp = models.yus_mlp.YusMLP(hidden_dims=model_params.hidden_dims, input_dim=data_params.input_dim, output_dim=data_params.output_dim)
         return yus_mlp
+    elif model_name == 'climsim_unet':
+        unet = models.ClimSimUNet()
+        return unet
     else:
         raise ValueError(f"Model {model_name} not recognized.")
     
