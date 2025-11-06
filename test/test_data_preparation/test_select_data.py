@@ -20,7 +20,8 @@ def test_get_dataset_full(sub_sampled_low_res_config_path: str = "../../config/d
             'quick': 0.01,
             'reduced': 0.1,
             'full': 1.0
-        }
+        },
+        'group_by_year': False
     })
     mode = 'train'
     dataset_testing_type = 'full'
@@ -44,7 +45,8 @@ def test_get_dataset_reduced(sub_sampled_low_res_config_path: str = "../../confi
             'quick': 0.1,
             'reduced': 0.5,
             'full': 1.0
-        }
+        },
+        'group_by_year': False
     })
     mode = 'train'
     dataset_testing_type = 'reduced'
@@ -69,7 +71,8 @@ def test_get_dataset_quick(sub_sampled_low_res_config_path: str = "../../config/
             'quick': 0.1,
             'reduced': 0.5,
             'full': 1.0
-        }
+        },
+        'group_by_year': False
     })
     mode = 'train'
     dataset_testing_type = 'quick'

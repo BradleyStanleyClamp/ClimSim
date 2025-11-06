@@ -13,7 +13,7 @@ import os
 
 class SubSampledLowResDataset(Dataset):
     def __init__(
-        self, mode: str, dataset_testing_type: str, dataset_config: DictConfig, model: str, group_by_year: bool = False
+        self, mode: str, dataset_testing_type: str, dataset_config: DictConfig, model: str=None, group_by_year: bool = False
     ):
         """
         Args:

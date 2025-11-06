@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader, Dataset
 from omegaconf import DictConfig
 import data_preparation
 
-def get_dataset(dataset_cfg, mode:str, dataset_testing_type: str, model: str) -> Dataset:
+def get_dataset(dataset_cfg, mode:str, dataset_testing_type: str, model: str=None) -> Dataset:
     """
     Function that gets you the specified dataset
 
@@ -19,6 +19,7 @@ def get_dataset(dataset_cfg, mode:str, dataset_testing_type: str, model: str) ->
 
         mode: (str) one of 'train', 'val' or 'test', specifying which dataset split to return
         dataset_testing_type: (str) size of dataset to be used, related to the type of testing e.g quick, reduced, full
+        model: (str) name of the model to be used, e.g if mlp then data can be used as is, but if unet then further processing is required, and if none then no further processing is required
 
     Returns:
         Dataset: the specified dataset

@@ -59,8 +59,8 @@ def test_select_model_mlp():
 
     assert isinstance(model, models.LightningWrapper)
     assert isinstance(model.model, models.mlp.MLP)
-    assert model.optimizer == torch.optim.Adam
-    assert model.scheduler is None
+    assert model.optimizer == 'Adam'
+    assert model.scheduler_cfg is None
 
 def test_select_model_yus_mlp():
     
@@ -71,7 +71,7 @@ def test_select_model_yus_mlp():
         "hidden_dims": [768, 640, 512, 640, 640],
         "activation": "leaky_relu",
         "optimizer": "RAdam",
-        "scheduler": 'cyclic'
+        "scheduler": {'name': 'cyclic'}
     })
 
     data_params = DictConfig({"input_dim": 100, "output_dim": 10})
@@ -80,8 +80,8 @@ def test_select_model_yus_mlp():
 
     assert isinstance(model, models.LightningWrapper)
     assert isinstance(model.model, models.yus_mlp.YusMLP)
-    assert model.optimizer == torch.optim.RAdam
-    assert model.scheduler == 'cyclic'
+    assert model.optimizer == 'RAdam'
+    assert model.scheduler_cfg.name == 'cyclic'
 
 
 def test_select_base_model_invalid():

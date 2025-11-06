@@ -47,29 +47,16 @@ def select_model(model_name: str, model_params: dict, data_params: dict) -> L.Li
 
     lightning_model = models.LightningWrapper(
         base_model,
-        optimizer=select_optimizer(model_params.optimizer),
+        optimizer=model_params.optimizer,
         lr=model_params.lr,
-        scheduler=model_params.scheduler,
+        scheduler_cfg=model_params.scheduler,
     )
 
     return lightning_model
 
 
-def select_optimizer(optimizer_name: str):
-    """
-    Selects and returns an optimizer based on the provided optimizer name.
-    Args:
-        optimizer_name (str): Name of the optimizer to be selected.
-    Returns:
-        optimizer (callable): The optimizer class.
-    """
-    if optimizer_name == "Adam":
-        return torch.optim.Adam
-    elif optimizer_name == "RAdam":
-        return torch.optim.RAdam
-    else:
-        raise ValueError(f"Optimizer {optimizer_name} not recognized.")
-    
+
+
 
 def load_model_from_checkpoint(checkpoint_path: str, model_name: str, model_params: dict, data_params: dict):
     """
@@ -86,7 +73,7 @@ def load_model_from_checkpoint(checkpoint_path: str, model_name: str, model_para
     model = models.LightningWrapper.load_from_checkpoint(
         checkpoint_path,
         model=base_model,
-        optimizer=select_optimizer(model_params.optimizer),
+        optimizer=model_params.optimizer,
         lr=model_params.lr,
         scheduler=model_params.scheduler,
     )

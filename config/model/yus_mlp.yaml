@@ -25,5 +25,6 @@ single_run_configuration:
   hidden_dims: [768, 640, 512, 640, 640]
   activation: leaky_relu
   optimizer: RAdam
-  scheduler: cyclic
+  scheduler:
+    name: cyclic
   
