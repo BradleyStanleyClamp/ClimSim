@@ -14,6 +14,19 @@ from torch import nn
 import torch
 import numpy as np
 
+def make_residual_connection(in_channels:int, out_channels:int):
+        """
+        Creates a residual connection. If the number of input and output channels differ, a 1x1 convolution is used to match dimensions.
+        Args:
+            in_channels (int): Number of input channels.
+            out_channels (int): Number of output channels.
+        Returns:
+            nn.Module: A module representing the residual connection.
+        """
+        if in_channels != out_channels:
+            return nn.Conv1d(in_channels, out_channels, kernel_size=1, stride=1, padding=0)
+        else:
+            return nn.Identity()
 
 class ResBlock(nn.Module):
     def __init__(self, in_channels:int, out_channels:int, num_groups:int=32):
@@ -34,7 +47,7 @@ class ResBlock(nn.Module):
 
         self.block0 = self._make_block(in_channels, out_channels, num_groups)
         self.block1 = self._make_block(out_channels, out_channels, num_groups)
-        self.residual_connection = self._make_residual_connection(in_channels, out_channels)
+        self.residual_connection = make_residual_connection(in_channels, out_channels)
 
     def _make_block(self, in_channels:int, out_channels:int, num_groups:int=32):
         """
@@ -51,26 +64,45 @@ class ResBlock(nn.Module):
             nn.Conv1d(in_channels, out_channels, kernel_size=3, padding=1, stride=1),
         )
 
-    def _make_residual_connection(self, in_channels:int, out_channels:int):
-        """
-        Creates a residual connection. If the number of input and output channels differ, a 1x1 convolution is used to match dimensions.
-        Args:
-            in_channels (int): Number of input channels.
-            out_channels (int): Number of output channels.
-        Returns:
-            nn.Module: A module representing the residual connection.
-        """
-        if in_channels != out_channels:
-            return nn.Conv1d(in_channels, out_channels, kernel_size=1, stride=1, padding=0)
-        else:
-            return nn.Identity()
-
     def forward(self, x):
         h = self.block0(x)
         h = self.block1(h)
         x = (self.residual_connection(x) + h) / np.sqrt(2.0)# Residual connection with normalisation of the variance to improve stability
         return x
     
+class AttentionBlock(nn.Module):
+    def __init__(self, in_channels: int, out_channels: int, num_groups: int = 32):
+        """
+        Block for self attention mechanism.
+        Args:
+            in_channels (int): Number of input channels.
+            out_channels (int): Number of output channels.
+
+        """
+        super().__init__()
+
+        self.group_norm = nn.GroupNorm(num_groups=num_groups, num_channels=in_channels)
+
+        self.Q = nn.Conv1d(in_channels, in_channels, kernel_size=1)
+        self.K = nn.Conv1d(in_channels, in_channels, kernel_size=1)
+        self.V = nn.Conv1d(in_channels, in_channels, kernel_size=1)
+        self.residual_connection = make_residual_connection(in_channels, out_channels)
+        
+
+    def forward(self, x):
+        x = self.group_norm(x)    
+
+        B, C, L = x.shape
+        q = self.Q(x).permute(0, 2, 1)  # (B, L, C)
+        k = self.K(x).permute(0, 2, 1)  # (B, L, C)
+        v = self.V(x).permute(0, 2, 1)  # (B, L, C)
+
+        h = torch.nn.functional.scaled_dot_product_attention(q, k, v, attn_mask=None, dropout_p=0.0, is_causal=False)
+
+        h = h.permute(0, 2, 1)  # (B, C, L)
+
+        x = self.residual_connection(x) + h / np.sqrt(2.0)  # Residual connection with normalisation of the variance to improve stability 
+        return x
 
 class ClimSimUNet(nn.Module):
     def __init__(self):
@@ -91,33 +123,31 @@ class ClimSimUNet(nn.Module):
 
         skips = []
         # Encoder
-        print("Encoder")
+        # print("Encoder")
         for down_block in self.enc:
-            print(f"  Down block: {x.shape}")
+            # print(f"  Down block: {x.shape}")
             for layer in down_block:
                 x = layer(x)
-                print(f"    After layer: {x.shape}")
+                # print(f"    After layer: {x.shape}")
             skips.append(x)
 
-        print(f"Bottom: {x.shape}")
+        # print(f"Bottom: {x.shape}")
         # Mid
         for layer in self.mid:
             x = layer(x)
-        print(f"After mid: {x.shape}")
+        # print(f"After mid: {x.shape}")
 
-        for i in range(len(skips)):
-            print(f"Skip {i}: {skips[i].shape}")
         # Decoder
-        print("Decoder")
+        # print("Decoder")
         for up_block in self.dec:
-            print(f"  Up block: {x.shape}")
+            # print(f"  Up block: {x.shape}")
             skip = skips.pop()
-            print(f"    Skip: {skip.shape}")
+            # print(f"    Skip: {skip.shape}")
             x = torch.cat((x, skip), dim=1)  # Concatenate skip connection
-            print(f"    After concat: {x.shape}")
+            # print(f"    After concat: {x.shape}")
             for layer in up_block:
                 x = layer(x)
-                print(f"    After layer: {x.shape}")
+                # print(f"    After layer: {x.shape}")
 
         x = self.conv_out(x)
         return x
@@ -133,7 +163,7 @@ class ClimSimUNet(nn.Module):
         self._make_level(256, 256, bottom_level=True)  # Level 4
 
         self.mid = nn.ModuleList([
-            ResBlock(in_channels=256, out_channels=256), # To be changed to attention block later
+            AttentionBlock(in_channels=256, out_channels=256),
             ResBlock(in_channels=256, out_channels=256),
         ])
 
