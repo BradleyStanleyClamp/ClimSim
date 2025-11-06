@@ -150,9 +150,31 @@ class ClimSimUNet(nn.Module):
                 # print(f"    After layer: {x.shape}")
 
         x = self.conv_out(x)
+        x = self._reshape_to_standard_format(x)
         return x
 
-
+    def _reshape_to_standard_format(self, x):
+        """
+        Reshapes the output to standard format (n_samples, features) from (n_samples, levels, variables)
+        Args:
+            x: (torch.Tensor) (n_samples, levels, variables) output data from the model
+        Returns:
+            reshaped_x: (torch.Tensor) (n_samples, features) reshaped output data
+        """
+        output = torch.cat([
+            x[:, 0, 0:60],
+            x[:, 1, 0:60],
+            x[:, 2, 0:60].mean(dim=1, keepdim=True),
+            x[:, 3, 0:60].mean(dim=1, keepdim=True),
+            x[:, 4, 0:60].mean(dim=1, keepdim=True),
+            x[:, 5, 0:60].mean(dim=1, keepdim=True),
+            x[:, 6, 0:60].mean(dim=1, keepdim=True),
+            x[:, 7, 0:60].mean(dim=1, keepdim=True),
+            x[:, 8, 0:60].mean(dim=1, keepdim=True),
+            x[:, 9, 0:60].mean(dim=1, keepdim=True),
+        ], dim=1)
+        return output
+    
     def _make_levels(self):
         """
         Creates all levels of the U-Net architecture, including the base level. For now hardcoded.
@@ -166,8 +188,6 @@ class ClimSimUNet(nn.Module):
             AttentionBlock(in_channels=256, out_channels=256),
             ResBlock(in_channels=256, out_channels=256),
         ])
-
-
 
     def _make_level(self, in_channels:int, out_channels:int, bottom_level:bool=False):
         """

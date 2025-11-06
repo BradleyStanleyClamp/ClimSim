@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader, Dataset
 from omegaconf import DictConfig
 import data_preparation
 
-def get_dataset(dataset_cfg, mode:str, dataset_testing_type: str) -> Dataset:
+def get_dataset(dataset_cfg, mode:str, dataset_testing_type: str, model: str) -> Dataset:
     """
     Function that gets you the specified dataset
 
@@ -33,7 +33,7 @@ def get_dataset(dataset_cfg, mode:str, dataset_testing_type: str) -> Dataset:
     if dataset_cfg.dataset_name == "subsampled_low_res":
         group_by_year = True if dataset_cfg.group_by_year is not False else False
 
-        return data_preparation.SubSampledLowResDataset(mode, dataset_testing_type, dataset_cfg, group_by_year=group_by_year)
+        return data_preparation.SubSampledLowResDataset(mode, dataset_testing_type, dataset_cfg, model=model, group_by_year=group_by_year)
 
 def get_dataloader(dataset_cfg, mode, dataset_testing_type, batch_size) -> DataLoader:
     """
