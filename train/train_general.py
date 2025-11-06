@@ -54,7 +54,7 @@ def main(cfg: DictConfig):
 
     logging.info("Setup complete, starting training")
 
-    datasets = data_preparation.get_all_datasets(cfg.dataset, cfg.testing.dataset_testing_type)
+    datasets = data_preparation.get_all_datasets(cfg.dataset, cfg.testing.dataset_testing_type, model=cfg.model.name)
 
     test_result, run_cfg = train.standard_training_from_cfg(
         cfg,

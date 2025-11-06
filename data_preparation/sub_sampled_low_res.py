@@ -42,9 +42,11 @@ class SubSampledLowResDataset(Dataset):
         # Loading data based on mode and sample based on testing type
         self.input, self.target = self._load_data()
 
-        # if self.model == "unet":
-        #     self.input = self._reshape_input_for_unet(self.input)
-            # self.target = self._reshape_for_unet(self.target) # Uncomment if target also needs reshaping for unet
+        if self.model == "climsim_unet":
+            self.input = self._reshape_input_for_unet_full_data(self.input)
+            self.target = self._reshape_output_for_unet_full_data(self.target)
+            logging.info(f"Reshaped input data shape for unet: {self.input.shape}")
+            logging.info(f"Reshaped target data shape for unet: {self.target.shape}")
 
     def _setup_data_class(self):
         # Resolve paths relative to this file so imports from other CWDs work
@@ -70,12 +72,11 @@ class SubSampledLowResDataset(Dataset):
 
     def _reshape_input_for_unet(self, data):
         """
-        Reshapes the data for unet, where: 
+        Reshapes a single data point for unet, where: 
         - Each variable has its own channel 
         - Scalars are repeated across the vertical levels to match dimensions
         - An additional 4 levels are added to reach 64 vertical levels required by unet architecture for three downsampling steps (as per original paper)
         
-        To deal with high memory usage, process is done in batches of 10000 samples
         Args:
             data: (np.ndarray) (n_samples, features) input or target data to be reshaped
         Returns:
@@ -91,34 +92,72 @@ class SubSampledLowResDataset(Dataset):
             np.repeat(data[120], 60),
             np.repeat(data[121], 60),
             np.repeat(data[122], 60),
-            np.repeat(data[123], 60)], axis=1)
+            np.repeat(data[123], 60)], axis=0)
 
         # pad 4 levels at the bottom to reach 64 levels
-        reshaped_data_padded = np.pad(reshaped_data, ((0, 4), (0, 0)), mode='constant', constant_values=0)
+        reshaped_data_padded = np.pad(reshaped_data, ((0, 0), (0, 4)), mode='constant', constant_values=0)
         return reshaped_data_padded
     
-    # def _reshape_output_for_unet(self, data):
-    #     """
-    #     Reshapes the output data for unet, where: 
-    #     - Each variable has its own channel 
-    #     - Scalars are repeated across the vertical levels to match dimensions
-    #     - An additional 4 levels are added to reach 64 vertical levels required by unet architecture for three downsampling steps (as per original paper)
-    #     Args:
-    #         data: (np.ndarray) (n_samples, features) input or target data to be reshaped
-    #     Returns:
-    #         reshaped_data: (np.ndarray) (n_samples, 64 [levels], 10 [variables]) reshaped data suitable for unet input
-    #     """
-    #     reshaped_data = np.stack([
-    #         data[:, 0:60],
-    #         data[:, 60:120],
-    #         np.repeat(data[:, 120][:, np.newaxis], 60, axis = 1),
-    #         np.repeat(data[:, 121][:, np.newaxis], 60, axis = 1),
-    #         np.repeat(data[:, 122][:, np.newaxis], 60, axis = 1),
-    #         np.repeat(data[:, 123][:, np.newaxis], 60, axis = 1)], axis = 2)
+    def _reshape_input_for_unet_full_data(self, data):
+        """
+        Reshapes all the data for unet, where: 
+        - Each variable has its own channel 
+        - Scalars are repeated across the vertical levels to match dimensions
+        - An additional 4 levels are added to reach 64 vertical levels required by unet architecture for three downsampling steps (as per original paper)
+        
+        To deal with high memory usage, process is done in batches of 10000 samples
+        Args:
+            data: (np.ndarray) (n_samples, features) input or target data to be reshaped
+        Returns:
+            reshaped_data: (np.ndarray) (n_samples, 64 [levels], 10 [variables]) reshaped data suitable for unet input
+        """
 
-    #     pad = (0, 0, 0, 4)
-    #     reshaped_data_padded =  np.pad(reshaped_data, ((0, 0), (0, 4), (0, 0)), mode='constant', constant_values=0)
-    #     return reshaped_data_padded
+        reshaped_data = np.stack([
+            data[:, 0:60],
+            data[:, 60:120],
+            np.repeat(data[:, 120][:, np.newaxis], 60, axis=1),
+            np.repeat(data[:, 121][:, np.newaxis], 60, axis=1),
+            np.repeat(data[:, 122][:, np.newaxis], 60, axis=1),
+            np.repeat(data[:, 123][:, np.newaxis], 60, axis=1)], axis=2)
+
+        # pad 4 levels at the bottom to reach 64 levels
+        reshaped_data_padded = np.pad(reshaped_data, ((0, 0), (0, 4), (0, 0)), mode='constant', constant_values=0)
+
+        reshaped_data_padded = reshaped_data_padded.transpose(0, 2, 1)  # Change shape to (n_samples, n_channels, n_levels)
+
+        return reshaped_data_padded
+    
+    
+    def _reshape_output_for_unet_full_data(self, data):
+        """
+        Reshapes the output data for unet, where: 
+        - Each variable has its own channel 
+        - Scalars are repeated across the vertical levels to match dimensions
+        - An additional 4 levels are added to reach 64 vertical levels required by unet architecture for three downsampling steps (as per original paper)
+        Args:
+            data: (np.ndarray) (n_samples, features) input or target data to be reshaped
+        Returns:
+            reshaped_data: (np.ndarray) (n_samples, 64 [levels], 10 [variables]) reshaped data suitable for unet input
+        """
+        reshaped_data = np.stack([
+            data[:, 0:60],
+            data[:, 60:120],
+            np.repeat(data[:, 120][:, np.newaxis], 60, axis = 1),
+            np.repeat(data[:, 121][:, np.newaxis], 60, axis = 1),
+            np.repeat(data[:, 122][:, np.newaxis], 60, axis = 1),
+            np.repeat(data[:, 123][:, np.newaxis], 60, axis = 1),
+            np.repeat(data[:, 124][:, np.newaxis], 60, axis = 1),
+            np.repeat(data[:, 125][:, np.newaxis], 60, axis = 1),
+            np.repeat(data[:, 126][:, np.newaxis], 60, axis = 1),
+            np.repeat(data[:, 127][:, np.newaxis], 60, axis = 1),
+            ], axis = 2)
+        
+        reshaped_data = reshaped_data.transpose(0, 2, 1)  # Change shape to (n_samples, n_channels, n_levels)
+        
+        # NOTE: No padding added here as output only has 60 levels, and we do not want to predict padded levels
+        # reshaped_data_padded =  np.pad(reshaped_data, ((0, 0), (0, 4), (0, 0)), mode='constant', constant_values=0)
+
+        return reshaped_data
 
     def _load_data(self):
         if self.mode == "train":
@@ -173,7 +212,4 @@ class SubSampledLowResDataset(Dataset):
         return len(self.input)
 
     def __getitem__(self, idx):
-        if self.model == "unet":
-            return self._reshape_input_for_unet(self.input[idx]), self.target[idx]
-        else:
-            return self.input[idx], self.target[idx]
+        return self.input[idx], self.target[idx]

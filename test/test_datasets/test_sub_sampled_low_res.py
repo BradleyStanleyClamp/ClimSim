@@ -96,7 +96,7 @@ def test_sub_sampled_low_res_dataset_for_unet(sub_sampled_low_res_config_path: s
     })
     mode = 'train'
     dataset_testing_type = 'full'
-    dataset = data_preparation.SubSampledLowResDataset(mode, dataset_testing_type, dataset_cfg, model='unet')
+    dataset = data_preparation.SubSampledLowResDataset(mode, dataset_testing_type, dataset_cfg, model='climsim_unet')
     x, y = dataset[0]
     assert x.shape[0] == 64
     assert x.shape[1] == 6

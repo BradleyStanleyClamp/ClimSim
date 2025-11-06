@@ -49,7 +49,7 @@ def standard_training_from_cfg(
 
         # Get data
         trainloader, valloader, testloader = data_preparation.get_all_dataloaders(
-            cfg.dataset, run.config.batch_size, cfg.testing.dataset_testing_type, datasets
+            cfg.dataset, run.config.batch_size, cfg.testing.dataset_testing_type, datasets, model=cfg.model.name
         )
         logging.info("Data loaders obtained")
 

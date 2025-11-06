@@ -52,7 +52,7 @@ def get_dataloader(dataset_cfg, mode, dataset_testing_type, batch_size) -> DataL
     dataset = get_dataset(dataset_cfg, mode, dataset_testing_type)
     return DataLoader(dataset, batch_size=dataset_cfg.batch_size, shuffle=(mode=="train"))
 
-def get_all_datasets(dataset_cfg, dataset_testing_type: str) -> tuple[Dataset, Dataset, Dataset]:
+def get_all_datasets(dataset_cfg, dataset_testing_type: str, model: str = None) -> tuple[Dataset, Dataset, Dataset]:
     """
     Function that gets you train, val and test datasets
 
@@ -65,18 +65,18 @@ def get_all_datasets(dataset_cfg, dataset_testing_type: str) -> tuple[Dataset, D
     Returns:
         tuple[Dataset, Dataset, Dataset]: train, val and test datasets
     """
-    train_dataset = get_dataset(dataset_cfg, "train", dataset_testing_type)
+    train_dataset = get_dataset(dataset_cfg, "train", dataset_testing_type, model=model)
     logging.info(f'trainset loaded with {len(train_dataset)} samples')
-    val_dataset = get_dataset(dataset_cfg, "val", dataset_testing_type)
+    val_dataset = get_dataset(dataset_cfg, "val", dataset_testing_type, model=model)
     logging.info(f'valset loaded with {len(val_dataset)} samples')
-    test_dataset = get_dataset(dataset_cfg, "test", dataset_testing_type)
+    test_dataset = get_dataset(dataset_cfg, "test", dataset_testing_type, model=model)
     logging.info(f'testset loaded with {len(test_dataset)} samples')
 
     return train_dataset, val_dataset, test_dataset
     
     
 
-def get_all_dataloaders(dataset_cfg, batch_size: int, dataset_testing_type: str, datasets: Tuple[Dataset, Dataset, Dataset]) -> tuple[DataLoader, DataLoader, DataLoader]:
+def get_all_dataloaders(dataset_cfg, batch_size: int, dataset_testing_type: str, datasets: Tuple[Dataset, Dataset, Dataset], model: str = None) -> tuple[DataLoader, DataLoader, DataLoader]:
     """
     Function that gets you train, val and test dataloaders, with the option of precomputed datasets
     Args:
@@ -93,7 +93,7 @@ def get_all_dataloaders(dataset_cfg, batch_size: int, dataset_testing_type: str,
     if datasets is not None:
         trainset, valset, testset = datasets
     else:
-        trainset, valset, testset = get_all_datasets(dataset_cfg, dataset_testing_type)
+        trainset, valset, testset = get_all_datasets(dataset_cfg, dataset_testing_type, model=model)
 
     train_dataloader = DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=dataset_cfg.general_dataset_config.num_workers)
     val_dataloader = DataLoader(valset, batch_size=batch_size, shuffle=False, num_workers=dataset_cfg.general_dataset_config.num_workers)

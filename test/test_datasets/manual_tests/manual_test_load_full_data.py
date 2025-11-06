@@ -41,12 +41,13 @@ def main(cfg: DictConfig):
 
     logging.info(f'model: {cfg.model.name}')
     trainset = data_preparation.get_dataset(
-        cfg.dataset, "train", cfg.testing.dataset_testing_type, model='unet'
+        cfg.dataset, "train", cfg.testing.dataset_testing_type, model=cfg.model.name
     )
 
     x, y = trainset[0]
 
     logging.info(f"Input shape: {x.shape}, Target shape: {y.shape}")
+    logging.info(f'dataset lengths: train {len(trainset)}')
 
 
 if __name__ == "__main__":

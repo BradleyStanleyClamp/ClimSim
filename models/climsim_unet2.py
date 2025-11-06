@@ -150,7 +150,11 @@ class ClimSimUNet(nn.Module):
                 # print(f"    After layer: {x.shape}")
 
         x = self.conv_out(x)
-        x = self._reshape_to_standard_format(x)
+
+        # Removing padded layers 
+        x = x[:, :, :-4]  # Remove last 4 levels added for padding to 64 levels
+
+        # x = self._reshape_to_standard_format(x) for reshaping to standard format (will need down the line)
         return x
 
     def _reshape_to_standard_format(self, x):
@@ -239,7 +243,6 @@ class ClimSimUNet(nn.Module):
             nn.Module: An upsampling block.
         """
         cat_channels = 2 * in_channels
-        print(f"Making up block: cat_channels={cat_channels}, in_channels={in_channels}, out_channels={out_channels}")
         
         if bottom_level:
             return nn.ModuleList([
