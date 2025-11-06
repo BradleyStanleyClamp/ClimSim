@@ -114,9 +114,9 @@ class ClimSimUNet(nn.Module):
         self.enc = nn.ModuleList()
         self.dec = nn.ModuleList()
 
-        self.conv_in = nn.Conv1d(48, 128, kernel_size=3, padding=1)
+        self.conv_in = nn.Conv1d(6, 128, kernel_size=3, padding=1)
         self._make_levels()
-        self.conv_out = nn.Conv1d(128, 13, kernel_size=3, padding=1)
+        self.conv_out = nn.Conv1d(128, 10, kernel_size=3, padding=1)
 
     def forward(self, x):
         x = self.conv_in(x)
