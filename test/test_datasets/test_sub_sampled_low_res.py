@@ -80,3 +80,23 @@ def test_sub_sampled_low_res_dataset_initialization_val(sub_sampled_low_res_conf
         config = OmegaConf.load(f)
 
     assert len(dataset) == config.dataset_testing_fractions.unit_test
+
+
+def test_sub_sampled_low_res_dataset_for_unet(sub_sampled_low_res_config_path: str = "../../config/dataset/sub_sampled_low_res.yaml"):
+    base_dir = Path(__file__).resolve().parents[1]
+    data_path = os.path.join(base_dir, "unit_test_sets", "sub_sampled_low_res/")
+    dataset_cfg: DictConfig = OmegaConf.create({
+        'dataset_name': 'subsampled_low_res',
+        'data_path': data_path,
+        'dataset_testing_fractions': {
+            'quick': 0.01,
+            'reduced': 0.1,
+            'full': 1.0
+        }
+    })
+    mode = 'train'
+    dataset_testing_type = 'full'
+    dataset = data_preparation.SubSampledLowResDataset(mode, dataset_testing_type, dataset_cfg, model='climsim_unet')
+    x, y = dataset[0]
+    assert x.shape[0] == 6
+    assert x.shape[1] == 64

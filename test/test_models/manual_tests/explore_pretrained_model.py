@@ -1,6 +1,9 @@
 import os
 from collections import Counter
 import torch
+import contextlib
+import sys
+from datetime import datetime
 
 """
 In an attemt to understand more about the SOTA Unets, I am trying to learn more about the setup from the pretrained models I have found.
@@ -10,7 +13,7 @@ In an attemt to understand more about the SOTA Unets, I am trying to learn more 
 # model_path = "/home/users/bradlesc/projects/ClimSim/models/models/saved_model/v2rh_unet_nonaggressive_cliprh_huber_rop2/model.pt" #26, 14
 # model_path = "/home/users/bradlesc/projects/ClimSim/models/models/saved_model/v2rh_unet_nonaggressive_cliprh_mae/model.pt" #26, 14
 # model_path = "/home/users/bradlesc/projects/ClimSim/models/models/saved_model/v4plus_unet_nonaggressive_cliprh_huber/model.pt" #57, 14
-model_path = "/home/users/bradlesc/projects/ClimSim/models/models/saved_model/v4plus_unet_nonaggressive_cliprh_huber_rop2_r3/model.pt" #57, 14
+# model_path = "/home/users/bradlesc/projects/ClimSim/models/models/saved_model/v4plus_unet_nonaggressive_cliprh_huber_rop2_r3/model.pt" #57, 14
 # model_path = "/home/users/bradlesc/projects/ClimSim/models/models/saved_model/v4plus_unet_nonaggressive_cliprh_mae/model.pt"
 # model_path = "/home/users/bradlesc/projects/ClimSim/models/models/saved_model/v5_unet_nonaggressive_cliprh_huber/model.pt" # 55, 13
 # model_path = "/home/users/bradlesc/projects/ClimSim/models/models/saved_model/v5_unet_nonaggressive_cliprh_huber_rop2_r2/model.pt" # 55, 13
@@ -50,54 +53,58 @@ def summarize_module(mod):
     for t, c in types.most_common():
         print(f"  {t}: {c}")
 
-print("Model file:", model_path)
-try:
-    print("File size (bytes):", os.path.getsize(model_path))
-except Exception:
-    pass
+def _run_inspection(log_f=None, model_path="model.pt"):
+    # This function contains the previous top-level inspection logic. When
+    # called with a file-like `log_f` open and stdout redirected, all prints
+    # will be written to that file.
+    print("Model file:", model_path)
+    try:
+        print("File size (bytes):", os.path.getsize(model_path))
+    except Exception:
+        pass
 
-obj = torch.load(model_path, map_location="cpu", weights_only=False)
-print("Loaded object type:", type(obj))
+    obj = torch.load(model_path, map_location="cpu", weights_only=False)
+    print("Loaded object type:", type(obj))
 
-if isinstance(obj, dict):
-    print("Top-level dict keys:", list(obj.keys()))
-    # try to locate a state_dict inside the dict
-    state_dict = None
-    candidate_keys = ("state_dict", "model_state_dict", "model", "state")
-    for k in candidate_keys:
-        if k in obj and isinstance(obj[k], dict):
-            state_dict = obj[k]
-            print(f"Using '{k}' as state-dict candidate")
-            break
-    # if the dict itself is map of tensors -> treat it as a state_dict
-    if state_dict is None and all(isinstance(v, torch.Tensor) for v in obj.values()):
-        state_dict = obj
-        print("Top-level dict looks like a state-dict; using it directly")
-    if state_dict is not None:
-        summarize_state_dict(state_dict)
+    if isinstance(obj, dict):
+        print("Top-level dict keys:", list(obj.keys()))
+        # try to locate a state_dict inside the dict
+        state_dict = None
+        candidate_keys = ("state_dict", "model_state_dict", "model", "state")
+        for k in candidate_keys:
+            if k in obj and isinstance(obj[k], dict):
+                state_dict = obj[k]
+                print(f"Using '{k}' as state-dict candidate")
+                break
+        # if the dict itself is map of tensors -> treat it as a state_dict
+        if state_dict is None and all(isinstance(v, torch.Tensor) for v in obj.values()):
+            state_dict = obj
+            print("Top-level dict looks like a state-dict; using it directly")
+        if state_dict is not None:
+            summarize_state_dict(state_dict)
+        else:
+            # print brief info about other entries
+            for k, v in obj.items():
+                if isinstance(v, torch.Tensor):
+                    print(f"{k}: tensor shape={tuple(v.size())} dtype={v.dtype}")
+                else:
+                    print(f"{k}: {type(v)}")
+    elif isinstance(obj, torch.nn.Module):
+        summarize_module(obj)
     else:
-        # print brief info about other entries
-        for k, v in obj.items():
-            if isinstance(v, torch.Tensor):
-                print(f"{k}: tensor shape={tuple(v.size())} dtype={v.dtype}")
-            else:
-                print(f"{k}: {type(v)}")
-elif isinstance(obj, torch.nn.Module):
-    summarize_module(obj)
-else:
-    # fallback: maybe a custom container with state_dict method
-    if hasattr(obj, "state_dict") and callable(obj.state_dict):
-        try:
-            sd = obj.state_dict()
-            print("Object has state_dict(); summarizing it:")
-            summarize_state_dict(sd)
-        except Exception as e:
-            print("Calling state_dict() failed:", e)
-    else:
-        print("Unrecognized object type. Try inspecting its attributes:")
-        for a in dir(obj):
-            if not a.startswith("_"):
-                print(" ", a)
+        # fallback: maybe a custom container with state_dict method
+        if hasattr(obj, "state_dict") and callable(obj.state_dict):
+            try:
+                sd = obj.state_dict()
+                print("Object has state_dict(); summarizing it:")
+                summarize_state_dict(sd)
+            except Exception as e:
+                print("Calling state_dict() failed:", e)
+        else:
+            print("Unrecognized object type. Try inspecting its attributes:")
+            for a in dir(obj):
+                if not a.startswith("_"):
+                    print(" ", a)
 
 def _print_inferred(label, info):
     print(f"{label}: {info}")
@@ -216,31 +223,75 @@ def _infer_from_module(mod):
 
 
 # Main inference entry: handle dict, module, or object with state_dict
-if isinstance(obj, torch.nn.Module):
-    print("Inferring IO dims from torch.nn.Module...")
-    _infer_from_module(obj)
-elif isinstance(obj, dict):
-    # try to locate a state_dict inside the dict (same candidates as earlier)
-    candidate_keys = ("state_dict", "model_state_dict", "model", "state")
-    sd = None
-    for k in candidate_keys:
-        if k in obj and isinstance(obj[k], dict):
-            sd = obj[k]
-            print(f"Using '{k}' entry as state-dict for inference")
-            break
-    if sd is None and all(isinstance(v, torch.Tensor) for v in obj.values()):
-        sd = obj
-        print("Top-level dict looks like a state-dict; using it for inference")
-    if sd is not None:
-        _infer_from_state_dict(sd)
+def _run_inference(obj):
+    # Reuse the previously-loaded `obj` and attempt to infer IO dims.
+    if isinstance(obj, torch.nn.Module):
+        print("Inferring IO dims from torch.nn.Module...")
+        _infer_from_module(obj)
+    elif isinstance(obj, dict):
+        # try to locate a state_dict inside the dict (same candidates as earlier)
+        candidate_keys = ("state_dict", "model_state_dict", "model", "state")
+        sd = None
+        for k in candidate_keys:
+            if k in obj and isinstance(obj[k], dict):
+                sd = obj[k]
+                print(f"Using '{k}' entry as state-dict for inference")
+                break
+        if sd is None and all(isinstance(v, torch.Tensor) for v in obj.values()):
+            sd = obj
+            print("Top-level dict looks like a state-dict; using it for inference")
+        if sd is not None:
+            _infer_from_state_dict(sd)
+        else:
+            print("No usable state-dict found in the loaded dict; cannot infer IO dims")
+    elif hasattr(obj, "state_dict") and callable(obj.state_dict):
+        try:
+            sd = obj.state_dict()
+            print("Using object's state_dict() for inference")
+            _infer_from_state_dict(sd)
+        except Exception as e:
+            print("Calling state_dict() failed for inference:", e)
     else:
-        print("No usable state-dict found in the loaded dict; cannot infer IO dims")
-elif hasattr(obj, "state_dict") and callable(obj.state_dict):
-    try:
-        sd = obj.state_dict()
-        print("Using object's state_dict() for inference")
-        _infer_from_state_dict(sd)
-    except Exception as e:
-        print("Calling state_dict() failed for inference:", e)
-else:
-    print("Cannot infer input/output dimensions for this object type.")
+        print("Cannot infer input/output dimensions for this object type.")
+
+
+def main():
+
+    models_path = "/home/users/bradlesc/projects/ClimSim/models/models/saved_model/"
+    model_names = ["v4plus_unet_nonaggressive_cliprh_huber_rop2_r3", "v2rh_unet_nonaggressive_cliprh_huber", "v2rh_unet_nonaggressive_cliprh_huber_rop2", "v2rh_unet_nonaggressive_cliprh_mae", "v4plus_unet_nonaggressive_cliprh_huber", "v4plus_unet_nonaggressive_cliprh_mae", "v5_unet_nonaggressive_cliprh_huber", "v5_unet_nonaggressive_cliprh_huber_rop2_r2", "v5_unet_nonaggressive_cliprh_mae"] 
+
+    for model_name in model_names:
+        model_path = os.path.join(models_path, model_name, "model.pt")
+        # Create a log filename based on the model file and timestamp
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        base = os.path.splitext(os.path.basename(model_path))[0]
+        log_dir = os.path.dirname(model_path) or os.getcwd()
+        log_filename = f"{model_name}.log"
+        log_path = os.path.join(log_filename)
+
+        # Redirect stdout to the log file for the duration of inspection
+        with open(log_path, 'w') as log_f:
+            with contextlib.redirect_stdout(log_f):
+                # Run the inspection (this will write into the log file)
+                _run_inspection(log_f=log_f, model_path=model_path)
+
+        # Re-open the model to run inference/IO-dim probing and append that to log
+        # (doing a second open so outputs are grouped; callers can modify behavior)
+        try:
+            obj = torch.load(model_path, map_location="cpu", weights_only=False)
+        except Exception as e:
+            print(f"Failed to reload model for inference probing: {e}")
+            obj = None
+
+        # Append inference results to the same log file
+        with open(log_path, 'a') as log_f:
+            with contextlib.redirect_stdout(log_f):
+                if obj is not None:
+                    _run_inference(obj)
+
+        # Briefly notify the user on the original stdout where the log was written
+        print(f"Inspection complete — saved output to: {log_path}")
+
+
+if __name__ == '__main__':
+    main()

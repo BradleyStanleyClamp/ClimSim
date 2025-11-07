@@ -13,7 +13,7 @@ wandb_mode: online
 dataset_testing_type: full
 epochs: ${max_epochs}
 plotting: False
-timings: False
+time_analysis: False
 
 
 energy_distance:

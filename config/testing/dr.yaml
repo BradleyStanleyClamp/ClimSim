@@ -12,7 +12,7 @@ wandb_mode: online
 dataset_testing_type: reduced
 epochs: 3
 plotting: True
-timings: False
+time_analysis: False
 
 energy_distance:
   K_cross: ${evaluate.energy_distance_test.K_cross}

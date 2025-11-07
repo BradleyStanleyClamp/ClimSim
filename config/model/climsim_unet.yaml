@@ -1,0 +1,14 @@
+name: climsim_unet
+
+
+single_run_configuration:
+  lr: 1e-4
+  batch_size: 1024
+  optimizer: Adam
+  scheduler: 
+    name: step
+    step_size: 3 # epochs
+    gamma: 0.5
+
+  
+  
