@@ -95,9 +95,10 @@ def get_all_dataloaders(dataset_cfg, batch_size: int, dataset_testing_type: str,
     else:
         trainset, valset, testset = get_all_datasets(dataset_cfg, dataset_testing_type, model=model)
 
-    train_dataloader = DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=dataset_cfg.general_dataset_config.num_workers)
-    val_dataloader = DataLoader(valset, batch_size=batch_size, shuffle=False, num_workers=dataset_cfg.general_dataset_config.num_workers)
-    test_dataloader = DataLoader(testset, batch_size=batch_size, shuffle=False, num_workers=dataset_cfg.general_dataset_config.num_workers)
+    logging.info(f'Creating dataloaders with batch size {batch_size} using {dataset_cfg.general_dataset_config.num_workers} workers')
+    train_dataloader = DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=int(dataset_cfg.general_dataset_config.num_workers), persistent_workers=dataset_cfg.general_dataset_config.persistent_workers, prefetch_factor=dataset_cfg.general_dataset_config.prefetch_factor)
+    val_dataloader = DataLoader(valset, batch_size=batch_size, shuffle=False, num_workers=int(dataset_cfg.general_dataset_config.num_workers), persistent_workers=dataset_cfg.general_dataset_config.persistent_workers, prefetch_factor=dataset_cfg.general_dataset_config.prefetch_factor)
+    test_dataloader = DataLoader(testset, batch_size=batch_size, shuffle=False, num_workers=int(dataset_cfg.general_dataset_config.num_workers), persistent_workers=dataset_cfg.general_dataset_config.persistent_workers, prefetch_factor=dataset_cfg.general_dataset_config.prefetch_factor)
 
     return train_dataloader, val_dataloader, test_dataloader
 

@@ -152,9 +152,9 @@ class ClimSimUNet(nn.Module):
         x = self.conv_out(x)
 
         # Removing padded layers 
-        x = x[:, :, :-4]  # Remove last 4 levels added for padding to 64 levels
+        # x = x[:, :, :-4]  # Remove last 4 levels added for padding to 64 levels
 
-        # x = self._reshape_to_standard_format(x) for reshaping to standard format (will need down the line)
+        x = self._reshape_to_standard_format(x) 
         return x
 
     def _reshape_to_standard_format(self, x):
@@ -165,18 +165,17 @@ class ClimSimUNet(nn.Module):
         Returns:
             reshaped_x: (torch.Tensor) (n_samples, features) reshaped output data
         """
-        output = torch.cat([
-            x[:, 0, 0:60],
-            x[:, 1, 0:60],
-            x[:, 2, 0:60].mean(dim=1, keepdim=True),
-            x[:, 3, 0:60].mean(dim=1, keepdim=True),
-            x[:, 4, 0:60].mean(dim=1, keepdim=True),
-            x[:, 5, 0:60].mean(dim=1, keepdim=True),
-            x[:, 6, 0:60].mean(dim=1, keepdim=True),
-            x[:, 7, 0:60].mean(dim=1, keepdim=True),
-            x[:, 8, 0:60].mean(dim=1, keepdim=True),
-            x[:, 9, 0:60].mean(dim=1, keepdim=True),
-        ], dim=1)
+        # slice once (no copy — view)
+        x0_60 = x[:, :, 0:60]            # shape (n, levels, 60)
+
+        # flatten the first two levels into (n, 120) in one op
+        first_two = x0_60[:, 0:2, :].reshape(x.shape[0], -1)  # shape (n, 2*60) == (n,120)
+
+        # compute the per-level means for levels 2..9 in one op
+        means_2_to_9 = x0_60[:, 2:10, :].mean(dim=2)         # shape (n, 8)
+
+        # concatenate once
+        output = torch.cat([first_two, means_2_to_9], dim=1)  # shape (n, 128)
         return output
     
     def _make_levels(self):

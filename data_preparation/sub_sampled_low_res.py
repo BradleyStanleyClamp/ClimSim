@@ -5,6 +5,8 @@ Script to build pytorch dataset for the subsampled low resolution data
 import logging
 from pathlib import Path
 from torch.utils.data import Dataset
+import numpy as np
+import torch
 import xarray as xr
 from climsim_utils.data_utils import *
 from omegaconf import DictConfig
@@ -44,9 +46,12 @@ class SubSampledLowResDataset(Dataset):
 
         if self.model == "climsim_unet":
             self.input = self._reshape_input_for_unet_full_data(self.input)
-            self.target = self._reshape_output_for_unet_full_data(self.target)
+            # self.target = self._reshape_output_for_unet_full_data(self.target)
             logging.info(f"Reshaped input data shape for unet: {self.input.shape}")
-            logging.info(f"Reshaped target data shape for unet: {self.target.shape}")
+            # logging.info(f"Reshaped target data shape for unet: {self.target.shape}")
+
+        self.input = torch.from_numpy(self.input).float()
+        self.target = torch.from_numpy(self.target).float()
 
     def _setup_data_class(self):
         # Resolve paths relative to this file so imports from other CWDs work

@@ -4,6 +4,7 @@ PyTorch Lightning wrapper module for efficient reproduction of training and eval
 """
 
 
+import logging
 import lightning as L
 import torch 
 from torch import nn
@@ -96,9 +97,11 @@ class LightningWrapper(L.LightningModule):
             torch.optim.Optimizer: The optimizer to be used for training.
         """
         optimizer = select_optimizer(self.optimizer)(self.parameters(), lr=self.lr)
-
+        logging.info(f"Using optimizer: {self.optimizer}")
+        
         if self.scheduler_cfg is not None:
             scheduler = select_scheduler(self.scheduler_cfg['name'], self.scheduler_cfg, optimizer)
+            logging.info(f"Using scheduler: {self.scheduler_cfg['name']}")
             return [optimizer], [scheduler]
         
         else:

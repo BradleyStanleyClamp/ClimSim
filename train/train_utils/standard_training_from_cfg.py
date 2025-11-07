@@ -12,6 +12,8 @@ import data_preparation
 import models
 from torch.utils.data import Dataset
 
+from pytorch_lightning.profilers import SimpleProfiler as pl_profiler
+
 
 def standard_training_from_cfg(
     cfg: DictConfig,
@@ -60,6 +62,11 @@ def standard_training_from_cfg(
         # Get call backs
         callbacks = []
 
+        if cfg.testing.time_analysis:
+            profiler = pl_profiler(filename="profiler_output.txt")
+        else:
+            profiler = None
+
         # Initialize trainer
         trainer = L.Trainer(
             max_epochs=cfg.testing.epochs,
@@ -69,6 +76,7 @@ def standard_training_from_cfg(
             enable_checkpointing=enable_checkpointing,
             callbacks=callbacks,
             log_every_n_steps=5,
+            profiler=profiler,
         )
 
         logging.info("Starting training")

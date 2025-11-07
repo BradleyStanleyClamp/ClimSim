@@ -51,7 +51,7 @@ def main(cfg: DictConfig):
 
     logging.info("Setup complete, starting training")
 
-    datasets = data_preparation.get_all_datasets(cfg.dataset, cfg.testing.dataset_testing_type)
+    datasets = data_preparation.get_all_datasets(cfg.dataset, cfg.testing.dataset_testing_type, model=cfg.model.name)
 
     for seed in cfg.train_seeds:
         train.seed_everything(seed)
@@ -60,7 +60,7 @@ def main(cfg: DictConfig):
             cfg,
             datasets,
             wandb_config,
-            f"{cfg.multirun_dir_name}_{cfg.project.timestamp}",
+            f"{cfg.multirun_dir_name}_{seed}_{cfg.project.timestamp}",
             enable_checkpointing=False,
             seed=seed,
             )

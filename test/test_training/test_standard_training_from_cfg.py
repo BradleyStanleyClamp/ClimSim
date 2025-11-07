@@ -15,7 +15,8 @@ def test_standard_training_from_cfg():
 
     with initialize(version_base=None, config_path="../../config"):
         # config is relative to a module
-        cfg = compose(config_name="train_general", overrides=['sweep=False', 'testing=qt','dataset.dataset_testing_fractions.quick=0.1'])
+        # NOTE: setting sweep to True to prevent model being saved
+        cfg = compose(config_name="train_general", overrides=['sweep=True', 'testing=qt','dataset.dataset_testing_fractions.quick=0.1'])
 
         wandb_config = omegaconf.OmegaConf.to_container(
             cfg.model.single_run_configuration, resolve=True, throw_on_missing=True
@@ -40,7 +41,7 @@ def test_unet_standard_training_from_cfg():
 
     with initialize(version_base=None, config_path="../../config"):
         # config is relative to a module
-        cfg = compose(config_name="train_general", overrides=['sweep=False', 'testing=qt', 'model=climsim_unet', 'dataset.dataset_testing_fractions.quick=0.1'])
+        cfg = compose(config_name="train_general", overrides=['sweep=True', 'testing=qt', 'model=climsim_unet', 'dataset.dataset_testing_fractions.quick=0.1'])
 
         wandb_config = omegaconf.OmegaConf.to_container(
             cfg.model.single_run_configuration, resolve=True, throw_on_missing=True
