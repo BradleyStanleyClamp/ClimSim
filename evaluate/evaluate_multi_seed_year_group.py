@@ -68,8 +68,16 @@ def main(cfg: DictConfig):
                 ax.scatter(x, test_losses)
 
     # draw baseline horizontal line and add to legend
-    baseline_y = 0.003736531361937523
-    ax.axhline(y=baseline_y, color='grey', linestyle='--', linewidth=1.5, label='baseline performance')
+    path_to_baseline = '/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/2/marginal_distribution_shifts_001_2025-11-05-10-19-36/yus_mlp_year_group_False/test_results.json'
+
+    with open(path_to_baseline, 'r') as f:
+        baseline_results = json.load(f)
+        baseline_losses = [baseline_results[str(i)][0]['test/loss'] for i in range(len(baseline_results))]
+
+
+    # baseline_y = 0.003736531361937523
+    for i in range(len(baseline_losses)):
+        ax.axhline(y=baseline_losses[i], color='grey', linestyle='--', linewidth=1.5, label='baseline performance')
     ax.legend(loc='best', fontsize='small')
 
     ax.set_xlabel("Training data group index")

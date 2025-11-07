@@ -286,5 +286,9 @@ def extract_marginal_distributions_for_visualization(data: np.ndarray, vis_margi
 
     if "near_surface_air_temperature" in vis_marginals_cfg.variables:
         results["near_surface_air_temperature"] = data[:,59][i_idx]
+    
+    if "top_3_levels_specific_humidity" in vis_marginals_cfg.variables:
+        for i in range(3):
+            results[f"top_{i}_level_specific_humidity"] = data[:, i][i_idx]
 
     return results

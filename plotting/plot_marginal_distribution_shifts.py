@@ -133,7 +133,7 @@ def plot_standard_feature_marginals(data, save_path: str):
             )
             ax.set_title('Scalar input features')
 
-        ax.set_ylabel("Values")
+        ax.set_ylabel("Energy distance")
         ax.grid(True)
         ax.set_ylim(min_val, max_val)
         fig.suptitle("Marginal Distribution Distances for Standard Features", fontsize=16, y=0.95)

@@ -16,9 +16,9 @@ chunk_size: 1000
 
 evaluation_options: 
   # - energy_distance
-  # - vis_marginals
+  - vis_marginals
   # - kl_divergence
-  - marginal_distributions
+  # - marginal_distributions
 
 energy_distance:
   K_cross: ${testing.energy_distance.K_cross} 
@@ -27,10 +27,14 @@ energy_distance:
   num_permutations: ${testing.energy_distance.num_permutations} 
 
 vis_marginals: # marginal distributions for visualisation
-  sample_size: 100000
+  sample_size: 1000000
   variables:
-    - near_surface_air_temperature
-    - near_surface_specific_humidity
+    # - near_surface_air_temperature
+    # - near_surface_specific_humidity
+    - top_3_levels_specific_humidity
+  groups_to_plot:
+    - 0
+    - 6
 
 kl_divergence:
   n_components: ${evaluate.kl_divergence.n_components}
