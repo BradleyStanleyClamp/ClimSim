@@ -29,6 +29,7 @@ from pathlib import Path
 import train
 import numpy as np
 from evaluate.evaluate_utils import save_evaluation_results_to_json
+import time
 
 @hydra.main(version_base=None, config_path="../../../config", config_name="train_general")
 def main(cfg: DictConfig):
@@ -40,10 +41,14 @@ def main(cfg: DictConfig):
     # trainset, valset, testset = data_preparation.get_all_datasets(cfg.dataset, cfg.testing.dataset_testing_type)
 
     logging.info(f'model: {cfg.model.name}')
-    trainset = data_preparation.get_dataset(
-        cfg.dataset, "train", cfg.testing.dataset_testing_type, model=cfg.model.name
-    )
-
+    for i in range(7):
+        start_time = time.perf_counter()
+        cfg.dataset.group_by_year = i
+        trainset = data_preparation.get_dataset(
+            cfg.dataset, "train", cfg.testing.dataset_testing_type, model=cfg.model.name
+        )
+        elapsed = time.perf_counter() - start_time
+        logging.info(f"Data loading time for year {i}: {elapsed:0.4f} seconds")
     x, y = trainset[0]
 
     logging.info(f"Input shape: {x.shape}, Target shape: {y.shape}")
