@@ -1,7 +1,7 @@
-project: p2.1.1
+project: p2.1.3
 
-task: '2'
-name: top_3_levels_specific_humidity_distributions #marginal_distribution_shifts_001 #yus_mlp_full_train_multiseed
+task: '3'
+name: dataset_evaluation_pipeline
 timestamp: ${now:%Y-%m-%d-%H-%M-%S}
 
 seed: 0 # High level seed for general code reproducibility, this will not be used for multiseed runs or sweeps
