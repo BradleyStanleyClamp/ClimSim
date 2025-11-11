@@ -28,7 +28,7 @@ import time
 import plotting
 import numpy as np
 
-@hydra.main(version_base=None, config_path="../config",config_name="evaluate_data_groups")
+@hydra.main(version_base=None, config_path="../../config",config_name="evaluate_data_groups")
 def main(cfg: DictConfig):
 
     
@@ -39,33 +39,34 @@ def main(cfg: DictConfig):
 
     torch.set_float32_matmul_precision("medium")
 
+    group_method = cfg.dataset.group_method
+    if not group_method:
+        raise ValueError("cfg.dataset.group_method must be set to a valid grouping method, cannot be False for evaluating data groups.")
+    num_data_groups = cfg.dataset[group_method].num_groups
 
     # Load trainset and testset 
-    trainset = data_preparation.get_dataset(cfg.dataset, "train", cfg.testing.dataset_testing_type)
+    # trainset = data_preparation.get_dataset(cfg.dataset, "train", cfg.testing.dataset_testing_type)
     testset = data_preparation.get_dataset(cfg.dataset, "test", cfg.testing.dataset_testing_type)
 
-    train_input = trainset.input
-    testset_input = testset.input
-
-    data_group_sample_size, num_data_groups = data_preparation.calc_sub_sampled_low_res_yearly_group_sample_size_and_num_groups(cfg.dataset, len(trainset), cfg.testing.dataset_testing_type)
-
-
+    
     # Iterate through each data group  
     full_results = {option_name: {} for option_name in cfg.evaluation_options}
     for group_idx in range(num_data_groups):
+        logging.info(f"Evaluating data group {group_idx + 1} / {num_data_groups}")
 
-        # get data group 
-        train_input_group = train_input[group_idx * data_group_sample_size:(group_idx + 1) * data_group_sample_size]
-
-
-        # start_time = time.perf_counter()
-        results = evaluate_data_groups(cfg, train_input_group, testset_input, evaluation_options=cfg.evaluation_options)
+        # Get data groups
+        cfg.dataset[group_method].target_group = group_idx
+        trainset = data_preparation.get_dataset(cfg.dataset, "train", cfg.testing.dataset_testing_type)
+        
+        logging.info(f"Trainset size for group {group_idx}: {len(trainset)}")
+   
+        start_time = time.perf_counter()
+        results = evaluate_data_groups(cfg, trainset.input, testset.input, evaluation_options=cfg.evaluation_options)
         for option_name in cfg.evaluation_options:
             full_results[option_name][group_idx] = results[option_name]
 
-        # elapsed = time.perf_counter() - start_time
-
-        # logging.info(f"evaluate_data_groups took {elapsed:.3f} seconds for group {group_idx}")
+        elapsed = time.perf_counter() - start_time
+        logging.info(f"evaluate_data_groups took {elapsed:.3f} seconds for group {group_idx}")
 
         full_results[group_idx] = results
 

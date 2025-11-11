@@ -16,9 +16,9 @@ chunk_size: 1000
 
 evaluation_options: 
   # - energy_distance
-  - vis_marginals
-  # - kl_divergence
-  # - marginal_distributions
+  # - vis_marginals
+  - kl_divergence
+  - marginal_distributions
 
 energy_distance:
   K_cross: ${testing.energy_distance.K_cross} 

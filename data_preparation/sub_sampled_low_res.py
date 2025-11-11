@@ -31,6 +31,8 @@ class SubSampledLowResDataset(Dataset):
         self.dataset_testing_type = dataset_testing_type
         self.dataset_config = dataset_config
         self.group_by_year = group_by_year
+
+        # Getting precomputed data path based on testing type for quick testing
         if dataset_testing_type == "quick":
             base_dir = Path(__file__).resolve().parents[1]
             self.data_path = os.path.join(base_dir, dataset_config.precomputed_quick_data_path)
@@ -38,7 +40,10 @@ class SubSampledLowResDataset(Dataset):
         else:
             self.data_path = dataset_config.data_path
 
-        # Setup ClimSim data class (not sure if necessary but may be useful in the future)
+        if self.mode == "train":
+            self.grouping_method = self._get_grouping_function(self.dataset_config.group_method)
+
+        # Setup ClimSim data class (useful for normalizations etc)
         self._setup_data_class()
 
         # Loading data based on mode and sample based on testing type
@@ -132,7 +137,6 @@ class SubSampledLowResDataset(Dataset):
 
         return reshaped_data_padded
     
-    
     def _reshape_output_for_unet_full_data(self, data):
         """
         Reshapes the output data for unet, where: 
@@ -164,6 +168,20 @@ class SubSampledLowResDataset(Dataset):
 
         return reshaped_data
 
+    def _get_grouping_function(self, group_method):
+        """
+        Gets the grouping function based on the group method specified in the configuration
+        Args:
+            group_method: (str) method to group data by
+        Returns:
+            grouping_function: (callable) function to group data
+            If no valid grouping method is specified, returns None
+        """
+        if group_method == "group_by_year":
+            return GroupByYear(self.dataset_config, self.dataset_testing_type)
+        else:
+            return None
+
     def _load_data(self):
         if self.mode == "train":
             train_input_path = self.data_path + "train_input.npy"
@@ -176,9 +194,8 @@ class SubSampledLowResDataset(Dataset):
                 self.dataset_config.dataset_testing_fractions,
             )
 
-            if self.group_by_year:
-                logging.info("Selecting data for specific year as per configuration")
-                train_input, train_target = select_year_of_data((train_input,train_target), self.dataset_config.group_by_year, self.dataset_config, self.dataset_testing_type)
+            if self.grouping_method:
+                train_input, train_target = self.grouping_method((train_input, train_target))
 
             self.data_class.input_train = train_input
             self.data_class.target_train = train_target
@@ -218,3 +235,14 @@ class SubSampledLowResDataset(Dataset):
 
     def __getitem__(self, idx):
         return self.input[idx], self.target[idx]
+
+
+class GroupByYear:
+    def __init__(self, dataset_cfg: DictConfig, dataset_testing_type: str):
+        self.dataset_cfg = dataset_cfg
+        self.dataset_testing_type = dataset_testing_type
+        if self.dataset_cfg.group_by_year.target_group is False:
+            raise ValueError(f'{dataset_cfg.group_by_year.target_group} must be set to a valid year index when using GroupByYear grouping method.')
+    def __call__(self, data):
+
+        return select_year_of_data(data, self.dataset_cfg.group_by_year.target_group, self.dataset_cfg, self.dataset_testing_type)

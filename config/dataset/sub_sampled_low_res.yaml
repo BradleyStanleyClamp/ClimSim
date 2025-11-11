@@ -6,6 +6,9 @@ precomputed_quick_data_path: 'test/unit_test_sets/sub_sampled_low_res/'
 input_dim: 124
 output_dim: 128
 num_spatial_points: 384
+samples_per_day: 72
+subsample_factors:
+  train: 7
 
 dataset_testing_fractions:
   unit_test: 3840
@@ -13,10 +16,12 @@ dataset_testing_fractions:
   reduced: 38400
   full: 1.0
 
+# Grouping Settings for splitting into different subgroups to achieve distribution shifts to test generalisation capabilities
+group_method: False # Whether to select a year of data to train on, if not false should be the year [0, 6] to select
 
-group_by_year: False # Whether to select a year of data to train on, if not false should be the year [0, 6] to select
+group_by_year:
+  num_groups: 7
+  target_group: False
 
-samples_per_day: 72
-subsample_factors:
-  train: 7
+
 

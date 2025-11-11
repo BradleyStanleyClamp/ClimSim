@@ -98,8 +98,8 @@ class LightningWrapper(L.LightningModule):
         """
         optimizer = select_optimizer(self.optimizer)(self.parameters(), lr=self.lr)
         logging.info(f"Using optimizer: {self.optimizer}")
-        
-        if self.scheduler_cfg is not None:
+
+        if self.scheduler_cfg is not None and self.scheduler_cfg != 'None':
             scheduler = select_scheduler(self.scheduler_cfg['name'], self.scheduler_cfg, optimizer)
             logging.info(f"Using scheduler: {self.scheduler_cfg['name']}")
             return [optimizer], [scheduler]
