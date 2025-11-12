@@ -18,7 +18,8 @@ def test_sub_sampled_low_res_dataset_initialization(sub_sampled_low_res_config_p
             'quick': 0.01,
             'reduced': 0.1,
             'full': 1.0
-        }
+        },
+        'group_method': False
     })
     mode = 'train'
     dataset_testing_type = 'full'
@@ -92,7 +93,8 @@ def test_sub_sampled_low_res_dataset_for_unet(sub_sampled_low_res_config_path: s
             'quick': 0.01,
             'reduced': 0.1,
             'full': 1.0
-        }
+        },
+        'group_method': False
     })
     mode = 'train'
     dataset_testing_type = 'full'

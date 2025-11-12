@@ -32,9 +32,8 @@ def get_dataset(dataset_cfg, mode:str, dataset_testing_type: str, model: str=Non
         ], "dataset_testing_type must be one of 'quick', 'reduced' or 'full'"
 
     if dataset_cfg.dataset_name == "subsampled_low_res":
-        group_by_year = True if dataset_cfg.group_by_year is not False else False
 
-        return data_preparation.SubSampledLowResDataset(mode, dataset_testing_type, dataset_cfg, model=model, group_by_year=group_by_year)
+        return data_preparation.SubSampledLowResDataset(mode, dataset_testing_type, dataset_cfg, model=model)
 
 def get_dataloader(dataset_cfg, mode, dataset_testing_type, batch_size) -> DataLoader:
     """
