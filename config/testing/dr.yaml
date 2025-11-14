@@ -14,8 +14,17 @@ epochs: 3
 plotting: True
 time_analysis: False
 
+# evaluate data group metric settings
+sample_size: 1000
+n_samples: 10
+batch_size: False
+
+
+
+# OBSOLETE
 energy_distance:
   K_cross: ${evaluate.energy_distance_test.K_cross}
   K_within: ${evaluate.energy_distance_test.K_within}
   batch_size: ${evaluate.energy_distance_test.batch_size}
   num_permutations: ${evaluate.energy_distance_test.num_permutations}
+

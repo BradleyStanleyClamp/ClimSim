@@ -1,0 +1,88 @@
+"""
+Testing distribution evaluation metrics.
+"""
+
+import torch 
+import evaluate
+import time 
+from scipy.stats import energy_distance
+
+from geomloss import SamplesLoss
+import dcor
+
+import numpy as np
+
+def test_matmul_trick():
+    X = torch.randn(1000, 10)
+    Y = torch.randn(2000, 10)
+    torch.set_float32_matmul_precision("medium")
+    start_time = time.perf_counter()
+    estimate = evaluate.squared_euclidean_distance_matrix_matmul_trick(X, Y)
+    elapsed = time.perf_counter() - start_time
+    print(f"estimated took {elapsed:.3f} seconds ")
+
+    start_time = time.perf_counter()
+    true = torch.cdist(X, Y, p=2) ** 2
+    elapsed = time.perf_counter() - start_time
+    print(f"true took {elapsed:.3f} seconds ")
+
+    assert estimate.shape == true.shape
+    assert torch.allclose(estimate, true, atol=1e-7)
+
+
+def test_different_energy_distances_1D():
+    torch.random.manual_seed(0)
+    X = torch.rand((100, 1))
+    Y = torch.rand((100, 1))
+    Loss =  SamplesLoss("energy")
+
+    geomloss_dist = Loss(X, Y ).item()
+    dcor_distance = dcor.energy_distance(X, Y)/2 
+    scipy_dist = energy_distance(X.squeeze(), Y.squeeze()) ** 2 /2
+    my_dist =  evaluate.energy_distance(X, Y) / 2
+
+    print(X.shape)
+    print(f"Energy Distance (geomloss): {geomloss_dist}")
+    print(f"Energy Distance (dcor): {dcor_distance}")
+    print(f"Energy Distance (scipy): {scipy_dist}")
+    print(f"Energy Distance (my): {my_dist}")
+
+    assert abs(geomloss_dist - dcor_distance) < 1e-3
+    assert abs(geomloss_dist - scipy_dist) < 1e-3
+    assert abs(geomloss_dist - my_dist) < 1e-3
+
+def test_different_energy_distances_2D():
+    torch.random.manual_seed(0)
+    X = torch.rand((100, 2))
+    Y = torch.rand((100, 2))
+    Loss =  SamplesLoss("energy")
+
+    geomloss_dist = Loss(X, Y ).item()
+    dcor_distance = dcor.energy_distance(X, Y)/2 
+    my_dist =  evaluate.energy_distance(X, Y) / 2
+
+    print(X.shape)
+    print(f"Energy Distance (geomloss): {geomloss_dist}")
+    print(f"Energy Distance (dcor): {dcor_distance}")
+    print(f"Energy Distance (my): {my_dist}")
+
+    assert abs(geomloss_dist - dcor_distance) < 1e-3
+    assert abs(geomloss_dist - my_dist) < 1e-3
+
+def test_energy_distance_order():
+    # (samples, features)
+    X = torch.ones((50, 2))
+    Y = torch.ones((100, 2))
+
+    Loss =  SamplesLoss("energy")
+    geomloss_dist = Loss(X, Y ).item()
+    dcor_distance = dcor.energy_distance(X, Y)/2 
+    my_dist =  evaluate.energy_distance(X, Y) / 2
+
+    print(X.shape)
+    print(f"Energy Distance (geomloss): {geomloss_dist}")
+    print(f"Energy Distance (dcor): {dcor_distance}")
+    print(f"Energy Distance (my): {my_dist}")
+
+    assert abs(geomloss_dist - dcor_distance) < 1e-3
+    assert abs(geomloss_dist - my_dist) < 1e-3

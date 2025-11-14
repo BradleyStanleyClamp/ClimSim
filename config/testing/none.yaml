@@ -16,6 +16,12 @@ plotting: False
 time_analysis: False
 
 
+# evaluate data group metric settings
+sample_size: 200000
+n_samples: 10
+batch_size: 2048
+
+# OBSOLETE
 energy_distance:
   K_cross: ${evaluate.energy_distance_standard.K_cross}
   K_within: ${evaluate.energy_distance_standard.K_within}

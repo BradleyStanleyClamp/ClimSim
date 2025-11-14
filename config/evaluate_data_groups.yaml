@@ -15,10 +15,12 @@ multirun_dir_name: eval_data_groups
 chunk_size: 1000
 
 evaluation_options: 
-  # - energy_distance
+  - multivariate
   # - vis_marginals
-  - kl_divergence
-  - marginal_distributions
+  # - kl_divergence
+  # - marginal_distributions
+  
+metric_name: 'energy_distance'
 
 energy_distance:
   K_cross: ${testing.energy_distance.K_cross} 

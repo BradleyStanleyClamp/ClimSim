@@ -1,3 +1,10 @@
+
+# Used for the MetricWrapper for optimisations when running the metrics on large quantities of data
+sample_size: ${testing.sample_size}
+n_samples: ${testing.n_samples}
+batch_size: ${testing.batch_size}
+
+
 energy_distance_standard: # Standard (no or full testing)
   K_cross: 200000
   K_within: 200000
