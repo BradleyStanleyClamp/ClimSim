@@ -10,7 +10,7 @@ defaults:
   - testing: qt
   - override hydra/launcher: slurm
 
-multirun_dir_name: eval_data_groups
+multirun_dir_name: eval_data_groups_${testing.batch_size}
 
 chunk_size: 1000
 
@@ -20,7 +20,7 @@ evaluation_options:
   # - kl_divergence
   # - marginal_distributions
   
-metric_name: 'energy_distance'
+metric_name: energy_distance
 
 energy_distance:
   K_cross: ${testing.energy_distance.K_cross} 

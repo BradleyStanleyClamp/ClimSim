@@ -20,40 +20,68 @@ from evaluate.evaluate_utils.energy_distance import energy_distance
 
 class MetricWrapper:
     def __init__(
-        self, samples_size: int, n_samples: int, batch_size: int, metric_name: str, dataloader_cfg: DictConfig
+        self, samples_size: int, metric_name: str, batch_size: Optional[int] = None, device: Optional[torch.device] = None
     ):
         """
-        Wrapper for different metrics to handle optimisations and significance testing
+        Wrapper for different metrics to handle optimisations and significance testing.
+        V1: only supports:
+            - Metrics: Energy Distance
+            - Optimisations: Fixed single sampling process from datasets, batching for large datasets
+
+        Future versions to include:
+            - Metrics: KL Divergence [+ PCA]
+            - Optimisations: Batching for large datasets, Monte Carlo sampling of multiple samples from datasets
+            - Significance Testing: Permutation Tests
+
         Args:
-            n_samples (int): Number of samples if doing sampling
-            batch_size (int): Batch size for computations.
+            samples_size (int): Number of samples to draw from each dataset for metric calculation.
             metric_name (str): Name of the metric to use.
-            dataloader_cfg (DictConfig): Configuration for the dataloader.
+            batch_size (Optional[int]): Batch size for large datasets.
         """
         self.sample_size = samples_size
-        self.n_samples = n_samples
         self.batch_size = batch_size
-        self.dataloader_cfg = dataloader_cfg
+
+        # Note: metrics should expect torch tensors in the form (samples, features)
         self.metric_function = self._get_metric_function(metric_name)
+
         self.observed = None
 
     def calculate(self, X: Dataset, Y: Dataset) -> float:
         """
         Calculate the metric between datasets X and Y.
+        Args:
+            X (Dataset): First dataset.
+            Y (Dataset): Second dataset.
+            NOTE: Datasets must have:
+            - a .input attribute containing the data as a torch tensor
+            - a .sample(num_samples) method to sample num_samples from the dataset
+
+        Returns:
+            metric_value (float): Calculated metric value.
         """
 
-        assert isinstance(X, Dataset) and isinstance(Y, Dataset), f"X and Y must be torch Datasets"
+        assert isinstance(X, Dataset) and isinstance(
+            Y, Dataset
+        ), f"X and Y must be torch Datasets"
 
         # For now we just have functionality to take a single sample instead of multiple samples (monte carlo sampling)
-        if self.sample_size and self.sample_size < len(X):
+        if self.sample_size and self.sample_size < min(len(X), len(Y)):
             if (
                 hasattr(X, "sample")
                 and callable(getattr(X, "sample"))
                 and hasattr(Y, "sample")
                 and callable(getattr(Y, "sample"))
             ):
+                logging.info(
+                    f"Sampling {self.sample_size} samples from each dataset for metric calculation."
+                )
+                start_time = time.perf_counter()
                 X.sample(self.sample_size)
                 Y.sample(self.sample_size)
+                elapsed = time.perf_counter() - start_time    
+                logging.info(
+                    f"Sampling took {elapsed:.3f} seconds (for both datasets)."
+                )            
                 assert len(X) == self.sample_size
                 assert len(Y) == self.sample_size
             else:
@@ -61,33 +89,8 @@ class MetricWrapper:
                     "Datasets must have a callable 'sample' method to perform sampling."
                 )
 
-        # For memory constraints we can do batchwise computation and utilise the torch dataloaders for efficiency
-        if not self.batch_size:
-            self.batch_size = max(len(X), len(Y))
-            
-        dataloader_X = DataLoader(
-            X,
-            batch_size=self.batch_size,
-            shuffle=True,
-            num_workers=int(self.dataloader_cfg.num_workers),
-            persistent_workers=self.dataloader_cfg.persistent_workers,
-            prefetch_factor=self.dataloader_cfg.prefetch_factor,
-        )
-        dataloader_Y = DataLoader(
-            Y,
-            batch_size=self.batch_size,
-            shuffle=True,
-            num_workers=int(self.dataloader_cfg.num_workers),
-            persistent_workers=self.dataloader_cfg.persistent_workers,
-            prefetch_factor=self.dataloader_cfg.prefetch_factor,
-        )
-        all_metrics = []
-        for batch_X, batch_Y in zip(dataloader_X, dataloader_Y):
-                batch_metric = self.metric_function(batch_X, batch_Y)
-                all_metrics.append(batch_metric)
-
-        return float(np.mean(all_metrics))
-
+        self.observed = self.metric_function(X.input, Y.input, batch_size=self.batch_size)
+        return self.observed
 
     def permutation_test(self, X, Y, num_permutations=500):
         """
@@ -117,34 +120,49 @@ class MetricWrapper:
             raise ValueError(f"Unknown metric name: {metric_name}")
 
 
-def evaluate_data_groups(
+def evaluate_data_group(
     cfg: DictConfig,
-    train_data: np.ndarray,
-    test_data: np.ndarray,
+    trainset: Dataset,
+    testset: Dataset,
     evaluation_options: list[str],
 ):
     """
-    Evaluate a data groups distribution shift compared to the test set using specified evaluation options.
+    Evaluate a data group distribution shift compared to the test set using specified evaluation options.
 
     Args:
         cfg (DictConfig): Configuration object containing evaluation settings.
-        train_data (np.ndarray)(samples, features): Training data.
-        test_data (np.ndarray)(samples, features): Test data.
+        trainset (torch.utils.data.Dataset): Training dataset.
+        testset (torch.utils.data.Dataset): Test dataset.
+        Note: Datasets must have:
+            - a .input attribute containing the data as a torch tensor
+            - a .sample(num_samples) method to sample num_samples from the dataset (if sampling is required)
         evaluation_options (list[str]): List of evaluation options to perform.
 
     Returns:
         results (dict): Dictionary containing evaluation results for each option.
 
     """
+    assert isinstance(trainset, Dataset) and isinstance(
+        testset, Dataset
+    ), f"trainset and testset must be torch Datasets"
     results = {}
 
     if "multivariate" in evaluation_options:
         metric = MetricWrapper(
             cfg.evaluate.sample_size,
-            cfg.evaluate.n_samples,
-            cfg.evaluate.batch_size,
             metric_name=cfg.metric_name,
+            batch_size=cfg.testing.batch_size,
         )
+        start_time = time.perf_counter()
+        observed_metric = metric.calculate(trainset, testset)
+        elapsed = time.perf_counter() - start_time
+        logging.info(
+            f"Multivariate {cfg.metric_name} calculation took {elapsed:.3f} seconds "
+        )
+        results["multivariate"] = {"value": observed_metric}
+        logging.info(f"Multivariate {cfg.metric_name} Value: {observed_metric:.6f}")
+
+        # TODO: Add permutation test functionality
 
     # if "energy_distance" in evaluation_options:
     #     # if cfg.testing.timings:

@@ -1,4 +1,4 @@
-# Dress rehearsal: A more serious 'flush through' of system, but they should result in meaningful results, i.e loss curves and comparable metrics
+# Dress rehearsal: A more serious 'flush through' of system, but still with reduced settings
 
 test_name: dress_rehearsal
 
@@ -13,6 +13,7 @@ dataset_testing_type: reduced
 epochs: 3
 plotting: True
 time_analysis: False
+num_workers: 4
 
 # evaluate data group metric settings
 sample_size: 1000

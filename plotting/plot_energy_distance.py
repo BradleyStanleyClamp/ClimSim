@@ -29,11 +29,12 @@ def plot_energy_distance_results(energy_distance_dict: dict, save_path: str):
         keys_sorted = sorted(keys)
 
     x = list(range(len(keys_sorted)))
-    p_values = [energy_distance_dict[k]['p_value'] for k in keys_sorted]
+    # p_values = [energy_distance_dict[k]['p_value'] for k in keys_sorted]
     y = [energy_distance_dict[k]['value'] for k in keys_sorted]
-    y_err = [energy_distance_dict[k]['std_err'] for k in keys_sorted]
+    # y_err = [energy_distance_dict[k]['std_err'] for k in keys_sorted]
 
-    ax.errorbar(x, y, yerr=y_err, marker="o", linestyle="-")
+    # ax.errorbar(x, y, yerr=y_err, marker="o", linestyle="-")
+    ax.errorbar(x, y, marker="o", linestyle="-")
     ax.set_xlabel("Data group index")
     ax.set_ylabel("Energy distance")
     ax.set_title("Energy distance vs Data group index")

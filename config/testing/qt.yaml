@@ -15,7 +15,7 @@ dataset_testing_type: quick
 epochs: 2
 plotting: False
 time_analysis: False
-
+num_workers: 1
 
 # evaluate data group metric settings
 sample_size: False

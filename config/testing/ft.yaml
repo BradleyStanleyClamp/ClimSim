@@ -13,9 +13,10 @@ dataset_testing_type: full
 epochs: 3
 plotting: True
 time_analysis: True
+num_workers: 7
 
 # evaluate data group metric settings
-sample_size: 200000
+sample_size: 20000
 n_samples: False
 batch_size: 2048
 

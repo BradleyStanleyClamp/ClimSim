@@ -275,7 +275,7 @@ def calc_sub_sampled_low_res_yearly_group_sample_size_and_num_groups(
         384 if dataset_testing_type == "quick" else data_group_sample_size
     )
     data_group_sample_size = (
-        38400 if dataset_testing_type == "reduced" else data_group_sample_size
+        3840 if dataset_testing_type == "reduced" else data_group_sample_size
     )
 
     num_data_groups = dataset_length // data_group_sample_size

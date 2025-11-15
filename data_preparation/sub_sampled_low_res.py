@@ -259,6 +259,10 @@ class SubSampledLowResDataset(Dataset):
             self.data_class.target_scoring = test_target
             return self.data_class.input_scoring, self.data_class.target_scoring
 
+    def sample(self, num_samples):
+        self.input = self.input[torch.randperm(len(self.input))[:num_samples]]
+        self.target = self.target[torch.randperm(len(self.target))[:num_samples]]
+
     def __len__(self):
         return len(self.input)
 

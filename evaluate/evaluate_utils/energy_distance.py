@@ -1,40 +1,456 @@
 import math
+from typing import Optional
 import numpy as np
+from torch.utils.data import Dataset, DataLoader
 import torch
+from evaluate.evaluate_utils.general_metric_utils import (
+    squared_euclidean_distance_matrix_matmul_trick,
+)
 
-from evaluate.evaluate_utils.general_metric_utils import squared_euclidean_distance_matrix_matmul_trick
 
-def energy_distance(X: torch.Tensor, Y: torch.Tensor) -> float:
+def _pairwise_squared_dists(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
     """
-    Compute the energy distance between two datasets X and Y (on GPU, if possible).
+    Compute squared Euclidean distances between rows of `a` and `b`
+    using the matmul trick. Returns a (na, nb) tensor >= 0.
+    """
+    # a: (na, d), b: (nb, d)
+    # use float32/float64 from inputs
+    a2 = (a * a).sum(dim=1, keepdim=True)  # (na,1)
+    b2 = (b * b).sum(dim=1, keepdim=True).transpose(0, 1)  # (1,nb)
+    ab = a @ b.t()  # (na, nb)
+    d2 = a2 + b2 - 2.0 * ab
+    # numerical safety
+    return torch.clamp(d2, min=0.0)
+
+
+# def energy_distance(
+#     X: Dataset, Y: Dataset, batch_size=None, general_dataset_config=None
+# ) -> float:
+#     """
+#     Compute the energy distance between two datasets X and Y (on GPU, if possible).
+#     Minimal edits to match the 'biased' averaging used by SciPy/dcor/geomloss.
+
+#     Args:
+#         X (Dataset): First dataset.
+#         Y (Dataset): Second dataset.
+#         batch_size (int, optional): Batch size for DataLoader. If None or False, uses full dataset size.
+#         general_dataset_config (DictConfig, optional): Configuration for DataLoader settings.
+
+#     Returns:
+#         float: Energy distance between X and Y.
+#     """
+#     assert isinstance(X, Dataset) and isinstance(
+#         Y, Dataset
+#     ), f"Inputs must be torch Datasets, got {type(X)} and {type(Y)}"
+
+#     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+#     if batch_size is False or batch_size is None:
+#         batch_size = max(len(X), len(Y))
+
+#     num_workers = general_dataset_config.num_workers if general_dataset_config else 0
+#     prefetch_factor = (
+#         general_dataset_config.prefetch_factor if general_dataset_config else False
+#     )
+#     persistent_workers = (
+#         general_dataset_config.persistent_workers if general_dataset_config else False
+#     )
+
+#     Xloader = DataLoader(
+#         X,
+#         batch_size=batch_size,
+#         shuffle=False,
+#         num_workers=num_workers,
+#         prefetch_factor=prefetch_factor,
+#         persistent_workers=persistent_workers,
+#     )
+
+#     # Get dataset sizes (len(Dataset) should be implemented)
+#     n = len(X)
+#     m = len(Y)
+#     if n == 0 or m == 0:
+#         raise ValueError("Datasets must be non-empty")
+
+#     # --- cross term (same as before) ---
+#     cross_sum = 0.0
+#     with torch.no_grad():
+#         for Xi in Xloader:
+#             Xi = _extract_features(Xi).to(device)
+#             for Yj in DataLoader(
+#                 Y,
+#                 batch_size=batch_size,
+#                 shuffle=False,
+#                 num_workers=num_workers,
+#                 prefetch_factor=prefetch_factor,
+#                 persistent_workers=persistent_workers,
+#             ):
+#                 Yj = _extract_features(Yj).to(device)
+#                 dXY_block = squared_euclidean_distance_matrix_matmul_trick(Xi, Yj)
+#                 cross_sum += torch.sqrt(dXY_block).sum().item()
+#     mean_xy = cross_sum / (n * m)
+
+#     # --- within-X term: now COUNT ALL PAIRS (including diagonal) and divide by n*n ---
+#     xx_sum = 0.0
+#     with torch.no_grad():
+#         for i_idx, Xi in enumerate(
+#             DataLoader(
+#                 X,
+#                 batch_size=batch_size,
+#                 shuffle=False,
+#                 num_workers=num_workers,
+#                 prefetch_factor=prefetch_factor,
+#                 persistent_workers=persistent_workers,
+#             )
+#         ):
+#             Xi = _extract_features(Xi).to(device)
+#             for j_idx, Xj in enumerate(
+#                 DataLoader(
+#                     X,
+#                     batch_size=batch_size,
+#                     shuffle=False,
+#                     num_workers=num_workers,
+#                     prefetch_factor=prefetch_factor,
+#                     persistent_workers=persistent_workers,
+#                 )
+#             ):
+#                 # handle only upper triangle (including diagonal) and mirror off-diagonals
+#                 if j_idx < i_idx:
+#                     continue
+#                 Xj = _extract_features(Xj).to(device)
+#                 dXX_block = squared_euclidean_distance_matrix_matmul_trick(Xi, Xj)
+#                 if i_idx == j_idx:
+#                     # include diagonal (they are zeros) — count all pairs in this block
+#                     xx_sum += torch.sqrt(dXX_block).sum().item()
+#                 else:
+#                     # off-diagonal block contributes twice (i<j and j<i)
+#                     xx_sum += 2.0 * torch.sqrt(dXX_block).sum().item()
+#     mean_xx = xx_sum / (n * n)  # <-- minimal change: n*n (biased/legacy)
+
+#     # --- within-Y term: same biased handling as within-X ---
+#     yy_sum = 0.0
+#     with torch.no_grad():
+#         for i_idx, Yi in enumerate(
+#             DataLoader(
+#                 Y,
+#                 batch_size=batch_size,
+#                 shuffle=False,
+#                 num_workers=num_workers,
+#                 prefetch_factor=prefetch_factor,
+#                 persistent_workers=persistent_workers,
+#             )
+#         ):
+#             Yi = _extract_features(Yi).to(device)
+#             for j_idx, Yj in enumerate(
+#                 DataLoader(
+#                     Y,
+#                     batch_size=batch_size,
+#                     shuffle=False,
+#                     num_workers=num_workers,
+#                     prefetch_factor=prefetch_factor,
+#                     persistent_workers=persistent_workers,
+#                 )
+#             ):
+#                 if j_idx < i_idx:
+#                     continue
+#                 Yj = _extract_features(Yj).to(device)
+#                 dYY_block = squared_euclidean_distance_matrix_matmul_trick(Yi, Yj)
+#                 if i_idx == j_idx:
+#                     yy_sum += torch.sqrt(dYY_block).sum().item()
+#                 else:
+#                     yy_sum += 2.0 * torch.sqrt(dYY_block).sum().item()
+#     mean_yy = yy_sum / (m * m)  # <-- minimal change: m*m (biased/legacy)
+
+#     # --- energy distance formula ---
+#     energy_dist = 2 * mean_xy - mean_xx - mean_yy
+#     return float(energy_dist)
+
+
+# def energy_distance(
+#     X: Dataset,
+#     Y: Dataset,
+#     batch_size: Optional[int] = None,
+#     general_dataset_config=None,
+# ) -> float:
+#     """
+#     Optimized (minimal-change) energy distance using batched streaming.
+#     - Reuses DataLoader objects
+#     - Uses pin_memory + non_blocking copies for GPU
+#     - Uses torch.cdist on CUDA, matmul trick on CPU
+#     - Accumulates on-device to reduce .item() overhead
+#     """
+#     assert isinstance(X, Dataset) and isinstance(
+#         Y, Dataset
+#     ), f"Inputs must be torch Datasets, got {type(X)} and {type(Y)}"
+
+#     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+#     # sensible default to avoid accidentally loading everything into memory
+#     if batch_size is False or batch_size is None:
+#         batch_size = min(
+#             1024, max(len(X), len(Y))
+#         )  # default 1024 but never larger than dataset
+
+#     num_workers = general_dataset_config.num_workers if general_dataset_config else 0
+#     prefetch_factor = (
+#         general_dataset_config.prefetch_factor if general_dataset_config else None
+#     )
+#     persistent_workers = False
+
+#     # pin_memory only helpful when transferring to GPU
+#     pin_memory = True if device.type == "cuda" else False
+
+#     # Create reusable loaders once (do NOT recreate inside inner loops)
+#     Xloader = DataLoader(
+#         X,
+#         batch_size=batch_size,
+#         shuffle=False,
+#         num_workers=num_workers,
+#         prefetch_factor=prefetch_factor,
+#         persistent_workers=persistent_workers,
+#         pin_memory=pin_memory,
+#     )
+#     Yloader = DataLoader(
+#         Y,
+#         batch_size=batch_size,
+#         shuffle=False,
+#         num_workers=num_workers,
+#         prefetch_factor=prefetch_factor,
+#         persistent_workers=persistent_workers,
+#         pin_memory=pin_memory,
+#     )
+
+#     # dataset sizes
+#     n = len(X)
+#     m = len(Y)
+#     if n == 0 or m == 0:
+#         raise ValueError("Datasets must be non-empty")
+
+#     use_cdist = device.type == "cuda"  # prefer cdist on GPU; keep matmul trick on CPU
+
+#     # Helper to move batch to device efficiently
+#     def to_device(t):
+#         # assume t is a tensor
+#         return t.to(device=device, non_blocking=pin_memory)
+
+#     # --- cross term ---
+#     cross_sum_t = torch.tensor(0.0, device=device)  # accumulate on device
+#     with torch.no_grad():
+#         for Xi in Xloader:
+#             Xi = _extract_features(Xi)
+#             Xi = to_device(Xi)
+#             # iterate over Yloader (fresh iterator each time but same loader object)
+#             for Yj in Yloader:
+#                 Yj = _extract_features(Yj)
+#                 Yj = to_device(Yj)
+#                 if use_cdist:
+#                     d_block = torch.cdist(Xi, Yj, p=2)  # distances directly
+#                 else:
+#                     d2 = squared_euclidean_distance_matrix_matmul_trick(Xi, Yj)
+#                     d_block = torch.sqrt(d2)
+#                 # accumulate on-device (avoids .item() per block)
+#                 cross_sum_t += d_block.sum()
+#     mean_xy = (cross_sum_t / (n * m)).item()
+
+#     # --- within-X term ---
+#     xx_sum_t = torch.tensor(0.0, device=device)
+#     with torch.no_grad():
+#         # enumerate over Xloader for indices
+#         for i_idx, Xi in enumerate(Xloader):
+#             Xi = _extract_features(Xi)
+#             Xi = to_device(Xi)
+#             # inner loop uses the SAME Xloader object (creates new iterator)
+#             for j_idx, Xj in enumerate(Xloader):
+#                 if j_idx < i_idx:
+#                     continue
+#                 Xj = _extract_features(Xj)
+#                 Xj = to_device(Xj)
+#                 if use_cdist:
+#                     d_block = torch.cdist(Xi, Xj, p=2)
+#                 else:
+#                     d2 = squared_euclidean_distance_matrix_matmul_trick(Xi, Xj)
+#                     d_block = torch.sqrt(d2)
+#                 if i_idx == j_idx:
+#                     # include diagonal (they are zeros) — sum all entries
+#                     xx_sum_t += d_block.sum()
+#                 else:
+#                     xx_sum_t += 2.0 * d_block.sum()
+#     mean_xx = (xx_sum_t / (n * n)).item()
+
+#     # --- within-Y term ---
+#     yy_sum_t = torch.tensor(0.0, device=device)
+#     with torch.no_grad():
+#         for i_idx, Yi in enumerate(Yloader):
+#             Yi = _extract_features(Yi)
+#             Yi = to_device(Yi)
+#             for j_idx, Yj in enumerate(Yloader):
+#                 if j_idx < i_idx:
+#                     continue
+#                 Yj = _extract_features(Yj)
+#                 Yj = to_device(Yj)
+#                 if use_cdist:
+#                     d_block = torch.cdist(Yi, Yj, p=2)
+#                 else:
+#                     d2 = squared_euclidean_distance_matrix_matmul_trick(Yi, Yj)
+#                     d_block = torch.sqrt(d2)
+#                 if i_idx == j_idx:
+#                     yy_sum_t += d_block.sum()
+#                 else:
+#                     yy_sum_t += 2.0 * d_block.sum()
+#     mean_yy = (yy_sum_t / (m * m)).item()
+
+#     energy_dist = 2 * mean_xy - mean_xx - mean_yy
+#     return float(energy_dist)
+
+
+def energy_distance(
+    X_tensor: torch.Tensor,
+    Y_tensor: torch.Tensor,
+    batch_size: Optional[int] = None,
+) -> float:
+    """
+
+    Batched energy distance computation between two tensors.
+    - Uses pin_memory + non_blocking copies for GPU
+    - Uses torch.cdist on CUDA, matmul trick on CPU
+    - Accumulates on-device to reduce .item() overhead
+    - Reuses the same batching logic as DataLoader, but directly on tensors
+    - Matches the 'biased' averaging (denominators n*n and m*m).
+
     Args:
-        X (torch.Tensor): First dataset.
-        Y (torch.Tensor): Second dataset.
+        X_tensor (torch.Tensor): First dataset tensor.
+        Y_tensor (torch.Tensor): Second dataset tensor.
+        batch_size (int, optional): Batch size for processing. 
+
     Returns:
-        float: Energy distance between X and Y.
+        float: Energy distance between X_tensor and Y_tensor.
     """
-    assert isinstance(X, torch.Tensor) and isinstance(Y, torch.Tensor), f"Inputs must be torch Tensors, got {type(X)} and {type(Y)}"
-    device = X.device
+    assert isinstance(X_tensor, torch.Tensor) and isinstance(
+        Y_tensor, torch.Tensor
+    ), f"Inputs must be torch Tensors, got {type(X_tensor)} and {type(Y_tensor)}"
 
-    n, m = X.shape[0], Y.shape[0]
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # --- cross term ---
-    dXY = squared_euclidean_distance_matrix_matmul_trick(X, Y)
-    mean_xy = torch.sqrt(dXY).mean().item()
+    # sensible default to avoid accidentally using too-large batches
+    if batch_size is False or batch_size is None:
+        batch_size = min(1024, max(len(X_tensor), len(Y_tensor)))
 
-    # --- within-X term ---
-    dXX = squared_euclidean_distance_matrix_matmul_trick(X, X)
-    mean_xx = torch.sqrt(dXX + torch.eye(n, device=device) * 1e-8).mean().item()
+    # pin_memory is only relevant when moving to CUDA
+    pin_memory = True if device.type == "cuda" else False
 
-    # --- within-Y term ---
-    dYY = squared_euclidean_distance_matrix_matmul_trick(Y, Y)
-    mean_yy = torch.sqrt(dYY + torch.eye(m, device=device) * 1e-8).mean().item()
+    # Ensure float (the cdist/matmul expects float)
+    if not torch.is_floating_point(X_tensor):
+        X_tensor = X_tensor.float()
+    if not torch.is_floating_point(Y_tensor):
+        Y_tensor = Y_tensor.float()
 
-    # --- energy distance formula ---
+    n = X_tensor.shape[0]
+    m = Y_tensor.shape[0]
+    if n == 0 or m == 0:
+        raise ValueError("Datasets must be non-empty")
+
+    use_cdist = device.type == "cuda"
+
+    # helper to move a CPU tensor (batch) to device efficiently
+    def to_device(batch: torch.Tensor):
+        if pin_memory and batch.device.type == "cpu":
+            # pin the host memory and use non_blocking copy
+            batch = batch.pin_memory()
+        return batch.to(device=device, non_blocking=pin_memory)
+
+    # accumulators on device
+    cross_sum_t = torch.tensor(0.0, device=device)
+    xx_sum_t = torch.tensor(0.0, device=device)
+    yy_sum_t = torch.tensor(0.0, device=device)
+
+    # --- cross term: sum_{i in X, j in Y} ||x_i - y_j|| ---
+    with torch.no_grad():
+        for i in range(0, n, batch_size):
+            Xi = X_tensor[i : i + batch_size]
+            Xi = to_device(Xi)
+            for j in range(0, m, batch_size):
+                Yj = Y_tensor[j : j + batch_size]
+                Yj = to_device(Yj)
+                if use_cdist:
+                    d_block = torch.cdist(Xi, Yj, p=2)  # distances
+                else:
+                    d2 = squared_euclidean_distance_matrix_matmul_trick(Xi, Yj)
+                    d_block = torch.sqrt(d2)
+                cross_sum_t += d_block.sum()
+
+    mean_xy = (cross_sum_t / (n * m)).item()
+
+    # --- within-X term: biased (include diagonal), divide by n*n ---
+    # iterate i over blocks, j from i to end (upper triangular blocks)
+    with torch.no_grad():
+        for i in range(0, n, batch_size):
+            Xi = X_tensor[i : i + batch_size]
+            Xi = to_device(Xi)
+            i_idx = i // batch_size
+            for j in range(i, n, batch_size):
+                Xj = X_tensor[j : j + batch_size]
+                Xj = to_device(Xj)
+                if use_cdist:
+                    d_block = torch.cdist(Xi, Xj, p=2)
+                else:
+                    d2 = squared_euclidean_distance_matrix_matmul_trick(Xi, Xj)
+                    d_block = torch.sqrt(d2)
+                if i == j:
+                    # diagonal block: include diagonal zeros (biased formula)
+                    xx_sum_t += d_block.sum()
+                else:
+                    # off-diagonal upper triangular block contributes twice
+                    xx_sum_t += 2.0 * d_block.sum()
+
+    mean_xx = (xx_sum_t / (n * n)).item()
+
+    # --- within-Y term: biased (include diagonal), divide by m*m ---
+    with torch.no_grad():
+        for i in range(0, m, batch_size):
+            Yi = Y_tensor[i : i + batch_size]
+            Yi = to_device(Yi)
+            for j in range(i, m, batch_size):
+                Yj = Y_tensor[j : j + batch_size]
+                Yj = to_device(Yj)
+                if use_cdist:
+                    d_block = torch.cdist(Yi, Yj, p=2)
+                else:
+                    d2 = squared_euclidean_distance_matrix_matmul_trick(Yi, Yj)
+                    d_block = torch.sqrt(d2)
+                if i == j:
+                    yy_sum_t += d_block.sum()
+                else:
+                    yy_sum_t += 2.0 * d_block.sum()
+
+    mean_yy = (yy_sum_t / (m * m)).item()
+
     energy_dist = 2 * mean_xy - mean_xx - mean_yy
-    return energy_dist
+    return float(energy_dist)
 
 
+def _get_tensor_from_dataset(D):
+        t = getattr(D, "input", None)
+        if t is not None:
+            # if it's numpy array, convert
+            if not isinstance(t, torch.Tensor):
+                t = torch.as_tensor(t)
+            return t
+        # fallback: materialize (only if attribute not present)
+        # assume dataset[i] returns tensor or (tensor, label)
+        first = D[0]
+        if isinstance(first, (tuple, list)):
+            return torch.stack([D[i][0] for i in range(len(D))])
+        else:
+            return torch.stack([D[i] for i in range(len(D))])
+
+def _extract_features(batch):
+    """
+    Accepts a batch from a DataLoader. If the dataset returns (x, y) tuples,
+    take the first element. If it returns plain tensors, return them.
+    """
+    if isinstance(batch, (list, tuple)):
+        # common pattern: DataLoader returns a tuple (features, labels)
+        return batch[0]
+    return batch
 
 
 def energy_test_permutation(

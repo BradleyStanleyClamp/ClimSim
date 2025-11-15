@@ -14,7 +14,7 @@ dataset_testing_type: full
 epochs: ${max_epochs}
 plotting: False
 time_analysis: False
-
+num_workers: 8
 
 # evaluate data group metric settings
 sample_size: 200000
