@@ -14,8 +14,8 @@ from tqdm import tqdm
 import torch
 import math
 from typing import Optional
-from evaluate.evaluate_utils.kl_divergence import kde_kl_mc, pca_kde_kl_gpu
-from evaluate.evaluate_utils.energy_distance import energy_distance
+# from evaluate.evaluate_utils.kl_divergence import kl_divergence
+from evaluate.evaluate_utils.energy_distance import EnergyDistanceMetric
 
 
 class MetricWrapper:
@@ -67,7 +67,7 @@ class MetricWrapper:
             Y = Y[torch.randperm(Y.shape[0])[:self.sample_size]]
             logging.info(f"Subsampled data has shapes X: {X.shape}, Y: {Y.shape}")
 
-        self.observed = self.metric_function(X, Y, batch_size=self.batch_size)
+        self.observed = self.metric_function(X, Y)
         return self.observed
 
     def permutation_test(self, X, Y, num_permutations=500):
@@ -93,7 +93,9 @@ class MetricWrapper:
             metric_name (str): Name of metric
         """
         if metric_name == "energy_distance":
-            return energy_distance
+            return EnergyDistanceMetric(self.batch_size)
+        # elif metric_name == "kl_divergence":
+        #     return kl_divergence
         else:
             raise ValueError(f"Unknown metric name: {metric_name}")
 
