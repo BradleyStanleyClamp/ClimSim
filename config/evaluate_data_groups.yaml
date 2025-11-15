@@ -15,10 +15,10 @@ multirun_dir_name: eval_data_groups_${testing.batch_size}
 chunk_size: 1000
 
 evaluation_options: 
-  - multivariate
+  # - multivariate
+  - marginals
   # - vis_marginals
   # - kl_divergence
-  # - marginal_distributions
   
 metric_name: energy_distance
 

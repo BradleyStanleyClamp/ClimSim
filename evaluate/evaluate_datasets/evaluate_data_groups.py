@@ -95,10 +95,10 @@ def main(cfg: DictConfig):
         with open(results_path, "w") as f:
             json.dump(full_results["multivariate"], f, indent=2)
         logging.info(f"Saved multivariate results to {results_path}")
-    if "marginal_distributions" in cfg.evaluation_options:
+    if "marginals" in cfg.evaluation_options:
         results_path = Path.cwd() / "marginal_distribution_distances.json"
         with open(results_path, "w") as f:
-            json.dump(full_results["marginal_distributions"], f, indent=2)
+            json.dump(full_results["marginals"], f, indent=2)
         logging.info(f"Saved marginal distribution distances results to {results_path}")
 
     # Plotting results
@@ -122,9 +122,9 @@ def main(cfg: DictConfig):
             full_results["kl_divergence"], save_path="kl_divergence.png"
         )
 
-    if "marginal_distributions" in cfg.evaluation_options:
+    if "marginals" in cfg.evaluation_options:
         plotting.plot_standard_feature_marginals(
-            full_results["marginal_distributions"],
+            full_results["marginals"],
             save_path="marginal_distribution_distances.png",
         )
 

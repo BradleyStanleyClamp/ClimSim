@@ -46,50 +46,28 @@ class MetricWrapper:
 
         self.observed = None
 
-    def calculate(self, X: Dataset, Y: Dataset) -> float:
+    def calculate(self, X: torch.Tensor, Y: torch.Tensor) -> float:
         """
         Calculate the metric between datasets X and Y.
         Args:
-            X (Dataset): First dataset.
-            Y (Dataset): Second dataset.
-            NOTE: Datasets must have:
-            - a .input attribute containing the data as a torch tensor
-            - a .sample(num_samples) method to sample num_samples from the dataset
+            X (torch.Tensor): First dataset. (features, samples)
+            Y (torch.Tensor): Second dataset. (features, samples)
 
         Returns:
             metric_value (float): Calculated metric value.
         """
 
-        assert isinstance(X, Dataset) and isinstance(
-            Y, Dataset
-        ), f"X and Y must be torch Datasets"
+        assert isinstance(X, torch.Tensor) and isinstance(
+            Y, torch.Tensor
+        ), f"X and Y must be torch Tensors"
 
         # For now we just have functionality to take a single sample instead of multiple samples (monte carlo sampling)
         if self.sample_size and self.sample_size < min(len(X), len(Y)):
-            if (
-                hasattr(X, "sample")
-                and callable(getattr(X, "sample"))
-                and hasattr(Y, "sample")
-                and callable(getattr(Y, "sample"))
-            ):
-                logging.info(
-                    f"Sampling {self.sample_size} samples from each dataset for metric calculation."
-                )
-                start_time = time.perf_counter()
-                X.sample(self.sample_size)
-                Y.sample(self.sample_size)
-                elapsed = time.perf_counter() - start_time    
-                logging.info(
-                    f"Sampling took {elapsed:.3f} seconds (for both datasets)."
-                )            
-                assert len(X) == self.sample_size
-                assert len(Y) == self.sample_size
-            else:
-                raise ValueError(
-                    "Datasets must have a callable 'sample' method to perform sampling."
-                )
+            X = X[torch.randperm(X.shape[0])[:self.sample_size]]
+            Y = Y[torch.randperm(Y.shape[0])[:self.sample_size]]
+            logging.info(f"Subsampled data has shapes X: {X.shape}, Y: {Y.shape}")
 
-        self.observed = self.metric_function(X.input, Y.input, batch_size=self.batch_size)
+        self.observed = self.metric_function(X, Y, batch_size=self.batch_size)
         return self.observed
 
     def permutation_test(self, X, Y, num_permutations=500):
@@ -154,7 +132,7 @@ def evaluate_data_group(
             batch_size=cfg.testing.batch_size,
         )
         start_time = time.perf_counter()
-        observed_metric = metric.calculate(trainset, testset)
+        observed_metric = metric.calculate(trainset.input, testset.input)
         elapsed = time.perf_counter() - start_time
         logging.info(
             f"Multivariate {cfg.metric_name} calculation took {elapsed:.3f} seconds "
@@ -162,7 +140,31 @@ def evaluate_data_group(
         results["multivariate"] = {"value": observed_metric}
         logging.info(f"Multivariate {cfg.metric_name} Value: {observed_metric:.6f}")
 
-        # TODO: Add permutation test functionality
+
+    if "marginals" in evaluation_options:
+        num_features = trainset.input.shape[1]
+        metric = MetricWrapper(
+            cfg.evaluate.sample_size,
+            metric_name=cfg.metric_name,
+            batch_size=cfg.testing.batch_size,
+        )
+        for i in range(num_features):
+            start_time = time.perf_counter()
+            observed_metric = metric.calculate(
+                trainset.input[:, i : i + 1], testset.input[:, i : i + 1]
+            )
+            elapsed = time.perf_counter() - start_time
+            logging.info(
+                f"Marginal {i} {cfg.metric_name} calculation took {elapsed:.3f} seconds "
+            )
+            if "marginals" not in results:
+                results["marginals"] = {"marginal_distances": [], "marginal_distribution_se": []}
+            results["marginals"]["marginal_distances"].append(observed_metric)
+            results["marginals"]["marginal_distribution_se"].append(0.0)  # Placeholder for standard error
+            logging.info(
+                f"Marginal {i} {cfg.metric_name} Value: {observed_metric:.6f}"
+            )
+
 
     # if "energy_distance" in evaluation_options:
     #     # if cfg.testing.timings:
@@ -216,48 +218,39 @@ def evaluate_data_group(
     #     results["kl_divergence"] = kl_divergence
     #     logging.info(f'KL Divergence Estimate: {kl_divergence["value"]:.6f}')
 
-    # if "marginal_distributions" in evaluation_options:
-    #     marginal_distances, se_marginal_distances = evaluate_marginal_distributions(
-    #         train_data, test_data, cfg
-    #     )
-    #     results["marginal_distributions"] = {
-    #         "marginal_distances": marginal_distances,
-    #         "marginal_distribution_se": se_marginal_distances,
-    #     }
-    #     logging.info(f"marginal distribution distances computed.")
 
     return results
 
 
-def evaluate_marginal_distributions(X, Y, cfg: DictConfig):
-    """
-    Quantifies the difference between marginal distributions of two datasets using energy distance.
+# def evaluate_marginal_distributions(X, Y, cfg: DictConfig):
+#     """
+#     Quantifies the difference between marginal distributions of two datasets using energy distance.
 
-    Args:
-        X (np.ndarray): First dataset (samples, features).
-        Y (np.ndarray): Second dataset (samples, features).
-        cfg (DictConfig): Configuration object containing settings for marginal distribution evaluation.
-    """
-    distances = []
-    se_distances = []
-    for i in range(X.shape[1]):
-        if cfg.marginal_distributions.metric == "energy_distance":
-            dist, se_dist = monte_carlo_energy_distance(
-                X[:, i : i + 1],
-                Y[:, i : i + 1],
-                K_cross=cfg.energy_distance.K_cross,
-                K_within=cfg.energy_distance.K_within,
-                batch_size=cfg.energy_distance.batch_size,
-                seed=cfg.project.seed,
-            )
-        else:
-            raise ValueError(
-                f"Unknown marginal distribution metric: {cfg.marginal_distributions.metric}, or not yet implemented."
-            )
+#     Args:
+#         X (np.ndarray): First dataset (samples, features).
+#         Y (np.ndarray): Second dataset (samples, features).
+#         cfg (DictConfig): Configuration object containing settings for marginal distribution evaluation.
+#     """
+#     distances = []
+#     se_distances = []
+#     for i in range(X.shape[1]):
+#         if cfg.marginal_distributions.metric == "energy_distance":
+#             dist, se_dist = monte_carlo_energy_distance(
+#                 X[:, i : i + 1],
+#                 Y[:, i : i + 1],
+#                 K_cross=cfg.energy_distance.K_cross,
+#                 K_within=cfg.energy_distance.K_within,
+#                 batch_size=cfg.energy_distance.batch_size,
+#                 seed=cfg.project.seed,
+#             )
+#         else:
+#             raise ValueError(
+#                 f"Unknown marginal distribution metric: {cfg.marginal_distributions.metric}, or not yet implemented."
+#             )
 
-        distances.append(dist)
-        se_distances.append(se_dist)
-    return distances, se_distances
+#         distances.append(dist)
+#         se_distances.append(se_dist)
+    # return distances, se_distances
 
 
 def extract_marginal_distributions_for_visualization(

@@ -16,9 +16,9 @@ time_analysis: True
 num_workers: 7
 
 # evaluate data group metric settings
-sample_size: 20000
+sample_size: False
 n_samples: False
-batch_size: 2048
+batch_size: 7000
 
 # OBSOLETE
 energy_distance:
