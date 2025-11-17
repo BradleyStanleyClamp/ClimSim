@@ -8,7 +8,7 @@ from sklearn.decomposition import PCA
 from sklearn.neighbors import KernelDensity
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import KFold
-import time 
+import time
 import torch
 from typing import Optional, Tuple
 import math
@@ -37,9 +37,13 @@ class KLDivergenceMetric:
         self.n_components = n_components
         self.bandwidth = bandwidth
         self.leave_one_out = leave_one_out
-        self.device = device or (torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu"))
+        self.device = device or (
+            torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+        )
 
-    def __call__(self, X_tensor: torch.Tensor, Y_tensor: torch.Tensor) -> Tuple[float, float, Tuple[torch.Tensor, torch.Tensor]]:
+    def __call__(
+        self, X_tensor: torch.Tensor, Y_tensor: torch.Tensor
+    ) -> Tuple[float, float, Tuple[torch.Tensor, torch.Tensor]]:
         """
         Returns: (kl_estimate, se_of_estimate, (logp_Y, logp_X))
           - kl_estimate is KL(P_Y || P_X) estimated as mean_y[ log p_hat_Y(y) - log p_hat_X(y) ]
@@ -51,8 +55,12 @@ class KLDivergenceMetric:
         Y = Y_tensor.to(device=device, dtype=torch.float32)
 
         # Optionally PCA-reduce
-        if self.n_components is not None and self.n_components < X.shape[1] and X.shape[1] > 1:
-            Xp, Yp, components, mean = pca_gpu(X, Y, n_components=self.n_components, device=device)
+        if (
+            self.n_components is not None
+            and self.n_components < X.shape[1]
+            and X.shape[1] > 1
+        ):
+            Xp, Yp = pca_gpu(X, Y, n_components=self.n_components, device=device)
             X = Xp
             Y = Yp
 
@@ -64,7 +72,9 @@ class KLDivergenceMetric:
             sd = pooled.std(dim=0, unbiased=True).mean().item()
             # Scott's rule: h = sd * n^{-1/(d+4)}
             self.bandwidth = float(sd * (n ** (-1.0 / (d + 4.0)) + 1e-12))
-            logging.info(f"Selected bandwidth {self.bandwidth:.4f} using Scott's rule on pooled data.")
+            logging.info(
+                f"Selected bandwidth {self.bandwidth:.4f} using Scott's rule on pooled data."
+            )
 
         # compute log p_train(y) (X_ref = X, X_query = Y)
         logp_X = kde_logdensity_gpu(
@@ -98,6 +108,54 @@ class KLDivergenceMetric:
         return kl_est, se, (logp_Y.cpu(), logp_X.cpu())
 
 
+def KLdivergence(x, y):
+    """
+    Compute the Kullback-Leibler divergence between two multivariate samples.
+    Function taken from: https://gist.github.com/atabakd/ed0f7581f8510c8587bc2f41a094b518
+      Parameters
+      ----------
+      x : 2D array (n,d)
+        Samples from distribution P, which typically represents the true
+        distribution.
+      y : 2D array (m,d)
+        Samples from distribution Q, which typically represents the approximate
+        distribution.
+      Returns
+      -------
+      out : float
+        The estimated Kullback-Leibler divergence D(P||Q).
+      References
+      ----------
+      Pérez-Cruz, F. Kullback-Leibler divergence estimation of
+    continuous distributions IEEE International Symposium on Information
+    Theory, 2008.
+    """
+    from scipy.spatial import cKDTree as KDTree
+
+    # Check the dimensions are consistent
+    x = np.atleast_2d(x)
+    y = np.atleast_2d(y)
+
+    n, d = x.shape
+    m, dy = y.shape
+
+    assert d == dy
+
+    # Build a KD tree representation of the samples and find the nearest neighbour
+    # of each point in x.
+    xtree = KDTree(x)
+    ytree = KDTree(y)
+
+    # Get the first two nearest neighbours for x, since the closest one is the
+    # sample itself.
+    r = xtree.query(x, k=2, eps=0.01, p=2)[0][:, 1]
+    s = ytree.query(x, k=1, eps=0.01, p=2)[0]
+
+    # There is a mistake in the paper. In Eq. 14, the right side misses a negative sign
+    # on the first term of the right hand side.
+    return -np.log(r / s).sum() * d / n + np.log(m / (n - 1.0))
+
+
 def kde_logdensity_gpu(
     X_ref: torch.Tensor,
     X_query: torch.Tensor,
@@ -123,7 +181,7 @@ def kde_logdensity_gpu(
 
     # constant normalization term for Gaussian kernel
     const_term = -0.5 * d * math.log(2.0 * math.pi) - d * math.log(bandwidth)
-    inv_two_h2 = 1.0 / (2.0 * (bandwidth ** 2))
+    inv_two_h2 = 1.0 / (2.0 * (bandwidth**2))
 
     results = []
     # process queries in blocks
@@ -133,7 +191,9 @@ def kde_logdensity_gpu(
         Q_norm = (Q * Q).sum(dim=1)  # (bq,)
 
         # initialize per-query accumulated log-sum using -inf
-        acc_logsum = torch.full((qend - qstart,), -float("inf"), device=device, dtype=torch.float32)
+        acc_logsum = torch.full(
+            (qend - qstart,), -float("inf"), device=device, dtype=torch.float32
+        )
 
         for rstart in range(0, n_ref, batch_ref):
             rend = min(n_ref, rstart + batch_ref)
@@ -177,10 +237,13 @@ def kde_logdensity_gpu(
                 log_density = torch.log(acc_sum) - math.log(n_ref - 1) + const_term
             else:
                 # if we cannot align indices, leave as-is but warn
-                logging.warning("leave_one_out requested but alignment assumptions fail; skipping leave-one-out correction for this block.")
+                logging.warning(
+                    "leave_one_out requested but alignment assumptions fail; skipping leave-one-out correction for this block."
+                )
         results.append(log_density)
 
     return torch.cat(results, dim=0)
+
 
 # class KLDivergenceMetric:
 #     def __init__(self, batch_size: int, n_components: int, bandwidth: float = 1.0):
@@ -189,7 +252,7 @@ def kde_logdensity_gpu(
 #         Args:
 #             batch_size (int): Batch size for processing data in chunks.
 #             n_components (int): Number of PCA components to reduce to (if PCA is used).
-        
+
 #         """
 #         self.batch_size = batch_size
 #         self.n_components = n_components
@@ -214,7 +277,7 @@ def kde_logdensity_gpu(
 #         if self.n_components is not None and self.n_components < X.shape[1] and X.shape[1] > 1:
 #             logging.info(f"Applying PCA reduction to {self.n_components} components for KL divergence.")
 #             X, Y, components, mean = pca_gpu(X, Y, n_components=self.n_components)
-        
+
 #         # compute log p_train(x) for test points
 #         logp_X = kde_logdensity_gpu(
 #             X_ref=X,
@@ -243,7 +306,6 @@ def kde_logdensity_gpu(
 
 #         # return kl, se, and optionally the per-point diffs for diagnostics
 #         return float(kl_est), float(se), (logp_Y.cpu(), logp_X.cpu())
-
 
 
 # def kde_logdensity_gpu(
@@ -280,11 +342,10 @@ def kde_logdensity_gpu(
 #     n_query = X_query.shape[0]
 
 #     # precompute constants that are reused across batches
-#     # constant term describes the log of the normalization term of the Gaussian kernel 
+#     # constant term describes the log of the normalization term of the Gaussian kernel
 #     const_term = -0.5 * d * math.log(2 * math.pi) - d * math.log(bandwidth)
 #     # Constant inside the kernel exponent
 #     inv_two_h2 = 1.0 / (2.0 * (bandwidth ** 2))
-
 
 
 #     logs = []
@@ -325,7 +386,7 @@ def kde_logdensity_gpu(
 #             # compute per-row max for this block
 #             block_max, _ = exponents.max(dim=1)  # (bq,)
 #             block_max = block_max.unsqueeze(1)  # (bq,1)
-            
+
 #             # compute sumexp relative to block_max
 #             block_sumexp = torch.exp(exponents - block_max).sum(dim=1)  # (bq,)
 
@@ -355,54 +416,65 @@ def kde_logdensity_gpu(
 # ---------------------------
 # PCA on GPU
 # ---------------------------
-def pca_gpu(X: torch.Tensor, Y:torch.Tensor, n_components: int, device: Optional[torch.device] = None) -> Tuple[torch.Tensor, torch.Tensor]:
+def pca_gpu(
+    X: torch.Tensor,
+    Y: torch.Tensor,
+    n_components: int,
+    device: Optional[torch.device] = None,
+) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Fit PCA on Y (n, d) (samples, features) and return (X_proj, Y_proj).
     Uses torch.pca_lowrank for speed on GPU (works for large n).
-    Note: To ensure each train group X is projected in the same way, we use Y to find the main components. 
+    Note: To ensure each train group X is projected in the same way, we use Y to find the main components.
 
     Args:
         X: (n, d) tensor of data
         n_components: number of PCA components to return
         device: torch.device to use (if None, will use X's device)
 
-    
+
     Returns:
         X_proj: (n, k) tensor of low dimensional projected data
         Y_proj: (m, k) tensor of low dimensional projected data
     """
-    device or (torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu"))
+    device or (
+        torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    )
     if X.device != device:
         X = X.to(device=device, dtype=torch.float32)
     if Y.device != device:
         Y = Y.to(device=device, dtype=torch.float32)
-        
+
     # The PCA is computed on centered data, so this is to center X first
     mean = Y.mean(dim=0, keepdim=True)
     Yc = Y - mean
 
     # torch.pca_lowrank returns U, S, V; V has shape (d, k)
     U, S, V = torch.pca_lowrank(Yc, q=n_components, center=False)
-    assert V.shape == (Y.shape[1], n_components), f"Unexpected PCA components shape: {V.shape}"
+    assert V.shape == (
+        Y.shape[1],
+        n_components,
+    ), f"Unexpected PCA components shape: {V.shape}"
     components = V  # (d, k) principal components
     Y_proj = Yc @ components  # (n, k)
 
     Xc = X - mean
     X_proj = Xc @ components
 
-    explained_var = (S ** 2) / (Y.shape[0] - 1)
+    explained_var = (S**2) / (Y.shape[0] - 1)
     total_var = torch.var(Yc, dim=0, unbiased=True).sum()
     explained_var_ratio = explained_var.sum() / total_var
-    logging.info(f"PCA on Y: {n_components} components explain {100.0 * explained_var_ratio.item():.2f}% of variance.")
+    logging.info(
+        f"PCA on Y: {n_components} components explain {100.0 * explained_var_ratio.item():.2f}% of variance."
+    )
 
     total_var_X = torch.var(Xc, dim=0, unbiased=True).sum()
     explained_var_ratio_X = explained_var.sum() / total_var_X
-    logging.info(f"PCA on X: {n_components} components explain {100.0 * explained_var_ratio_X.item():.2f}% of variance.")
-
+    logging.info(
+        f"PCA on X: {n_components} components explain {100.0 * explained_var_ratio_X.item():.2f}% of variance."
+    )
 
     return X_proj, Y_proj
-
-
 
 
 # def kde_kl_mc(X_train: np.ndarray, X_test: np.ndarray, n_components=30, bandwidth=None, bw_grid=None, sample_size=None, rng=None):
@@ -514,8 +586,9 @@ def pca_kde_kl_gpu(
     Xtr_proj, components, mean = pca_gpu(Xtr, n_components=n_components, device=device)
     time_elapsed = time.perf_counter() - time_start
     logging.info(f"PCA on GPU took {time_elapsed:.3f} seconds.")
-    logging.info(f"{n_components} components explain {100.0 * torch.sum(torch.var(Xtr_proj, dim=0)) / torch.sum(torch.var(Xtr, dim=0)):.2f}% of variance.")
-
+    logging.info(
+        f"{n_components} components explain {100.0 * torch.sum(torch.var(Xtr_proj, dim=0)) / torch.sum(torch.var(Xtr, dim=0)):.2f}% of variance."
+    )
 
     # project test to same lower dimension space as the training data
     Xte_centered = Xte - mean.unsqueeze(0)
@@ -542,7 +615,9 @@ def pca_kde_kl_gpu(
     )
 
     # KL estimate: mean_test [ log p_test - log p_train ]
-    diff = (logp_test - logp_train).double()  # convert to double for mean + var stability
+    diff = (
+        logp_test - logp_train
+    ).double()  # convert to double for mean + var stability
     kl_est = diff.mean().item()
     # approximate SE of mean (use sample variance / sqrt(n))
     se = diff.std(unbiased=True).item() / math.sqrt(diff.numel())
@@ -555,7 +630,7 @@ def pca_kde_kl_gpu(
 #     """
 #     Select the best bandwidth for KDE on the GPU using a validation set.
 #     """
-    
+
 #     device = device or (torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu"))
 #     X = torch.as_tensor(X_train_np, dtype=torch.float32, device=device)
 #     n = X.shape[0]
