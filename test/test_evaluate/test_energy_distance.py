@@ -112,3 +112,22 @@ def test_energy_distance_batch():
     print(f"Energy Distance with dataloader configs: {dist}")
     print(f"Expected Energy Distance: {expected_dist}")
     assert abs(dist - expected_dist) < 1e-6
+
+
+def test_pca_on_gpu():
+    torch.random.manual_seed(0)
+    X = torch.rand((1000, 5))
+    Y = torch.rand((1500, 5))
+
+
+    n_components = 3
+    X_proj, Y_proj, components, mean = evaluate.pca_gpu(X, Y, n_components=n_components)
+
+    print(f"Original X shape: {X.shape}, Projected X shape: {X_proj.shape}")
+    print(f"Original Y shape: {Y.shape}, Projected Y shape: {Y_proj.shape}")
+    print(f"Components shape: {components.shape}, Mean shape: {mean.shape}")
+
+    assert X_proj.shape == (1000, n_components)
+    assert Y_proj.shape == (1500, n_components)
+    assert components.shape == (5, n_components)
+    assert mean.shape == (5,)

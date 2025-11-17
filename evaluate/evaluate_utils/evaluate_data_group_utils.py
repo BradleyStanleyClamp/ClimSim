@@ -14,7 +14,7 @@ from tqdm import tqdm
 import torch
 import math
 from typing import Optional
-# from evaluate.evaluate_utils.kl_divergence import kl_divergence
+from evaluate.evaluate_utils.kl_divergence import KLDivergenceMetric
 from evaluate.evaluate_utils.energy_distance import EnergyDistanceMetric
 
 
@@ -94,8 +94,8 @@ class MetricWrapper:
         """
         if metric_name == "energy_distance":
             return EnergyDistanceMetric(self.batch_size)
-        # elif metric_name == "kl_divergence":
-        #     return kl_divergence
+        elif metric_name == "kl_divergence":
+            return KLDivergenceMetric(self.batch_size)
         else:
             raise ValueError(f"Unknown metric name: {metric_name}")
 
