@@ -13,6 +13,7 @@ import torch
 from typing import Optional, Tuple
 import math
 from typing import Union, Optional
+from scipy.spatial import cKDTree
 
 
 class KLDivergenceMetric:
@@ -69,7 +70,74 @@ class KLDivergenceMetric:
         return divergence
 
 
-def KLdivergence(x, y):
+def KLdivergence(x, y, batch_size=10000, dtype=np.float32, eps=0.01):
+    """
+    Batch-friendly KL divergence estimator (Pérez-Cruz 2008).
+    Queries KD-trees in chunks so you don't keep large intermediate arrays.
+    Parameters
+    ----------
+    x : array-like, shape (n, d)
+        Samples from P (true distribution).
+    y : array-like, shape (m, d)
+        Samples from Q (approximate distribution).
+    batch_size : int
+        How many rows of x to process per batch.
+    dtype : np.dtype
+        Use float32 to reduce memory if precision is acceptable.
+    eps : float
+        passed to cKDTree.query for a small speed/accuracy tradeoff.
+    Returns
+    -------
+    float : estimated KL divergence D(P || Q)
+    """
+    # Ensure 2D and dtype
+    x = np.atleast_2d(np.asarray(x, dtype=dtype))
+    y = np.atleast_2d(np.asarray(y, dtype=dtype))
+
+    n, d = x.shape
+    m, dy = y.shape
+    assert d == dy, "Dimension mismatch between x and y."
+
+    logging.info("Building cKDTree for x and y...")
+    # cKDTree is memory/time efficient
+    xtree = cKDTree(x)
+    ytree = cKDTree(y)
+
+    logging.info("Querying trees in batches...")
+    # We'll accumulate the sum of -log(r/s) over x
+    sum_log_ratio = 0.0
+    processed = 0
+
+    for start in range(0, n, batch_size):
+        stop = min(n, start + batch_size)
+        xb = x[start:stop]
+
+        # r: distance to 2nd NN in x (first is self)
+        # cKDTree.query returns (dists, idxs)
+        dists_x, _ = xtree.query(xb, k=2, eps=eps, p=2)
+        # dists_x shape: (batch_size, 2) or (batch_size,) if k==1; safe indexing below
+        # take the 2nd column (index 1)
+        r = dists_x[:, 1]
+
+        # s: distance to nearest neighbor in y
+        s, _ = ytree.query(xb, k=1, eps=eps, p=2)
+
+        # avoid zero distances
+        # (shouldn't happen for r since second NN > 0 unless duplicate points)
+        r = np.maximum(r, np.finfo(dtype).tiny)
+        s = np.maximum(s, np.finfo(dtype).tiny)
+
+        # accumulate
+        sum_log_ratio += (-np.log(r / s)).sum()
+        processed += xb.shape[0]
+
+    # final estimator
+    # note: the original formula: - (d / n) * sum(log(r/s)) + log(m/(n-1))
+    # double-check signs: we accumulated -sum(log(r/s)) already, so:
+    kl = (d / float(n)) * sum_log_ratio + math.log(float(m) / float(n - 1.0))
+    return kl
+
+def KLdivergence_old(x, y):
     """
     Compute the Kullback-Leibler divergence between two multivariate samples.
     Function taken from: https://gist.github.com/atabakd/ed0f7581f8510c8587bc2f41a094b518
@@ -91,7 +159,6 @@ def KLdivergence(x, y):
     continuous distributions IEEE International Symposium on Information
     Theory, 2008.
     """
-    from scipy.spatial import cKDTree as KDTree
 
     # Check the dimensions are consistent
     x = np.atleast_2d(x)
@@ -104,16 +171,19 @@ def KLdivergence(x, y):
 
     # Build a KD tree representation of the samples and find the nearest neighbour
     # of each point in x.
+    logging.info("Building KD-Trees for KL divergence estimation...")
     xtree = KDTree(x)
     ytree = KDTree(y)
 
     # Get the first two nearest neighbours for x, since the closest one is the
     # sample itself.
+    logging.info("Querying KD-Trees for KL divergence estimation...")
     r = xtree.query(x, k=2, eps=0.01, p=2)[0][:, 1]
     s = ytree.query(x, k=1, eps=0.01, p=2)[0]
 
     # There is a mistake in the paper. In Eq. 14, the right side misses a negative sign
     # on the first term of the right hand side.
+    logging.info("Computing KL divergence estimate...")
     return -np.log(r / s).sum() * d / n + np.log(m / (n - 1.0))
 
 

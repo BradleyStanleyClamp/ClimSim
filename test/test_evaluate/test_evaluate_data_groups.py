@@ -15,7 +15,7 @@ def test_evaluate_data_group_multivariate():
 
     cfg = DictConfig(
         {
-            "evaluate": {"sample_size": False},
+            "evaluate": {"sample_size": False, "pca_components": None},
             "metric_name": "energy_distance",
             "testing": {"batch_size": 100},
             'dataset' : {"general_dataset_config": {
@@ -43,7 +43,7 @@ def test_evaluate_data_group_marginals():
 
     cfg = DictConfig(
         {
-            "evaluate": {"sample_size": False},
+            "evaluate": {"sample_size": False, 'pca_components': None},
             "metric_name": "energy_distance",
             "testing": {"batch_size": 100},
             'dataset' : {"general_dataset_config": {

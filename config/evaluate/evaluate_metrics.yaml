@@ -4,4 +4,4 @@ sample_size: ${testing.sample_size}
 n_samples: ${testing.n_samples}
 batch_size: ${testing.batch_size}
 
-pca_components: 3
+pca_components: 15

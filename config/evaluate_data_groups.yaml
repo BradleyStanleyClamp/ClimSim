@@ -10,7 +10,7 @@ defaults:
   - testing: qt
   - override hydra/launcher: slurm
 
-multirun_dir_name: eval_data_groups_${testing.batch_size}
+multirun_dir_name: eval_data_groups_${evaluate.pca_components}
 
 chunk_size: 1000
 
