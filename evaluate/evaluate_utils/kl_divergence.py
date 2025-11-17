@@ -12,31 +12,23 @@ import time
 import torch
 from typing import Optional, Tuple
 import math
+from typing import Union, Optional
 
 
 class KLDivergenceMetric:
     def __init__(
         self,
-        batch_size: int,
         n_components: Optional[int] = None,
-        bandwidth: Optional[float] = None,
         device: Optional[torch.device] = None,
-        leave_one_out: bool = True,
     ):
         """
         KL divergence estimate KL(P_Y || P_X) via Gaussian KDE on (optionally PCA-reduced) data.
 
         Args:
-            batch_size: preferred batch size for query dimension (will be used for both ref/query blocks).
             n_components: if not None and < data dim, perform PCA to this many components.
-            bandwidth: if None, will use Scott's rule on the (projected) data.
             device: torch.device or None (use CUDA if available).
-            leave_one_out: whether to use leave-one-out when evaluating KDE on the same set (Y evaluated under KDE fitted on Y).
         """
-        self.batch_size = int(batch_size)
         self.n_components = n_components
-        self.bandwidth = bandwidth
-        self.leave_one_out = leave_one_out
         self.device = device or (
             torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         )
@@ -60,52 +52,21 @@ class KLDivergenceMetric:
             and self.n_components < X.shape[1]
             and X.shape[1] > 1
         ):
+            start_time = time.perf_counter()
             Xp, Yp = pca_gpu(X, Y, n_components=self.n_components, device=device)
             X = Xp
             Y = Yp
+            end_time = time.perf_counter()
+            logging.info(f"PCA reduction took {end_time - start_time:.4f} seconds")
 
-        # choose bandwidth if not provided: Scott's rule on pooled data (projected)
-        if self.bandwidth is None:
-            pooled = torch.cat([X, Y], dim=0)
-            n, d = pooled.shape
-            # sample std per dimension then average (simple heuristic)
-            sd = pooled.std(dim=0, unbiased=True).mean().item()
-            # Scott's rule: h = sd * n^{-1/(d+4)}
-            self.bandwidth = float(sd * (n ** (-1.0 / (d + 4.0)) + 1e-12))
-            logging.info(
-                f"Selected bandwidth {self.bandwidth:.4f} using Scott's rule on pooled data."
-            )
-
-        # compute log p_train(y) (X_ref = X, X_query = Y)
-        logp_X = kde_logdensity_gpu(
-            X_ref=X,
-            X_query=Y,
-            bandwidth=self.bandwidth,
-            device=device,
-            batch_ref=self.batch_size,
-            batch_query=self.batch_size,
-            eps=1e-12,
-            leave_one_out=False,  # not relevant (ref != query)
+        start_time = time.perf_counter()
+        divergence = KLdivergence(X.cpu().numpy(), Y.cpu().numpy())
+        end_time = time.perf_counter()
+        logging.info(
+            f"KL divergence calculation took {end_time - start_time:.4f} seconds"
         )
 
-        # compute log p_test(y) (X_ref = Y, X_query = Y) — use leave-one-out to avoid self-contrib
-        logp_Y = kde_logdensity_gpu(
-            X_ref=Y,
-            X_query=Y,
-            bandwidth=self.bandwidth,
-            device=device,
-            batch_ref=self.batch_size,
-            batch_query=self.batch_size,
-            eps=1e-12,
-            leave_one_out=self.leave_one_out,
-        )
-
-        # KL estimate
-        diff = (logp_Y - logp_X).double()
-        kl_est = float(diff.mean().item())
-        se = float(diff.std(unbiased=True).item() / math.sqrt(diff.numel()))
-
-        return kl_est, se, (logp_Y.cpu(), logp_X.cpu())
+        return divergence
 
 
 def KLdivergence(x, y):
@@ -437,7 +398,7 @@ def pca_gpu(
         X_proj: (n, k) tensor of low dimensional projected data
         Y_proj: (m, k) tensor of low dimensional projected data
     """
-    device or (
+    device = device or (
         torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     )
     if X.device != device:

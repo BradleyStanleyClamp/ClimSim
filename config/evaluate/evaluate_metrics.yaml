@@ -4,21 +4,4 @@ sample_size: ${testing.sample_size}
 n_samples: ${testing.n_samples}
 batch_size: ${testing.batch_size}
 
-
-energy_distance_standard: # Standard (no or full testing)
-  K_cross: 200000
-  K_within: 200000
-  batch_size: 20000
-  num_permutations: 500
-
-energy_distance_test: # Reduced testing settings
-  K_cross: 384
-  K_within: 384
-  batch_size: 384
-  num_permutations: 50
-
-kl_divergence:
-  n_components: 30
-  bandwidth: 0.1  # If null, will do CV to select
-  bw_grid: [0.1, 0.5, 1.0, 2.0, 5.0]  # Bandwidths to search over if bandwidth is null
-  sample_size: 50000  # If not null, subsample this many points from training data to fit KDE (for speed)
+pca_components: 3

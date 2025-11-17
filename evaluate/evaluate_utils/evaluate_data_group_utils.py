@@ -20,27 +20,27 @@ from evaluate.evaluate_utils.energy_distance import EnergyDistanceMetric
 
 class MetricWrapper:
     def __init__(
-        self, samples_size: int, metric_name: str, batch_size: Optional[int] = None, device: Optional[torch.device] = None
+        self, samples_size: int, metric_name: str, pca_components: Optional[int] = None, batch_size: Optional[int] = None, device: Optional[torch.device] = None
     ):
         """
         Wrapper for different metrics to handle optimisations and significance testing.
-        V1: only supports:
-            - Metrics: Energy Distance
+        V2: only supports:
+            - Metrics: Energy Distance, KL Divergence [+ PCA]
             - Optimisations: Fixed single sampling process from datasets, batching for large datasets
 
         Future versions to include:
-            - Metrics: KL Divergence [+ PCA]
-            - Optimisations: Batching for large datasets, Monte Carlo sampling of multiple samples from datasets
+            - Optimisations: Monte Carlo sampling of multiple samples from datasets
             - Significance Testing: Permutation Tests
 
         Args:
             samples_size (int): Number of samples to draw from each dataset for metric calculation.
             metric_name (str): Name of the metric to use.
+            pca_components (int): Number of PCA components to use (only for KL Divergence).
             batch_size (Optional[int]): Batch size for large datasets.
         """
         self.sample_size = samples_size
         self.batch_size = batch_size
-
+        self.pca_components = pca_components
         # Note: metrics should expect torch tensors in the form (samples, features)
         self.metric_function = self._get_metric_function(metric_name)
 
@@ -95,7 +95,9 @@ class MetricWrapper:
         if metric_name == "energy_distance":
             return EnergyDistanceMetric(self.batch_size)
         elif metric_name == "kl_divergence":
-            return KLDivergenceMetric(self.batch_size)
+            if self.pca_components is None:
+                raise ValueError("pca_components must be specified for KL Divergence metric.")
+            return KLDivergenceMetric(n_components=self.pca_components, device=None)
         else:
             raise ValueError(f"Unknown metric name: {metric_name}")
 
@@ -131,6 +133,7 @@ def evaluate_data_group(
         metric = MetricWrapper(
             cfg.evaluate.sample_size,
             metric_name=cfg.metric_name,
+            pca_components=cfg.evaluate.pca_components,
             batch_size=cfg.testing.batch_size,
         )
         start_time = time.perf_counter()
@@ -148,6 +151,7 @@ def evaluate_data_group(
         metric = MetricWrapper(
             cfg.evaluate.sample_size,
             metric_name=cfg.metric_name,
+            pca_components=cfg.evaluate.pca_components,
             batch_size=cfg.testing.batch_size,
         )
         for i in range(num_features):
