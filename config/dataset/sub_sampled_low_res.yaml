@@ -23,5 +23,6 @@ group_by_year:
   num_groups: 7
   target_group: False
 
+remove_high_altitude_specific_humidity_levels: False
 
 

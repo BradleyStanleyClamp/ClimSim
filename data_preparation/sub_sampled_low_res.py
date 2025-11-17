@@ -62,6 +62,14 @@ class SubSampledLowResDataset(Dataset):
             logging.info(f"Reshaped input data shape for unet: {self.input.shape}")
             # logging.info(f"Reshaped target data shape for unet: {self.target.shape}")
 
+        if self.dataset_config.remove_high_altitude_specific_humidity_levels > 0:
+            self._remove_high_altitude_specific_humidity_levels(
+                self.dataset_config.remove_high_altitude_specific_humidity_levels
+            )
+            logging.info(
+                f"Removed top {self.dataset_config.remove_high_altitude_specific_humidity_levels} high altitude specific humidity levels from data. New input shape: {self.input.shape}"
+            )
+
         self.input = torch.from_numpy(self.input).float()
         self.target = torch.from_numpy(self.target).float()
 
@@ -194,6 +202,19 @@ class SubSampledLowResDataset(Dataset):
         # reshaped_data_padded =  np.pad(reshaped_data, ((0, 0), (0, 4), (0, 0)), mode='constant', constant_values=0)
 
         return reshaped_data
+
+    def _remove_high_altitude_specific_humidity_levels(self, n_levels):
+        """
+        Removes the top n_levels of specific humidity from the data where top is high altitude.
+        This is in response to findings in P2.1.3.2: Validate ClimSim non-stationary findings, where shifts in assumed stationary system seem to be caused by high altitude specific humidity levels.
+        """
+        if self.model == "climsim_unet":
+            raise NotImplementedError(
+                "Removing high altitude specific humidity levels is not implemented for unet model."
+            )
+        # We want to keep 0-60, 60+n_levels to end
+        input_keep_indices = list(range(0, 60)) + list(range(60 + n_levels, 124))
+        self.input = self.input[:, input_keep_indices]
 
     def _get_grouping_function(self, group_method):
         """

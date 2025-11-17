@@ -1,7 +1,7 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-
+import logging
 
 # 'state_t' :: air temperature :: 60 :: K 
 # 'state_q0001' :: specific humidity :: 60 :: kg/kg
@@ -63,7 +63,13 @@ def plot_standard_feature_marginals(data, save_path: str):
         save_path: path to save the resulting plot
     """
     # data = data['marginal_distances'] # For now not dealing with se
-    assert all(len(v['marginal_distances']) == 124 for v in data.values()), "All value lists must be of length 124."
+    # assert all(len(v['marginal_distances']) == 124 for v in data.values()), "All value lists must be of length 124."
+    if len(data[list(data.keys())[0]]['marginal_distances']) == 124:
+        segments = [(0, 60), (60, 120), (120, 124)]
+    else: 
+        logging.warning("Data does not have 124 features, adjusting segments assuming removed 13 specific humidity levels.")
+        segments = [(0, 60), (60, 107), (107, 111)]
+    
 
     # Ensure consistent x-axis order
     x_vals = sorted(data.keys())
@@ -79,7 +85,8 @@ def plot_standard_feature_marginals(data, save_path: str):
     min_val = np.min(y_lines_np)
 
     # Define the segment ranges
-    segments = [(0, 60), (60, 120), (120, 124)]
+
+
 
     fig, axes = plt.subplots(3, 1, figsize=(8, 12), sharex=True, constrained_layout=False)
     plt.subplots_adjust(right=0.85)  # room for colorbars only

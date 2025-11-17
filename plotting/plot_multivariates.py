@@ -47,6 +47,45 @@ def plot_multivariate_results(distance_dict: dict, metric_name: str,save_path: s
     plt.close(fig)
 
 
+def plot_compare_multivariate_results(distance_dict: dict, metric_name: str,save_path: str):
+    """
+    Plots energy distance results for different data groups.
+
+    Args:
+        energy_distance_dict (dict): A dictionary where keys are group indices and values are energy distance values.
+        save_path (str): The path to save the plot image.
+    """
+
+    # Plot results
+    fig, ax = plt.subplots(figsize=(8, 4))
+    colors = ['#8f91a2', '#94B0DA', '#DCEDFF', '#4b6c9e', '#708dbf']
+
+    for i, (multivariate_version, distance_dict) in enumerate(distance_dict.items()):
+        # Accept dicts keyed by ints or strings; order by integer key when possible
+        keys = list(distance_dict.keys())
+        try:
+            keys_sorted = sorted(keys, key=lambda k: int(k))
+        except Exception:
+            keys_sorted = sorted(keys)
+
+        x = list(range(len(keys_sorted)))
+        y = [distance_dict[k]['value'] for k in keys_sorted]
+
+        ax.errorbar(x, y, marker="o", linestyle="-", color=colors[i], label=multivariate_version)
+
+    ax.set_xlabel("Training year")
+    ax.set_ylabel(f"{metric_name.replace('_', ' ').title()}")
+    ax.set_title(f"{metric_name.replace('_', ' ').title()} between train distribution \n and test distribution")
+    ax.grid(True)
+    fig.tight_layout()
+    ax.legend(title="Multivariate version", loc='best')
+
+    Path(save_path).parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(save_path, dpi=200, transparent=True)
+    logging.info(f"Saved plot to {save_path}")
+    plt.close(fig)
+
+
 def plot_energy_distance_results_with_p_values(energy_distance_dict: dict, save_path: str, cmap: str = "viridis"):
     """
     Plots energy distance results for different data groups and colors points by p-value.
