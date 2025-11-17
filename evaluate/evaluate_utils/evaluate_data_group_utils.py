@@ -172,32 +172,6 @@ def evaluate_data_group(
             )
 
 
-    # if "energy_distance" in evaluation_options:
-    #     # if cfg.testing.timings:
-    #     #     start_time = time.perf_counter()
-    #     #     observed, se_observed = monte_carlo_energy_distance(train_data, test_data, K_cross=cfg.energy_distance.K_cross, K_within=cfg.energy_distance.K_within, batch_size=cfg.energy_distance.batch_size, seed=cfg.project.seed)
-    #     #     elapsed = time.perf_counter() - start_time
-    #     #     logging.info(f"evaluate_data_groups took {elapsed:.3f} seconds ")
-    #     #     energy_distance = {"value": observed, "std_err": se_observed, "p_value": 0.0}
-
-    #     # else:
-    #     start_time = time.perf_counter()
-    #     energy, se_energy, pval = energy_test_permutation(
-    #         train_data,
-    #         test_data,
-    #         num_permutations=cfg.energy_distance.num_permutations,
-    #         K_cross=cfg.energy_distance.K_cross,
-    #         K_within=cfg.energy_distance.K_within,
-    #         batch_size=cfg.energy_distance.batch_size,
-    #         seed=cfg.project.seed,
-    #     )
-    #     elapsed = time.perf_counter() - start_time
-    #     logging.info(f"energy_test_permutation took {elapsed:.3f} seconds ")
-    #     energy_distance = {"value": energy, "std_err": se_energy, "p_value": pval}
-    #     results["energy_distance"] = energy_distance
-    #     logging.info(
-    #         f'Energy Distance: {energy_distance["value"]:.6f} ± {energy_distance["std_err"]:.6f}, p-value: {energy_distance["p_value"]:.6f}'
-    #     )
 
     # if "vis_marginals" in evaluation_options:
     #     marginal_distributions = extract_marginal_distributions_for_visualization(
@@ -206,57 +180,9 @@ def evaluate_data_group(
     #     results["vis_marginals"] = marginal_distributions
     #     logging.info(f"Extracted marginal distributions for visualization.")
 
-    # if "kl_divergence" in evaluation_options:
-    #     start_time = time.perf_counter()
-    #     # kl_estimate, (logp_test_vals, logp_train_vals), pca_obj = kde_kl_mc(train_data, test_data, n_components=cfg.kl_divergence.n_components, bandwidth=cfg.kl_divergence.bandwidth, bw_grid=cfg.kl_divergence.bw_grid, sample_size=cfg.kl_divergence.sample_size, rng=cfg.project.seed)
-    #     kl_estimate, se, _ = pca_kde_kl_gpu(
-    #         train_data,
-    #         test_data,
-    #         n_components=cfg.kl_divergence.n_components,
-    #         bandwidth=cfg.kl_divergence.bandwidth,
-    #         batch_ref=cfg.kl_divergence.sample_size,
-    #     )
-    #     elapsed = time.perf_counter() - start_time
-    #     logging.info(f"kde_kl_mc took {elapsed:.3f} seconds ")
-    #     kl_divergence = {
-    #         "value": kl_estimate
-    #     }  # , "logp_test_vals": logp_test_vals, "logp_train_vals": logp_train_vals}
-    #     results["kl_divergence"] = kl_divergence
-    #     logging.info(f'KL Divergence Estimate: {kl_divergence["value"]:.6f}')
 
 
     return results
-
-
-# def evaluate_marginal_distributions(X, Y, cfg: DictConfig):
-#     """
-#     Quantifies the difference between marginal distributions of two datasets using energy distance.
-
-#     Args:
-#         X (np.ndarray): First dataset (samples, features).
-#         Y (np.ndarray): Second dataset (samples, features).
-#         cfg (DictConfig): Configuration object containing settings for marginal distribution evaluation.
-#     """
-#     distances = []
-#     se_distances = []
-#     for i in range(X.shape[1]):
-#         if cfg.marginal_distributions.metric == "energy_distance":
-#             dist, se_dist = monte_carlo_energy_distance(
-#                 X[:, i : i + 1],
-#                 Y[:, i : i + 1],
-#                 K_cross=cfg.energy_distance.K_cross,
-#                 K_within=cfg.energy_distance.K_within,
-#                 batch_size=cfg.energy_distance.batch_size,
-#                 seed=cfg.project.seed,
-#             )
-#         else:
-#             raise ValueError(
-#                 f"Unknown marginal distribution metric: {cfg.marginal_distributions.metric}, or not yet implemented."
-#             )
-
-#         distances.append(dist)
-#         se_distances.append(se_dist)
-    # return distances, se_distances
 
 
 def extract_marginal_distributions_for_visualization(

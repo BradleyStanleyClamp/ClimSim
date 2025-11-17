@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 
 
-def plot_energy_distance_results(energy_distance_dict: dict, save_path: str):
+def plot_multivariate_results(distance_dict: dict, metric_name: str,save_path: str):
     """
     Plots energy distance results for different data groups.
 
@@ -22,27 +22,27 @@ def plot_energy_distance_results(energy_distance_dict: dict, save_path: str):
     fig, ax = plt.subplots(figsize=(8, 4))
 
     # Accept dicts keyed by ints or strings; order by integer key when possible
-    keys = list(energy_distance_dict.keys())
+    keys = list(distance_dict.keys())
     try:
         keys_sorted = sorted(keys, key=lambda k: int(k))
     except Exception:
         keys_sorted = sorted(keys)
 
     x = list(range(len(keys_sorted)))
-    # p_values = [energy_distance_dict[k]['p_value'] for k in keys_sorted]
-    y = [energy_distance_dict[k]['value'] for k in keys_sorted]
-    # y_err = [energy_distance_dict[k]['std_err'] for k in keys_sorted]
+    # p_values = [distance_dict[k]['p_value'] for k in keys_sorted]
+    y = [distance_dict[k]['value'] for k in keys_sorted]
+    # y_err = [distance_dict[k]['std_err'] for k in keys_sorted]
 
     # ax.errorbar(x, y, yerr=y_err, marker="o", linestyle="-")
-    ax.errorbar(x, y, marker="o", linestyle="-")
-    ax.set_xlabel("Data group index")
-    ax.set_ylabel("Energy distance")
-    ax.set_title("Energy distance vs Data group index")
+    ax.errorbar(x, y, marker="o", linestyle="-", color="#8f91a2")
+    ax.set_xlabel("Training year")
+    ax.set_ylabel(f"{metric_name.replace('_', ' ').title()}")
+    ax.set_title(f"{metric_name.replace('_', ' ').title()} between train distribution \n and test distribution")
     ax.grid(True)
     fig.tight_layout()
 
     Path(save_path).parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(save_path, dpi=200)
+    fig.savefig(save_path, dpi=200, transparent=True)
     logging.info(f"Saved plot to {save_path}")
     plt.close(fig)
 

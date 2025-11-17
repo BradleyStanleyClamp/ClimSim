@@ -91,12 +91,12 @@ def main(cfg: DictConfig):
 
     # Save results to json file
     if "multivariate" in cfg.evaluation_options:
-        results_path = Path.cwd() / "energy_distance.json"
+        results_path = Path.cwd() / f"multivariate_{cfg.metric_name}.json"
         with open(results_path, "w") as f:
             json.dump(full_results["multivariate"], f, indent=2)
         logging.info(f"Saved multivariate results to {results_path}")
     if "marginals" in cfg.evaluation_options:
-        results_path = Path.cwd() / "marginal_distribution_distances.json"
+        results_path = Path.cwd() / f"marginal_distribution_{cfg.metric_name}.json"
         with open(results_path, "w") as f:
             json.dump(full_results["marginals"], f, indent=2)
         logging.info(f"Saved marginal distribution distances results to {results_path}")
@@ -113,13 +113,8 @@ def main(cfg: DictConfig):
             )
 
     if "multivariate" in cfg.evaluation_options:
-        plotting.plot_energy_distance_results(
-            full_results["multivariate"], save_path=f"multivariate_energy_distance.png"
-        )
-
-    if "kl_divergence" in cfg.evaluation_options:
-        plotting.plot_kl_divergence_results(
-            full_results["kl_divergence"], save_path="kl_divergence.png"
+        plotting.plot_multivariate_results(
+            full_results["multivariate"], metric_name=cfg.metric_name, save_path=f"multivariate_{cfg.metric_name}.png"
         )
 
     if "marginals" in cfg.evaluation_options:
