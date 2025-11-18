@@ -58,14 +58,14 @@ class KLDivergenceMetric:
             X = Xp
             Y = Yp
             end_time = time.perf_counter()
-            logging.info(f"PCA reduction took {end_time - start_time:.4f} seconds")
+            # logging.info(f"PCA reduction took {end_time - start_time:.4f} seconds")
 
         start_time = time.perf_counter()
         divergence = KLdivergence(X.cpu().numpy(), Y.cpu().numpy())
         end_time = time.perf_counter()
-        logging.info(
-            f"KL divergence calculation took {end_time - start_time:.4f} seconds"
-        )
+        # logging.info(
+        #     f"KL divergence calculation took {end_time - start_time:.4f} seconds"
+        # )
 
         return divergence
 
@@ -98,12 +98,12 @@ def KLdivergence(x, y, batch_size=10000, dtype=np.float32, eps=0.01):
     m, dy = y.shape
     assert d == dy, "Dimension mismatch between x and y."
 
-    logging.info("Building cKDTree for x and y...")
+    # logging.info("Building cKDTree for x and y...")
     # cKDTree is memory/time efficient
     xtree = cKDTree(x)
     ytree = cKDTree(y)
 
-    logging.info("Querying trees in batches...")
+    # logging.info("Querying trees in batches...")
     # We'll accumulate the sum of -log(r/s) over x
     sum_log_ratio = 0.0
     processed = 0

@@ -73,6 +73,9 @@ class MetricWrapper:
     def permutation_test(self, X, Y, num_permutations=500):
         """
         Perform a permutation test to assess significance of the metric.
+            H_0: X and Y are from the same distribution.
+            H_1: X and Y are from different distributions.
+
         Args:
             X (np.ndarray): First dataset.
             Y (np.ndarray): Second dataset.
@@ -81,10 +84,31 @@ class MetricWrapper:
         Returns:
             pval (float): p-value from the permutation test.
         """
+        if self.sample_size and self.sample_size < min(len(X), len(Y)):
+            X = X[torch.randperm(X.shape[0])[:self.sample_size]]
+            Y = Y[torch.randperm(Y.shape[0])[:self.sample_size]]
+            logging.info(f"perm test subsample results X: {X.shape}, Y: {Y.shape}")
+            self.sample_size = None  # Disable further sampling within metric functions
+
         if self.observed is None:
             self.observed = self.calculate(X, Y)
 
-        pass
+        pooled = torch.vstack([X, Y])
+        n = X.shape[0]
+        count = 0
+        for i in range(num_permutations):
+            idx = torch.randperm(pooled.shape[0])
+            Xp = pooled[idx[:n]]
+            Yp = pooled[idx[n:]]
+            stat = self.metric_function(Xp, Yp)
+            if stat >= self.observed:
+                count += 1
+            if i % 50 == 0:
+                logging.info(
+                    f"Permutation test progress: {i}/{num_permutations} permutations completed."
+                )
+        pval = (count + 1) / (num_permutations + 1)
+        return pval
 
     def _get_metric_function(self, metric_name: str):
         """
@@ -144,6 +168,20 @@ def evaluate_data_group(
         )
         results["multivariate"] = {"value": observed_metric}
         logging.info(f"Multivariate {cfg.metric_name} Value: {observed_metric:.6f}")
+        
+        if cfg.permutation_test > 0:
+            start_time = time.perf_counter()
+            pval = metric.permutation_test(
+                trainset.input,
+                testset.input,
+                num_permutations=cfg.permutation_test,
+            )
+            elapsed = time.perf_counter() - start_time
+            logging.info(
+                f"Multivariate {cfg.metric_name} permutation test took {elapsed:.3f} seconds "
+            )
+            results["multivariate"]["p_value"] = pval
+            logging.info(f"Multivariate {cfg.metric_name} p-value: {pval:.6f}")
 
 
     if "marginals" in evaluation_options:
@@ -217,3 +255,54 @@ def extract_marginal_distributions_for_visualization(
             results[f"top_{i}_level_specific_humidity"] = data[:, i][i_idx]
 
     return results
+
+
+
+def permutation_test(
+    X,
+    Y,
+    num_permutations=500,
+    K_cross=2_000_000,
+    K_within=2_000_000,
+    batch_size=200000,
+    seed=None,
+):
+    """
+    To provide a single value with significance, we can perform a permutation test.
+    H_0: X and Y are from the same distribution.
+    H_1: X and Y are from different distributions.
+    This function utilises the optimised monte_carlo_energy_distance function to allow for larger datasets.
+
+    Args:
+        X (np.ndarray): First dataset.
+        Y (np.ndarray): Second dataset.
+        num_permutations (int): Number of permutations to perform.
+        K_cross (int): Number of random pairs for cross term estimation.
+        K_within (int): Number of random pairs for within term estimation.
+        batch_size (int): Batch size for pair computations.
+        seed (int, optional): Random seed for reproducibility. Defaults to None.
+
+    Returns:
+        observed (float): Observed energy distance.
+        se_observed (float): Standard error of the observed energy distance.
+        pval (float): p-value from the permutation test.
+    """
+
+    rng = np.random.default_rng(seed)
+    observed, se_observed = monte_carlo_energy_distance(
+        X, Y, K_cross=K_cross, K_within=K_within, batch_size=batch_size, seed=seed
+    )
+    pooled = np.vstack([X, Y])
+    n = X.shape[0]
+    count = 0
+    for _ in range(num_permutations):
+        idx = rng.permutation(pooled.shape[0])
+        Xp = pooled[idx[:n]]
+        Yp = pooled[idx[n:]]
+        stat, se_energy = monte_carlo_energy_distance(
+            Xp, Yp, K_cross=K_cross, K_within=K_within, batch_size=batch_size, seed=seed
+        )
+        if stat >= observed:
+            count += 1
+    pval = (count + 1) / (num_permutations + 1)
+    return observed, se_observed, pval

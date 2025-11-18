@@ -12,7 +12,7 @@ defaults:
   - override hydra/launcher: slurm
 
 # Naming 
-multirun_dir_name: ${model.name}_year_group_${dataset.group_by_year}
+multirun_dir_name: ${model.name}_year_group_${dataset.group_by_year.target_group}
 
 # Training parameters
 max_epochs: 10

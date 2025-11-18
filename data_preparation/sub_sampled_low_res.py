@@ -67,7 +67,7 @@ class SubSampledLowResDataset(Dataset):
                 self.dataset_config.remove_high_altitude_specific_humidity_levels
             )
             logging.info(
-                f"Removed top {self.dataset_config.remove_high_altitude_specific_humidity_levels} high altitude specific humidity levels from data. New input shape: {self.input.shape}"
+                f"Removed top {self.dataset_config.remove_high_altitude_specific_humidity_levels,} high altitude specific humidity levels from data. New input shape: {self.input.shape}, New target shape: {self.target.shape}"
             )
 
         self.input = torch.from_numpy(self.input).float()
@@ -215,6 +215,9 @@ class SubSampledLowResDataset(Dataset):
         # We want to keep 0-60, 60+n_levels to end
         input_keep_indices = list(range(0, 60)) + list(range(60 + n_levels, 124))
         self.input = self.input[:, input_keep_indices]
+
+        target_keep_indices = list(range(0, 60)) + list(range(60 + n_levels, 128))
+        self.target = self.target[:, target_keep_indices]
 
     def _get_grouping_function(self, group_method):
         """

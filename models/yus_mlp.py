@@ -38,7 +38,11 @@ class YusMLP(nn.Module):
 
         self.last_hidden_layer = nn.Linear(hidden_dims[-1], output_dim)
 
-        self.output_lin = nn.Linear(output_dim, 120)  # linear branch
+
+        # Functionality to deal with removal of specific humidity levels
+        adjusted_linear_output_dim = output_dim - 8  # Adjust output dim for linear branch
+
+        self.output_lin = nn.Linear(output_dim, adjusted_linear_output_dim)  # linear branch
         self.output_relu = nn.Sequential(             # relu branch
             nn.Linear(output_dim, 8),
             nn.ReLU()

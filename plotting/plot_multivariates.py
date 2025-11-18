@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 
 
-def plot_multivariate_results(distance_dict: dict, metric_name: str,save_path: str):
+def plot_multivariate_results(distance_dict: dict, metric_name: str, save_path: str):
     """
     Plots energy distance results for different data groups.
 
@@ -29,17 +29,46 @@ def plot_multivariate_results(distance_dict: dict, metric_name: str,save_path: s
         keys_sorted = sorted(keys)
 
     x = list(range(len(keys_sorted)))
-    # p_values = [distance_dict[k]['p_value'] for k in keys_sorted]
-    y = [distance_dict[k]['value'] for k in keys_sorted]
-    # y_err = [distance_dict[k]['std_err'] for k in keys_sorted]
 
-    # ax.errorbar(x, y, yerr=y_err, marker="o", linestyle="-")
-    ax.errorbar(x, y, marker="o", linestyle="-", color="#8f91a2")
+    first_val = distance_dict[keys_sorted[0]]
+    if isinstance(first_val, dict) and "p_value" in first_val:
+        p_values = [distance_dict[k]["p_value"] for k in keys_sorted]
+        bins = [0.005, 0.05]
+        bin_colors = ["#002147", "#8f91a2", "#94b0da"]
+        idx = np.digitize(p_values, bins)
+        colors = [bin_colors[i] for i in idx]
+        is_pvalues = True
+
+    else:
+        is_pvalues = False
+        colors = ["#8f91a2"] * len(keys_sorted)
+
+    y = np.array([distance_dict[k]["value"] for k in keys_sorted])
+    # y = [distance_dict[k] for k in keys_sorted]
+
+    ax.plot(x, y, color="grey", linestyle="-", linewidth=1, zorder=0)
+
+    for xi, yi, c in zip(x, y, colors):
+        ax.errorbar(
+            xi, yi, marker="o", color=c, ecolor=c, elinewidth=1.2, capsize=3, zorder=1
+        )
+
     ax.set_xlabel("Training year")
     ax.set_ylabel(f"{metric_name.replace('_', ' ').title()}")
-    ax.set_title(f"{metric_name.replace('_', ' ').title()} between train distribution \n and test distribution")
+    ax.set_title(
+        f"{metric_name.replace('_', ' ').title()} between train distribution \n and test distribution"
+    )
     ax.grid(True)
     fig.tight_layout()
+
+    if is_pvalues:
+        legend_handles = [
+            Patch(color=bin_colors[0], label="$< 0.005$"),
+            # Patch(color=bin_colors[1], label='$< 0.01$'),
+            Patch(color=bin_colors[1], label="$< 0.05$"),
+            Patch(color=bin_colors[2], label="$>= 0.05$"),
+        ]
+        ax.legend(handles=legend_handles, title="p-value", loc="best")
 
     Path(save_path).parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(save_path, dpi=200, transparent=True)
@@ -47,7 +76,9 @@ def plot_multivariate_results(distance_dict: dict, metric_name: str,save_path: s
     plt.close(fig)
 
 
-def plot_compare_multivariate_results(distance_dict: dict, metric_name: str,save_path: str):
+def plot_compare_multivariate_results(
+    distance_dict: dict, metric_name: str, save_path: str
+):
     """
     Plots energy distance results for different data groups.
 
@@ -58,7 +89,7 @@ def plot_compare_multivariate_results(distance_dict: dict, metric_name: str,save
 
     # Plot results
     fig, ax = plt.subplots(figsize=(8, 4))
-    colors = ['#8f91a2', '#94B0DA', '#DCEDFF', '#4b6c9e', '#708dbf']
+    colors = ["#8f91a2", "#94B0DA", "#DCEDFF", "#4b6c9e", "#708dbf"]
 
     for i, (multivariate_version, distance_dict) in enumerate(distance_dict.items()):
         # Accept dicts keyed by ints or strings; order by integer key when possible
@@ -69,16 +100,20 @@ def plot_compare_multivariate_results(distance_dict: dict, metric_name: str,save
             keys_sorted = sorted(keys)
 
         x = list(range(len(keys_sorted)))
-        y = [distance_dict[k]['value'] for k in keys_sorted]
+        y = [distance_dict[k]["value"] for k in keys_sorted]
 
-        ax.errorbar(x, y, marker="o", linestyle="-", color=colors[i], label=multivariate_version)
+        ax.errorbar(
+            x, y, marker="o", linestyle="-", color=colors[i], label=multivariate_version
+        )
 
     ax.set_xlabel("Training year")
     ax.set_ylabel(f"{metric_name.replace('_', ' ').title()}")
-    ax.set_title(f"{metric_name.replace('_', ' ').title()} between train distribution \n and test distribution")
+    ax.set_title(
+        f"{metric_name.replace('_', ' ').title()} between train distribution \n and test distribution"
+    )
     ax.grid(True)
     fig.tight_layout()
-    ax.legend(title="Multivariate version", loc='best')
+    ax.legend(title="Multivariate version", loc="best")
 
     Path(save_path).parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(save_path, dpi=200, transparent=True)
@@ -86,7 +121,9 @@ def plot_compare_multivariate_results(distance_dict: dict, metric_name: str,save
     plt.close(fig)
 
 
-def plot_energy_distance_results_with_p_values(energy_distance_dict: dict, save_path: str, cmap: str = "viridis"):
+def plot_energy_distance_results_with_p_values(
+    energy_distance_dict: dict, save_path: str, cmap: str = "viridis"
+):
     """
     Plots energy distance results for different data groups and colors points by p-value.
 
@@ -106,9 +143,9 @@ def plot_energy_distance_results_with_p_values(energy_distance_dict: dict, save_
         keys_sorted = sorted(keys)
 
     x = list(range(len(keys_sorted)))
-    p_values = np.array([energy_distance_dict[k]['p_value'] for k in keys_sorted])
-    y = np.array([energy_distance_dict[k]['value'] for k in keys_sorted])
-    y_err = np.array([energy_distance_dict[k]['std_err'] for k in keys_sorted])
+    p_values = np.array([energy_distance_dict[k]["p_value"] for k in keys_sorted])
+    y = np.array([energy_distance_dict[k]["value"] for k in keys_sorted])
+    y_err = np.array([energy_distance_dict[k]["std_err"] for k in keys_sorted])
 
     # Use discrete p-value bins with fixed colors
     # Bins: <0.001, <0.01, <0.05, >=0.05
@@ -125,30 +162,41 @@ def plot_energy_distance_results_with_p_values(energy_distance_dict: dict, save_
     # Plot onto explicit Axes so legend can be added
     fig, ax = plt.subplots(figsize=(8, 4))
     # Draw a grey line joining the points first so markers/errorbars overlay it
-    ax.plot(x, y, color='grey', linestyle='-', linewidth=1, zorder=0)
+    ax.plot(x, y, color="grey", linestyle="-", linewidth=1, zorder=0)
     for xi, yi, err, c in zip(x, y, y_err, colors):
-        ax.errorbar(xi, yi, yerr=err, marker="o", color=c, ecolor=c, elinewidth=1.2, capsize=3, zorder=1)
+        ax.errorbar(
+            xi,
+            yi,
+            yerr=err,
+            marker="o",
+            color=c,
+            ecolor=c,
+            elinewidth=1.2,
+            capsize=3,
+            zorder=1,
+        )
 
     ax.set_xlabel("Training year")
     ax.set_ylabel("Energy distance")
-    ax.set_title("Energy distance between training-year distribution \n and test-year distribution (Year 8)")
+    ax.set_title(
+        "Energy distance between training-year distribution \n and test-year distribution (Year 8)"
+    )
     ax.grid(True)
 
     # Add a legend that shows the discrete p-value bins
     legend_handles = [
-        Patch(color=bin_colors[0], label='$< 0.005$'),
+        Patch(color=bin_colors[0], label="$< 0.005$"),
         # Patch(color=bin_colors[1], label='$< 0.01$'),
-        Patch(color=bin_colors[1], label='$< 0.05$'),
-        Patch(color=bin_colors[2], label='$>= 0.05$'),
+        Patch(color=bin_colors[1], label="$< 0.05$"),
+        Patch(color=bin_colors[2], label="$>= 0.05$"),
     ]
-    ax.legend(handles=legend_handles, title='p-value', loc='best')
+    ax.legend(handles=legend_handles, title="p-value", loc="best")
 
     fig.tight_layout()
     Path(save_path).parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(save_path, transparent=True)
     logging.info(f"Saved plot to {save_path}")
     plt.close(fig)
-
 
 
 def plot_kl_divergence_results(kl_divergence_dict: dict, save_path: str):
@@ -172,7 +220,7 @@ def plot_kl_divergence_results(kl_divergence_dict: dict, save_path: str):
 
     x = list(range(len(keys_sorted)))
     # p_values = [kl_divergence_dict[k]['p_value'] for k in keys_sorted]
-    y = [kl_divergence_dict[k]['value'] for k in keys_sorted]
+    y = [kl_divergence_dict[k]["value"] for k in keys_sorted]
     # y_err = [kl_divergence_dict[k]['std_err'] for k in keys_sorted]
 
     ax.errorbar(x, y, marker="o", linestyle="-")
