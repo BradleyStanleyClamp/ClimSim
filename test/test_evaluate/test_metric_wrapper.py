@@ -59,7 +59,9 @@ def test_metric_wrapper_on_sub_sampled_low_res_no_further_sampling():
             "subsample_factors": {"train": 7},
             "group_method": "group_by_year",
             "group_by_year": {"target_group": 0},
+            "remove_high_altitude_specific_humidity_levels": False
         }
+        
     )
     dataset_testing_type = "quick"
     trainset = data_preparation.SubSampledLowResDataset(
@@ -92,6 +94,7 @@ def test_metric_wrapper_on_sub_sampled_low_res_further_sampling():
             "subsample_factors": {"train": 7},
             "group_method": "group_by_year",
             "group_by_year": {"target_group": 0},
+            "remove_high_altitude_specific_humidity_levels": False
         }
     )
     dataset_testing_type = "quick"

@@ -21,7 +21,8 @@ def test_get_dataset_full(sub_sampled_low_res_config_path: str = "../../config/d
             'reduced': 0.1,
             'full': 1.0
         },
-        'group_method': False
+        'group_method': False,
+        'remove_high_altitude_specific_humidity_levels': False
 
     })
     mode = 'train'
@@ -47,7 +48,9 @@ def test_get_dataset_reduced(sub_sampled_low_res_config_path: str = "../../confi
             'reduced': 0.5,
             'full': 1.0
         },
-        'group_method': False
+        'group_method': False,
+        'remove_high_altitude_specific_humidity_levels': False
+
     })
     mode = 'train'
     dataset_testing_type = 'reduced'
@@ -73,7 +76,8 @@ def test_get_dataset_quick(sub_sampled_low_res_config_path: str = "../../config/
             'reduced': 0.5,
             'full': 1.0
         },
-        'group_method': False
+        'group_method': False,
+        'remove_high_altitude_specific_humidity_levels': False
     })
     mode = 'train'
     dataset_testing_type = 'quick'

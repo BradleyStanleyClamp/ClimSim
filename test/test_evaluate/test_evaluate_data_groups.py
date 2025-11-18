@@ -23,6 +23,7 @@ def test_evaluate_data_group_multivariate():
                 "prefetch_factor": 2,
                 "persistent_workers": False,
             }},
+            'permutation_test': False
         }
     )
 
