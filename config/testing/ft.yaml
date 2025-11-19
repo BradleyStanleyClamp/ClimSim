@@ -14,6 +14,8 @@ epochs: 3
 plotting: True
 time_analysis: True
 num_workers: 4
+timeout_min: 720
+mem_gb: 64
 
 # evaluate data group metric settings
 sample_size: 20000

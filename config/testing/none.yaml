@@ -15,11 +15,14 @@ epochs: ${max_epochs}
 plotting: False
 time_analysis: False
 num_workers: 6
+timeout_min: 1440
+mem_gb: 64
 
 # evaluate data group metric settings
 sample_size: 20000
 n_samples: False
 batch_size: 7000
+
 
 # OBSOLETE
 energy_distance:

@@ -167,8 +167,8 @@ def test_climsim_from_raw_dataset_unit_test_combine_datasets():
     assert "state_q0001" in input_ds
     assert "ptend_t" in target_ds
     assert "ptend_q0001" in target_ds
-    assert input_ds.dims["sample"] == 2
-    assert target_ds.dims["sample"] == 2
+    assert input_ds.sizes["sample"] == 2
+    assert target_ds.sizes["sample"] == 2
 
 
 def test_climsim_from_raw_dataset_unit_test_normalise_dataset():
@@ -317,7 +317,7 @@ def test_climsim_from_raw_dataset_init_sample_data():
             "base_folder_path": data_path,
             "target_years": ["0001"],
             "target_months": ["02"],
-            "sample_rate": 1,
+            'dataset_testing_sample_rates': {'full': 1},
             "v1_inputs": v1_inputs,
             "v1_targets": v1_targets,
             "output_scale_file_path": output_scale_file_path,
@@ -356,7 +356,7 @@ def test_climsim_from_raw_dataset_init_sample_data_train_and_test():
             "base_folder_path": data_path,
             "target_years": ["0001"],
             "target_months": ["02"],
-            "sample_rate": 1,
+            'dataset_testing_sample_rates': {'full': 1},
             "v1_inputs": v1_inputs,
             "v1_targets": v1_targets,
             "output_scale_file_path": output_scale_file_path,

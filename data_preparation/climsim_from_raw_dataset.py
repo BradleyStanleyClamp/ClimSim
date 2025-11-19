@@ -42,13 +42,19 @@ class ClimSimFromRawDataset(Dataset):
             dataset_cfg.target_years,
             dataset_cfg.target_months,
         )
+        logging.info(f"Total files found: {len(self.input_filenames)}")
 
         self.sampled_input_filenames, self.sampled_target_filenames = (
             self._sample_filenames(
                 self.input_filenames,
                 self.target_filenames,
-                sample_rate=dataset_cfg.sample_rate,
+                sample_rate=dataset_cfg.dataset_testing_sample_rates[
+                    dataset_testing_type
+                ],
             )
+        )
+        logging.info(
+            f"Files after sampling ({dataset_testing_type}): {len(self.sampled_input_filenames)}"
         )
 
         input_ds, target_ds = self._combine_datasets(
@@ -57,6 +63,7 @@ class ClimSimFromRawDataset(Dataset):
             v1_inputs=dataset_cfg.v1_inputs,
             v1_targets=dataset_cfg.v1_targets,
         )
+        logging.info(f"Combined dataset samples: {input_ds.sizes['sample']}")
 
         normalised_input_ds, normalised_target_ds, self.normalisation_stats = (
             self._normalise_datasets(
@@ -67,6 +74,7 @@ class ClimSimFromRawDataset(Dataset):
                 v1_targets=dataset_cfg.v1_targets,
             )
         )
+        logging.info(f"Normalised data")
 
         self.input, self.target = self._prepare_data(
             self.model,
@@ -102,6 +110,11 @@ class ClimSimFromRawDataset(Dataset):
         for year in target_years:
             for month in target_months:
                 folder_path = os.path.join(base_folder_path, f"{year}-{month}")
+                if not os.path.isdir(folder_path):
+                    logging.warning(
+                        f"Folder path does not exist or is not a directory: {folder_path}. Skipping."
+                    )
+                    continue
                 for filename in os.listdir(folder_path):
                     if input_regex in filename:
                         input_filelist.append(os.path.join(folder_path, filename))
@@ -146,6 +159,56 @@ class ClimSimFromRawDataset(Dataset):
         return sampled_input_filelist, sampled_target_filelist
 
     def _combine_datasets(
+        self,
+        sampled_input_filenames: list,
+        sampled_target_filenames: list,
+        v1_inputs: list,
+        v1_targets: list,
+    ) -> tuple:
+        """
+        Loads and combines the data from the selected filenames into a single xarray dataset. It sub selects the taget variables and removes samples where target variables may not be present.
+
+        Returns:
+            Tuple of (combined input dataset, combined target dataset).
+        """
+        combined_input_ds = xr.open_mfdataset(
+            sampled_input_filenames,
+            combine="nested",
+            concat_dim="sample",
+            # coords="minimal",
+            # data_vars="minimal",
+            # compat="override",
+        )
+
+        combined_target_ds = xr.open_mfdataset(
+            sampled_target_filenames,
+            combine="nested",
+            concat_dim="sample",
+            # coords="minimal",
+            # data_vars="minimal",
+            # compat="override",
+        )
+
+        try:
+            combined_input_ds = combined_input_ds[list(v1_inputs)]
+            combined_target_ds["ptend_t"] = (
+                combined_target_ds["state_t"] - combined_input_ds["state_t"]
+                ) / 1200
+
+            combined_target_ds["ptend_q0001"] = (
+                combined_target_ds["state_q0001"] - combined_input_ds["state_q0001"]
+                ) / 1200
+            
+            combined_target_ds = combined_target_ds[list( v1_targets)]
+
+        except KeyError as e:
+            raise RuntimeError(
+                f"A required variable is missing from the lazy-loaded dataset: {e}"
+            )
+
+        return combined_input_ds, combined_target_ds
+
+    def _combine_datasets_old(
         self,
         sampled_input_filenames: list,
         sampled_target_filenames: list,

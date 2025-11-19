@@ -6,8 +6,8 @@ defaults:
 _target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
 submitit_folder: ${hydra.sweep.dir}/.submitit/%j
 
-timeout_min: 1440
-mem_gb: 64
+timeout_min: ${testing.timeout_min}
+mem_gb: ${testing.mem_gb}
 cpus_per_task: ${dataset.general_dataset_config.num_workers}
 
 # timeout_min: 60 #1440

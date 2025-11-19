@@ -31,6 +31,7 @@ dependencies = [
   "pytorch-lightning>=2.5.5",
   "geomloss>=0.2.6",
   "dcor>=0.6",
+  "dask>=2024.8.0",
 ]
 
 [project.optional-dependencies]
