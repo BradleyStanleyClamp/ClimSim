@@ -1,0 +1,11 @@
+dataset_name: 'climsim_from_raw'
+
+base_folder_path: '/gws/nopw/j04/iecdt/bstanleyclamp/subsampled_low_res/ClimSim_low-res/train/'
+output_scale_file_path: '/home/users/bradlesc/projects/ClimSim/preprocessing/normalizations/outputs/output_scale.nc'
+target_years: [0001]
+target_months: [02, 03]
+
+sample_rate: 10
+
+v1_inputs: ['state_t','state_q0001','state_ps','pbuf_SOLIN','pbuf_LHFLX','pbuf_SHFLX']
+v1_targets: ['ptend_t','ptend_q0001','cam_out_NETSW','cam_out_FLWDS','cam_out_PRECSC','cam_out_PRECC','cam_out_SOLS','cam_out_SOLL','cam_out_SOLSD', "cam_out_SOLLD"]
