@@ -38,6 +38,71 @@ output_scale_file_path = os.path.join(
 )
 
 
+def test_climsim_from_raw_dataset_unit_test_select_target_years_months():
+    dataset = data_preparation.ClimSimFromRawDataset(
+        mode="train",
+        dataset_testing_type="qt",
+        dataset_cfg=None,
+        model=None,
+        unit_test_specific_methods=True,
+    )
+
+    dataset_cfg = DictConfig(
+        {
+            "target_years": [
+                "0001",
+                "0002",
+                "0003",
+                "0004",
+                "0005",
+                "0006",
+                "0007",
+                "0008",
+                "0009",
+            ],
+            "group_method": "group_by_months",  # Whether to select a year of data to train on, if not false should be the year [0, 6] to select
+            "group_by_months": {
+                "num_groups": 3,  # (02, 03, 04)
+                "target_group": 1,
+                "groups": [["02"], ["03"], ["04"]],
+                "test_group": ["05"],
+            },
+        }
+    )
+
+    years, months = dataset._select_target_years_months(
+        mode="train", dataset_cfg=dataset_cfg
+    )
+    assert years == [
+        "0001",
+        "0002",
+        "0003",
+        "0004",
+        "0005",
+        "0006",
+        "0007",
+        "0008",
+        "0009",
+    ]
+    assert months == ["03"]
+
+    years, months = dataset._select_target_years_months(
+        mode="test", dataset_cfg=dataset_cfg
+    )
+    assert years == [
+        "0001",
+        "0002",
+        "0003",
+        "0004",
+        "0005",
+        "0006",
+        "0007",
+        "0008",
+        "0009",
+    ]
+    assert months == ["05"]
+
+
 def test_climsim_from_raw_dataset_unit_test_get_dataset_filenames_working():
     base_dir = Path(__file__).resolve().parents[1]
     data_path = os.path.join(
@@ -92,12 +157,15 @@ def test_climsim_from_raw_dataset_unit_test_sample_filenames_failing():
         model=None,
         unit_test_specific_methods=True,
     )
-    with pytest.raises(AssertionError):
-        input_filenames, target_filenames = dataset._get_dataset_filenames(
-            base_folder_path=dataset_config.base_folder_path,
-            target_years=dataset_config.target_years,
-            target_months=dataset_config.target_months,
-        )
+
+    input_filenames, target_filenames = dataset._get_dataset_filenames(
+        base_folder_path=dataset_config.base_folder_path,
+        target_years=dataset_config.target_years,
+        target_months=dataset_config.target_months,
+    )
+
+    assert len(input_filenames) == 2
+    assert len(target_filenames) == 2
 
 
 def test_climsim_from_raw_dataset_unit_test_sample_filenames():
@@ -317,10 +385,11 @@ def test_climsim_from_raw_dataset_init_sample_data():
             "base_folder_path": data_path,
             "target_years": ["0001"],
             "target_months": ["02"],
-            'dataset_testing_sample_rates': {'full': 1},
+            "dataset_testing_sample_rates": {"full": 1},
             "v1_inputs": v1_inputs,
             "v1_targets": v1_targets,
             "output_scale_file_path": output_scale_file_path,
+            "group_method": False,
         }
     )
 
@@ -356,10 +425,11 @@ def test_climsim_from_raw_dataset_init_sample_data_train_and_test():
             "base_folder_path": data_path,
             "target_years": ["0001"],
             "target_months": ["02"],
-            'dataset_testing_sample_rates': {'full': 1},
+            "dataset_testing_sample_rates": {"full": 1},
             "v1_inputs": v1_inputs,
             "v1_targets": v1_targets,
             "output_scale_file_path": output_scale_file_path,
+            "group_method": False,
         }
     )
 

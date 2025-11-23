@@ -5,7 +5,8 @@ Script that trains the models used for sanity testing process. These models are:
 """
 
 import warnings
-import netCDF4 # Another weird import issue that is only triggered if netCDF4 imported after wandb 
+import netCDF4  # Another weird import issue that is only triggered if netCDF4 imported after wandb
+
 with (
     warnings.catch_warnings()
 ):  # To catch annoying pydantic x wandb warning - looks like it should be adressed soon: https://github.com/wandb/wandb/issues/10662
@@ -31,17 +32,38 @@ import numpy as np
 from evaluate.evaluate_utils import save_evaluation_results_to_json
 import time
 
-@hydra.main(version_base=None, config_path="../../../config", config_name="train_general")
-def main(cfg: DictConfig):
-       # Seeding everything
-    train.seed_everything(cfg.project.seed)
-    
-    torch.set_float32_matmul_precision('medium')
 
-    trainset = data_preparation.ClimSimFromRawDataset(mode="train", dataset_testing_type=cfg.testing.dataset_testing_type, dataset_cfg=cfg.dataset, model=cfg.model.name)
-    logging.info(f'dataset lengths: train {len(trainset)}')
+import dask
+from dask.distributed import Client, LocalCluster
+import xarray as xr
+
+
+@hydra.main(
+    version_base=None, config_path="../../../config", config_name="evaluate_data_groups"
+)
+def main(cfg: DictConfig):
+    # Seeding everything
+    train.seed_everything(cfg.project.seed)
+
+    torch.set_float32_matmul_precision("medium")
+
+    mode = "train"
+    start_time = time.time()
+    trainset = data_preparation.ClimSimFromRawDataset(
+        mode=mode,
+        dataset_testing_type=cfg.testing.dataset_testing_type,
+        dataset_cfg=cfg.dataset,
+        num_workers=cfg.testing.num_workers,
+        unit_test_specific_methods=False,
+    )
+    logging.info(f"Trainset loading time: {time.time() - start_time} seconds")
+
+    logging.info(f"Trainset length: {len(trainset)}")
+    logging.info(trainset.input.shape)
+    logging.info(trainset.target.shape)
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
-    main()    
+    main()

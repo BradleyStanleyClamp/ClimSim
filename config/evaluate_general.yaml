@@ -9,7 +9,7 @@ defaults:
   - dataset/general_dataset_config: general_dataset_config
   - hydra: default
   - testing: qt
-  - override hydra/launcher: slurm
+  - override hydra/launcher: slurm_gpu
 
 multirun_dir_name: evaluation_comp_general
 

@@ -1,0 +1,21 @@
+#config/hydra/launcher/slurm.yaml
+
+defaults:
+  - submitit_slurm
+
+_target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
+submitit_folder: ${hydra.sweep.dir}/.submitit/%j
+
+timeout_min: 60 #${testing.timeout_min}
+mem_gb: ${testing.mem_gb}
+cpus_per_task: ${dataset.general_dataset_config.num_workers}
+
+
+partition: debug
+qos: debug
+account: iecdt
+
+
+
+
+# https://help.jasmin.ac.uk/docs/batch-computing/how-to-submit-a-job/
