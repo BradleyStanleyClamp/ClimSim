@@ -32,6 +32,7 @@ dependencies = [
   "geomloss>=0.2.6",
   "dcor>=0.6",
   "dask[distributed]>=2024.8.0",
+  "huggingface-hub[cli]>=1.1.5",
 ]
 
 [project.optional-dependencies]
