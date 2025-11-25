@@ -6,19 +6,17 @@ defaults:
 _target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
 submitit_folder: ${hydra.sweep.dir}/.submitit/%j
 
-<<<<<<< HEAD
 timeout_min: 1440 #60 #${testing.timeout_min}
 mem_gb: 64 #${testing.mem_gb}
 cpus_per_task: 10 #${dataset.general_dataset_config.num_workers}
-=======
-timeout_min: 60 #${testing.timeout_min}
-mem_gb: ${testing.mem_gb}
-cpus_per_task: ${dataset.general_dataset_config.num_workers}
->>>>>>> parent of 6c05d1d (p2.1.3.5 - pipeline working and data download script)
+
+# timeout_min: 60 #${testing.timeout_min}
+# mem_gb: ${testing.mem_gb}
+# cpus_per_task: ${dataset.general_dataset_config.num_workers}
 
 
-partition: debug
-qos: debug
+partition: standard #debug
+qos: high #debug
 account: iecdt
 
 
