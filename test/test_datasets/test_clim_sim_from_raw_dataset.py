@@ -415,46 +415,6 @@ def test_climsim_from_raw_dataset_init_sample_data():
     assert len(y) == 128
 
 
-def test_climsim_from_raw_dataset_init_sample_data_remove_high_altitude_specific_humidity_levels():
-    base_dir = Path(__file__).resolve().parents[1]
-    data_path = os.path.join(
-        base_dir, "unit_test_sets", "dummy_low_res_climsim/", "filename_testing"
-    )
-    dataset_config = DictConfig(
-        {
-            "base_folder_path": data_path,
-            "target_years": ["0001"],
-            "target_months": ["02"],
-            "dataset_testing_sample_rates": {"full": 1},
-            "v1_inputs": v1_inputs,
-            "v1_targets": v1_targets,
-            "output_scale_file_path": output_scale_file_path,
-            "group_method": False,
-            "remove_high_altitude_specific_humidity_levels": 2,
-        }
-    )
-
-    dataset = data_preparation.ClimSimFromRawDataset(
-        mode="train",
-        dataset_testing_type="full",
-        dataset_cfg=dataset_config,
-        model=None,
-        unit_test_specific_methods=False,
-    )
-
-    assert isinstance(dataset.input, torch.Tensor)
-    assert isinstance(dataset.target, torch.Tensor)
-    assert dataset.input.shape[0] == dataset.target.shape[0]
-    assert dataset.input.shape[1] == 124 - dataset_config.remove_high_altitude_specific_humidity_levels
-    assert dataset.target.shape[1] == 128 - dataset_config.remove_high_altitude_specific_humidity_levels
-
-    x, y = dataset[0]
-    assert torch.equal(x, dataset.input[0])
-    assert torch.equal(y, dataset.target[0])
-
-    assert len(x) == 124 - dataset_config.remove_high_altitude_specific_humidity_levels
-    assert len(y) == 128 - dataset_config.remove_high_altitude_specific_humidity_levels
-
 def test_climsim_from_raw_dataset_init_sample_data_train_and_test():
     base_dir = Path(__file__).resolve().parents[1]
     data_path = os.path.join(

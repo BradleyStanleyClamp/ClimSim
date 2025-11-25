@@ -32,13 +32,6 @@ class ClimSimFromRawDataset(Dataset):
         self.model = model
         self.normalisation_stats = normalisation_stats
 
-        if hasattr(dataset_cfg, "remove_high_altitude_specific_humidity_levels"):
-            self.remove_high_altitude_specific_humidity_levels = (
-                dataset_cfg.remove_high_altitude_specific_humidity_levels
-            )
-        else:
-            self.remove_high_altitude_specific_humidity_levels = False
-
         if unit_test_specific_methods:
             # For unit testing, we can skip the full initialization as we want to test specific methods only
             return
@@ -92,6 +85,10 @@ class ClimSimFromRawDataset(Dataset):
 
         logging.info(f"Combined dataset samples: {input_ds.sizes['sample']}")
 
+        input_ds, target_ds = self._spatial_selection(
+            input_ds, target_ds, dataset_cfg.path_to_grid_info
+        )
+
         start_time = time.time()
         normalised_input_ds, normalised_target_ds, self.normalisation_stats = (
             self._normalise_datasets(
@@ -142,7 +139,7 @@ class ClimSimFromRawDataset(Dataset):
         if mode == "train":
             target_months = group_method_cfg.groups[int(group_method_cfg.target_group)]
         elif mode == "val":
-            target_months = group_method_cfg.val_group
+            raise NotImplementedError("Validation mode is not implemented yet.")
         elif mode == "test":
             target_months = group_method_cfg.test_group
 
@@ -266,6 +263,22 @@ class ClimSimFromRawDataset(Dataset):
         combined_target_ds = combined_target_ds[list(v1_targets)]
 
         return combined_input_ds, combined_target_ds
+
+    def _spatial_selection(
+        self, input_ds: xr.Dataset, target_ds: xr.Dataset, path_to_grid_info
+    ) -> tuple:
+        """
+        Subselects spatial region from dataset based on configuration.
+
+        V1 is hardcoded to select the northern hemisphere
+        """
+        logging.info("Selecting northern hemisphere columns only.")
+        grid_info = xr.open_dataset(path_to_grid_info)
+        latitudes = grid_info["lat"]
+        northern_hemisphere = latitudes.values > 0
+        input_ds = input_ds.sel(ncol=northern_hemisphere)
+        target_ds = target_ds.sel(ncol=northern_hemisphere)
+        return input_ds, target_ds
 
     def _combine_datasets_also_old(
         self,
@@ -429,19 +442,8 @@ class ClimSimFromRawDataset(Dataset):
                 # bring to (lev, obs) view (no copy; xarray reorder)
                 da_view = da.transpose("lev", "obs")
                 L = da_view.sizes["lev"]
-                S = (
-                    self.remove_high_altitude_specific_humidity_levels
-                    if (
-                        self.remove_high_altitude_specific_humidity_levels
-                        and (varname == "state_q0001" or varname == "ptend_q0001")
-                    )
-                    else 0
-                )
-                da_view = da_view.isel(lev=slice(S, L))
-
                 # name the features for each level
-                var_feature_names = [f"{varname}_lev{i}" for i in range(S, L)]
-
+                var_feature_names = [f"{varname}_lev{i}" for i in range(L)]
             else:
                 # expand a fake lev dimension of length 1 -> (lev=1, obs)
                 da_view = da.expand_dims({"lev": [0]}).transpose("lev", "obs")

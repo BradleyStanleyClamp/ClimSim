@@ -8,4 +8,7 @@ defaults:
 
 multirun_dir_name: download_climsim  #eval_data_groups
 
-
+download_folders:
+  - 3
+  - 4
+  - 9
