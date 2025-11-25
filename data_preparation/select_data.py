@@ -3,14 +3,18 @@ Script for selecting datasets and data loaders
 """
 
 import logging
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 from torch.utils.data import DataLoader, Dataset
 from omegaconf import DictConfig
 import data_preparation
 
 
 def get_dataset(
-    dataset_cfg, mode: str, dataset_testing_type: str, model: str = None
+    dataset_cfg,
+    mode: str,
+    dataset_testing_type: str,
+    model: str = None,
+    normalisation_stats: Dict = None,
 ) -> Dataset:
     """
     Function that gets you the specified dataset
@@ -23,6 +27,7 @@ def get_dataset(
         mode: (str) one of 'train', 'val' or 'test', specifying which dataset split to return
         dataset_testing_type: (str) size of dataset to be used, related to the type of testing e.g quick, reduced, full
         model: (str) name of the model to be used, e.g if mlp then data can be used as is, but if unet then further processing is required, and if none then no further processing is required
+        normalisation_stats: (Dict) statistics for normalisation, if required by the dataset
 
     Returns:
         Dataset: the specified dataset
@@ -42,6 +47,14 @@ def get_dataset(
 
         return data_preparation.SubSampledLowResDataset(
             mode, dataset_testing_type, dataset_cfg, model=model
+        )
+    elif dataset_cfg.dataset_name == "climsim_from_raw":
+        return data_preparation.ClimSimFromRawDataset(
+            mode,
+            dataset_testing_type,
+            dataset_cfg,
+            model=model,
+            normalisation_stats=normalisation_stats,
         )
 
 
@@ -86,9 +99,16 @@ def get_all_datasets(
     """
     train_dataset = get_dataset(dataset_cfg, "train", dataset_testing_type, model=model)
     logging.info(f"trainset loaded with {len(train_dataset)} samples")
-    val_dataset = get_dataset(dataset_cfg, "val", dataset_testing_type, model=model)
+    
+    if hasattr(train_dataset, "normalisation_stats"):
+        logging.info("Passing normalisation stats to val and test datasets")
+        normalisation_stats = train_dataset.normalisation_stats
+    else:
+        normalisation_stats = None
+        
+    val_dataset = get_dataset(dataset_cfg, "val", dataset_testing_type, model=model, normalisation_stats=normalisation_stats)
     logging.info(f"valset loaded with {len(val_dataset)} samples")
-    test_dataset = get_dataset(dataset_cfg, "test", dataset_testing_type, model=model)
+    test_dataset = get_dataset(dataset_cfg, "test", dataset_testing_type, model=model, normalisation_stats=normalisation_stats)
     logging.info(f"testset loaded with {len(test_dataset)} samples")
 
     return train_dataset, val_dataset, test_dataset

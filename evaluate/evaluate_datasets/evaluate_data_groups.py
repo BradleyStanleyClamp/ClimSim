@@ -52,9 +52,6 @@ def main(cfg: DictConfig):
 
     # Load trainset and testset
     # trainset = data_preparation.get_dataset(cfg.dataset, "train", cfg.testing.dataset_testing_type)
-    testset = data_preparation.get_dataset(
-        cfg.dataset, "test", cfg.testing.dataset_testing_type
-    )
 
     # Iterate through each data group
     full_results = {option_name: {} for option_name in cfg.evaluation_options}
@@ -63,13 +60,27 @@ def main(cfg: DictConfig):
 
         # Get data groups
         cfg.dataset[group_method].target_group = group_idx
+        
+
         start_time = time.perf_counter()
         trainset = data_preparation.get_dataset(
             cfg.dataset, "train", cfg.testing.dataset_testing_type
         )
+        if hasattr(trainset, "normalisation_stats"):
+            normalisation_stats = trainset.normalisation_stats
+        else:
+            normalisation_stats = None
+
+        testset = data_preparation.get_dataset(
+            cfg.dataset,
+            "test",
+            cfg.testing.dataset_testing_type,
+            normalisation_stats=normalisation_stats,
+        )
+
         elapsed = time.perf_counter() - start_time
         logging.info(f"Loaded trainset for group {group_idx} in {elapsed:.3f} seconds")
-        
+
         logging.info(f"Trainset size for group {group_idx}: {len(trainset)}")
 
         start_time = time.perf_counter()
@@ -114,7 +125,9 @@ def main(cfg: DictConfig):
 
     if "multivariate" in cfg.evaluation_options:
         plotting.plot_multivariate_results(
-            full_results["multivariate"], metric_name=cfg.metric_name, save_path=f"multivariate_{cfg.metric_name}.png"
+            full_results["multivariate"],
+            metric_name=cfg.metric_name,
+            save_path=f"multivariate_{cfg.metric_name}.png",
         )
 
     if "marginals" in cfg.evaluation_options:

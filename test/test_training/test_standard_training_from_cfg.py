@@ -22,6 +22,8 @@ def test_standard_training_from_cfg():
                 "sweep=True",
                 "testing=qt",
                 "dataset.dataset_testing_fractions.quick=0.1",
+                "dataset.group_method=False",
+                "dataset.remove_high_altitude_specific_humidity_levels=False"
             ],
         )
 
@@ -56,6 +58,8 @@ def test_unet_standard_training_from_cfg():
                 "model=climsim_unet",
                 "dataset.dataset_testing_fractions.quick=0.1",
                 "max_epochs=1",
+                "dataset.group_method=False",
+                "dataset.remove_high_altitude_specific_humidity_levels=False"
             ],
         )
 

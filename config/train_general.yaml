@@ -9,10 +9,10 @@ defaults:
   - dataset/general_dataset_config: general_dataset_config
   - hydra: default
   - testing: qt
-  - override hydra/launcher: slurm
+  - override hydra/launcher: slurm_gpu
 
 # Naming 
-multirun_dir_name: ${model.name}_year_group_${dataset.group_by_year.target_group}
+multirun_dir_name: ${model.name}_group_${dataset.group_by_months.target_group}
 
 # Training parameters
 max_epochs: 10

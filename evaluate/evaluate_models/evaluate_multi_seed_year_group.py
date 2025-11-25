@@ -39,7 +39,7 @@ def load_energy_distance_results(path: Path | str = None) -> dict:
         logging.error(f"Failed to load energy_distance results from {results_path}: {e}")
         return {}
 
-@hydra.main(version_base=None, config_path="../config", config_name="evaluate_data_groups")
+@hydra.main(version_base=None, config_path="../../config", config_name="evaluate_data_groups")
 def main(cfg: DictConfig):
 
         # Seeding everything
@@ -52,11 +52,13 @@ def main(cfg: DictConfig):
     fig, ax = plt.subplots(figsize=(8, 4))
 
 
-    path_to_results = '/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/1/multi_seed_mlp_performance_on_year_grouped_data_2025-10-30-10-25-04'
+    # path_to_results = '/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/1/multi_seed_mlp_performance_on_year_grouped_data_2025-10-30-10-25-04'
+    # path_to_results = '/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/4/yus_mlp_multi_seed_reduced_sh_001_2025-11-18-14-58-24'
+    path_to_results = '/home/users/bradlesc/projects/ClimSim/logs/p2.1.1/7/unet_year_groups_multiseed_003_2025-11-07-09-16-56'
 
     for subfolder in os.listdir(path_to_results):
         full_path = os.path.join(path_to_results, subfolder)
-        if os.path.isdir(full_path) and subfolder.startswith('yus'):
+        if os.path.isdir(full_path) and (subfolder.startswith('yus') or subfolder.startswith('climsim')):
             print(f"Processing folder: {subfolder}")
             results_file = os.path.join(full_path, 'test_results.json')
             with open(results_file, 'r') as f:
@@ -68,7 +70,8 @@ def main(cfg: DictConfig):
                 ax.scatter(x, test_losses)
 
     # draw baseline horizontal line and add to legend
-    path_to_baseline = '/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/2/marginal_distribution_shifts_001_2025-11-05-10-19-36/yus_mlp_year_group_False/test_results.json'
+    # path_to_baseline = '/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/2/marginal_distribution_shifts_001_2025-11-05-10-19-36/yus_mlp_year_group_False/test_results.json'
+    path_to_baseline = '/home/users/bradlesc/projects/ClimSim/logs/p2.1.1/7/unet_full_data_multiseed_001_2025-11-06-22-22-34/climsim_unet_year_group_False/test_results.json'
 
     with open(path_to_baseline, 'r') as f:
         baseline_results = json.load(f)
@@ -77,7 +80,10 @@ def main(cfg: DictConfig):
 
     # baseline_y = 0.003736531361937523
     for i in range(len(baseline_losses)):
-        ax.axhline(y=baseline_losses[i], color='grey', linestyle='--', linewidth=1.5, label='baseline performance')
+        if i==0:
+            ax.axhline(y=baseline_losses[i], color='grey', linestyle='--', linewidth=1.5, label='baseline performance')
+        else:
+            ax.axhline(y=baseline_losses[i], color='grey', linestyle='--', linewidth=1.5)
     ax.legend(loc='best', fontsize='small')
 
     ax.set_xlabel("Training data group index")

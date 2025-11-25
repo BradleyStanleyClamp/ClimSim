@@ -3,19 +3,18 @@ defaults:
   - _self_
   - project: config
   - wandb/wkey: wkey
-  - dataset: sub_sampled_low_res
+  - dataset: climsim_from_raw
   - dataset/general_dataset_config: general_dataset_config
   - evaluate: evaluate_metrics
   - hydra: default
   - testing: qt
-  - override hydra/launcher: slurm
+  - override hydra/launcher: slurm_gpu
 
-multirun_dir_name: ${metric_name}_${evaluation_options[0]}_removed_top_${dataset.remove_high_altitude_specific_humidity_levels}
-
+multirun_dir_name: ${evaluation_options[0]}_${metric_name}  #eval_data_groups
 
 evaluation_options: 
   - multivariate
-  # - marginals
+  - marginals
   # - vis_marginals
   
 metric_name: energy_distance #kl_divergence #

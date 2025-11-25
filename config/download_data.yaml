@@ -1,0 +1,14 @@
+
+defaults:
+  - _self_
+  - project: config
+  - hydra: default
+  - testing: qt
+  - override hydra/launcher: slurm_cpu
+
+multirun_dir_name: download_climsim  #eval_data_groups
+
+download_folders:
+  - 3
+  - 4
+  - 9

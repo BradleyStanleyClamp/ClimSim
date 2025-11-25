@@ -19,7 +19,8 @@ def test_sub_sampled_low_res_dataset_initialization(sub_sampled_low_res_config_p
             'reduced': 0.1,
             'full': 1.0
         },
-        'group_method': False
+        'group_method': False,
+        'remove_high_altitude_specific_humidity_levels': False
     })
     mode = 'train'
     dataset_testing_type = 'full'
@@ -43,7 +44,8 @@ def test_sub_sampled_low_res_dataset_initialization_test(sub_sampled_low_res_con
             'quick': 0.01,
             'reduced': 0.1,
             'full': 1.0
-        }
+        },
+        'remove_high_altitude_specific_humidity_levels': False
     })
     mode = 'test'
     dataset_testing_type = 'full'
@@ -68,7 +70,8 @@ def test_sub_sampled_low_res_dataset_initialization_val(sub_sampled_low_res_conf
             'quick': 0.01,
             'reduced': 0.1,
             'full': 1.0
-        }
+        },
+        'remove_high_altitude_specific_humidity_levels': False
     })
     mode = 'val'
     dataset_testing_type = 'full'
@@ -94,7 +97,8 @@ def test_sub_sampled_low_res_dataset_for_unet(sub_sampled_low_res_config_path: s
             'reduced': 0.1,
             'full': 1.0
         },
-        'group_method': False
+        'group_method': False,
+        'remove_high_altitude_specific_humidity_levels': False
     })
     mode = 'train'
     dataset_testing_type = 'full'
@@ -125,7 +129,8 @@ def test_sub_sampled_low_res_dataset_year_grouping(sub_sampled_low_res_config_pa
         'group_method': 'group_by_year',
         'group_by_year': {
             'target_group': 0
-        }
+        },
+        'remove_high_altitude_specific_humidity_levels': False
     })
     mode = 'train'
     dataset_testing_type = 'quick'
@@ -153,7 +158,8 @@ def test_sub_sampled_low_res_dataset_no_grouping(sub_sampled_low_res_config_path
         'group_method': False,
         'group_by_year': {
             'target_group': 0
-        }
+        },
+        'remove_high_altitude_specific_humidity_levels': False
     })
     mode = 'train'
     dataset_testing_type = 'quick'
