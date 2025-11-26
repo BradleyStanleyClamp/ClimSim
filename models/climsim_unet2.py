@@ -170,7 +170,7 @@ class ClimSimUNet(nn.Module):
 
         # flatten the first two levels into (n, 120) in one op
         first_two = x0_60[:, 0:2, :].reshape(x.shape[0], -1)  # shape (n, 2*60) == (n,120)
-
+        first_two = first_two[:, :-15] # HARDCODED REMOVAL OF TOP SH Levels # shape (n, 105)
         # compute the per-level means for levels 2..9 in one op
         means_2_to_9 = x0_60[:, 2:10, :].mean(dim=2)         # shape (n, 8)
 

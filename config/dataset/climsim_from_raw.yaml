@@ -8,7 +8,7 @@ path_to_grid_info: '/home/users/bradlesc/projects/ClimSim/grid_info/ClimSim_low-
 # base_folder_path: '/gws/nopw/j04/iecdt/bstanleyclamp/subsampled_low_res_reduced_for_testing/ClimSim_low-res/train/'
 
 output_scale_file_path: '/home/users/bradlesc/projects/ClimSim/preprocessing/normalizations/outputs/output_scale.nc'
-target_years: ['0001', '0002','0003'] #, '0004' , '0005', '0006', '0007', '0008', '0009']
+target_years: ['0001','0002','0003','0004','0005','0006','0007','0008','0009']
 target_months: ['02'] # Only used if group_method is false
 
 v1_inputs: ['state_t','state_q0001','state_ps','pbuf_SOLIN','pbuf_LHFLX','pbuf_SHFLX']

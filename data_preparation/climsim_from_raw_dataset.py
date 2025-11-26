@@ -97,22 +97,24 @@ class ClimSimFromRawDataset(Dataset):
         )
 
         start_time = time.time()
-        normalised_input_ds, normalised_target_ds, self.normalisation_stats = (
-            self._normalise_datasets(
-                self.normalisation_stats,
-                input_ds,
-                target_ds,
-                output_scale_file_path=dataset_cfg.output_scale_file_path,
-                v1_targets=dataset_cfg.v1_targets,
-            )
+        (
+            self.normalised_input_ds,
+            self.normalised_target_ds,
+            self.normalisation_stats,
+        ) = self._normalise_datasets(
+            self.normalisation_stats,
+            input_ds,
+            target_ds,
+            output_scale_file_path=dataset_cfg.output_scale_file_path,
+            v1_targets=dataset_cfg.v1_targets,
         )
         logging.info(f"Normalised data in {time.time() - start_time} seconds")
 
         start_time = time.time()
         self.input, self.target = self._prepare_data(
             self.model,
-            normalised_input_ds,
-            normalised_target_ds,
+            self.normalised_input_ds,
+            self.normalised_target_ds,
             v1_inputs=dataset_cfg.v1_inputs,
             v1_targets=dataset_cfg.v1_targets,
         )
@@ -283,6 +285,11 @@ class ClimSimFromRawDataset(Dataset):
         grid_info = xr.open_dataset(path_to_grid_info)
         latitudes = grid_info["lat"]
         northern_hemisphere = latitudes.values > 0
+
+        self.latitudes = latitudes.sel(ncol=northern_hemisphere)
+        self.longitudes = grid_info["lon"].sel(ncol=northern_hemisphere)
+        self.num_latlon = northern_hemisphere.sum().item()
+
         input_ds = input_ds.sel(ncol=northern_hemisphere)
         target_ds = target_ds.sel(ncol=northern_hemisphere)
         return input_ds, target_ds
@@ -427,15 +434,44 @@ class ClimSimFromRawDataset(Dataset):
             Tuple of (input tensor, target tensor). With shape (num_samples, num_features)
         """
         standard_data = [None, "mlp", "yus_mlp"]
-        if model_name not in standard_data:
-            raise NotImplementedError(
-                f"Data preparation for model '{model_name}' is not implemented."
-            )
-
-        input_tensor = self._dataset_to_tensor(input_ds)
-        target_tensor = self._dataset_to_tensor(target_ds)
+        if model_name in standard_data:
+            input_tensor = self._dataset_to_tensor(input_ds)
+            target_tensor = self._dataset_to_tensor(target_ds)
+        elif model_name == "climsim_unet":
+            input_tensor = self._prepare_for_unet(input_ds)
+            target_tensor = self._dataset_to_tensor(target_ds)
+            # target_tensor = self._prepare_for_unet(target_ds)
+            logging.info(f"UNet input tensor shape: {input_tensor.shape}")
+            logging.info(f"UNet target tensor shape: {target_tensor.shape}")
+        else:
+            raise ValueError(f"Unknown model name: {model_name}")
 
         return input_tensor, target_tensor
+
+    def _prepare_for_unet(self, input_ds: xr.Dataset) -> torch.Tensor:
+        """ """
+        S = (
+            self.remove_high_altitude_specific_humidity_levels
+            if (self.remove_high_altitude_specific_humidity_levels)
+            else 0
+        )
+        if "state_q0001" in input_ds:
+            input_ds["state_q0001"] = input_ds["state_q0001"].where(
+                input_ds["state_q0001"].lev < input_ds["state_q0001"].lev[S], 0.0
+            )
+        elif "ptend_q0001" in input_ds:
+            input_ds["ptend_q0001"] = input_ds["ptend_q0001"].where(
+                input_ds["ptend_q0001"].lev < input_ds["ptend_q0001"].lev[S], 0.0
+            )
+
+        ds_stacked = input_ds.stack(obs=("sample", "ncol"))
+        array = ds_stacked.to_array().transpose("obs", "variable", "lev")
+        reshaped_data_padded = np.pad(
+            array, ((0, 0), (0, 0), (0, 4)), mode="constant", constant_values=0
+        )
+        reshaped_data_padded = reshaped_data_padded.astype("float32")
+        tensor = torch.from_numpy(reshaped_data_padded)
+        return tensor
 
     def _dataset_to_tensor(self, input_ds: xr.Dataset) -> tuple:
         """ """

@@ -105,13 +105,14 @@ def get_all_datasets(
         normalisation_stats = train_dataset.normalisation_stats
     else:
         normalisation_stats = None
-        
+    
+    logging.warning(f"Note: temporarily hardcoding that test=val!!!")
     val_dataset = get_dataset(dataset_cfg, "val", dataset_testing_type, model=model, normalisation_stats=normalisation_stats)
     logging.info(f"valset loaded with {len(val_dataset)} samples")
-    test_dataset = get_dataset(dataset_cfg, "test", dataset_testing_type, model=model, normalisation_stats=normalisation_stats)
-    logging.info(f"testset loaded with {len(test_dataset)} samples")
+    # test_dataset = get_dataset(dataset_cfg, "test", dataset_testing_type, model=model, normalisation_stats=normalisation_stats)
+    # logging.info(f"testset loaded with {len(test_dataset)} samples")
 
-    return train_dataset, val_dataset, test_dataset
+    return train_dataset, val_dataset, val_dataset #test_dataset
 
 
 def get_all_dataloaders(

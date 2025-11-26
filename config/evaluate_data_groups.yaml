@@ -4,6 +4,7 @@ defaults:
   - project: config
   - wandb/wkey: wkey
   - dataset: climsim_from_raw
+  - model: mlp
   - dataset/general_dataset_config: general_dataset_config
   - evaluate: evaluate_metrics
   - hydra: default

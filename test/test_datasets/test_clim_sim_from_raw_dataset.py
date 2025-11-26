@@ -490,6 +490,7 @@ def test_climsim_from_raw_dataset_init_sample_data_remove_high_altitude_specific
             "output_scale_file_path": output_scale_file_path,
             "group_method": False,
             "remove_high_altitude_specific_humidity_levels": 2,
+            "path_to_grid_info": "/home/users/bradlesc/projects/ClimSim/grid_info/ClimSim_low-res_grid-info.nc",
         }
     )
 

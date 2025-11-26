@@ -55,6 +55,7 @@ def main(cfg: DictConfig):
         dataset_cfg=cfg.dataset,
         num_workers=cfg.testing.num_workers,
         unit_test_specific_methods=False,
+        model=cfg.model.name,
     )
     logging.info(f"Trainset loading time: {time.time() - start_time} seconds")
 
