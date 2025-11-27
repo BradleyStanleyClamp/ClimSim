@@ -1,0 +1,18 @@
+name: squeezeformer
+
+
+single_run_configuration:
+  embed_dim: 384
+  head_dim: 2048
+  lr: 0.0005
+  batch_size: 1024
+  optimizer: AdamW
+  scheduler: 
+    name: lambda_lr
+    num_warmup_steps: 0
+    warmup_method: 'exp'
+    num_training_steps: ${max_epochs}
+    num_cycles: 0.5
+
+  
+  

@@ -22,7 +22,7 @@ def standard_training_from_cfg(
     run_name: str,
     enable_checkpointing: bool,
     seed: int = None,
-)-> Tuple[Dict, Dict]:
+) -> Tuple[Dict, Dict]:
     """
     Function that peforms standard pytorch-lightning training from config files. Its two main usecases are for single runs and sweeps.
 
@@ -33,7 +33,7 @@ def standard_training_from_cfg(
         run_name: (str) name of the run, to be used in wandb logging
         enable_checkpointing: (bool) whether to enable checkpointing in the trainer. Should be False for sweeps, True for single runs.
         seed: (int) random seed to use for the run. If None, no seeding is done.
-    
+
     Returns:
         test_results: (Dict) results from testing the model on the test set
         run.config: (Dict) configuration used for the run
@@ -51,14 +51,29 @@ def standard_training_from_cfg(
 
         # Get data
         trainloader, valloader, testloader = data_preparation.get_all_dataloaders(
-            cfg.dataset, run.config.batch_size, cfg.testing.dataset_testing_type, datasets, model=cfg.model.name
+            cfg.dataset,
+            run.config.batch_size,
+            cfg.testing.dataset_testing_type,
+            datasets,
+            model=cfg.model.name,
         )
         logging.info("Data loaders obtained")
 
         # Load model
         sample_input, sample_output = next(iter(trainloader))
-        cfg.dataset.input_dim, cfg.dataset.output_dim = sample_input.shape[-1], sample_output.shape[-1]
-        logging.info(f"Input dim: {cfg.dataset.input_dim}, Output dim: {cfg.dataset.output_dim}")
+        if cfg.model.name == "squeezeformer":
+            cfg.dataset.input_dim, cfg.dataset.output_dim = (
+                6,
+                10,
+            )
+        else:
+            cfg.dataset.input_dim, cfg.dataset.output_dim = (
+                sample_input.shape[-1],
+                sample_output.shape[-1],
+            )
+        logging.info(
+            f"Input dim: {cfg.dataset.input_dim}, Output dim: {cfg.dataset.output_dim}"
+        )
         model = models.select_model(cfg.model.name, run.config, cfg.dataset)
         logging.info(f"Model {cfg.model.name} loaded")
 
@@ -96,7 +111,7 @@ def standard_training_from_cfg(
 
         # Optional Saving the model if single run
         if not cfg.sweep:
-            model_save_path = f'{cfg.model.name}_{seed}_{cfg.project.timestamp}.ckpt'
+            model_save_path = f"{cfg.model.name}_{seed}_{cfg.project.timestamp}.ckpt"
             trainer.save_checkpoint(model_save_path)
             logging.info(f"Model saved at: {model_save_path}")
 

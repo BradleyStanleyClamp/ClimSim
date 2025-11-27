@@ -7,7 +7,9 @@ import models
 import torch
 
 
-def select_base_model(model_name: str, model_params: dict, data_params: dict) -> torch.nn.Module:
+def select_base_model(
+    model_name: str, model_params: dict, data_params: dict
+) -> torch.nn.Module:
     """
     Selects and returns a base model (nn.Module) class based on the provided model name.
     Args:
@@ -20,19 +22,39 @@ def select_base_model(model_name: str, model_params: dict, data_params: dict) ->
         ValueError: If the model name is not recognized.
     """
     if model_name == "mlp":
-        mlp = models.mlp.MLP(hidden_dims=model_params.hidden_dims, input_dim=data_params.input_dim, output_dim=data_params.output_dim)
+        mlp = models.mlp.MLP(
+            hidden_dims=model_params.hidden_dims,
+            input_dim=data_params.input_dim,
+            output_dim=data_params.output_dim,
+        )
         return mlp
-    
+
     elif model_name == "yus_mlp":
-        yus_mlp = models.yus_mlp.YusMLP(hidden_dims=model_params.hidden_dims, input_dim=data_params.input_dim, output_dim=data_params.output_dim)
+        yus_mlp = models.yus_mlp.YusMLP(
+            hidden_dims=model_params.hidden_dims,
+            input_dim=data_params.input_dim,
+            output_dim=data_params.output_dim,
+        )
         return yus_mlp
-    elif model_name == 'climsim_unet':
+    elif model_name == "climsim_unet":
         unet = models.ClimSimUNet()
         return unet
+    elif model_name == "squeezeformer":
+        squeezeformer = models.SqueezeFormer(
+            in_dim=data_params.input_dim,
+            embed_dim=model_params.embed_dim,
+            levels=data_params.levels,
+            head_dim=model_params.head_dim,
+            out_dim=data_params.output_dim,
+        )
+        return squeezeformer
     else:
         raise ValueError(f"Model {model_name} not recognized.")
-    
-def select_model(model_name: str, model_params: dict, data_params: dict) -> L.LightningModule:
+
+
+def select_model(
+    model_name: str, model_params: dict, data_params: dict
+) -> L.LightningModule:
     """
     Selects and returns a lightning wrapped model class based on the provided model name.
     Args:
@@ -55,10 +77,9 @@ def select_model(model_name: str, model_params: dict, data_params: dict) -> L.Li
     return lightning_model
 
 
-
-
-
-def load_model_from_checkpoint(checkpoint_path: str, model_name: str, model_params: dict, data_params: dict):
+def load_model_from_checkpoint(
+    checkpoint_path: str, model_name: str, model_params: dict, data_params: dict
+):
     """
     Loads a model from a checkpoint file.
     Args:

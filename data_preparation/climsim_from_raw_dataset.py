@@ -438,17 +438,22 @@ class ClimSimFromRawDataset(Dataset):
             input_tensor = self._dataset_to_tensor(input_ds)
             target_tensor = self._dataset_to_tensor(target_ds)
         elif model_name == "climsim_unet":
-            input_tensor = self._prepare_for_unet(input_ds)
+            input_tensor = self._prepare_as_3d(input_ds, patch=4)
             target_tensor = self._dataset_to_tensor(target_ds)
             # target_tensor = self._prepare_for_unet(target_ds)
             logging.info(f"UNet input tensor shape: {input_tensor.shape}")
             logging.info(f"UNet target tensor shape: {target_tensor.shape}")
+        elif model_name == "squeezeformer":
+            input_tensor = self._prepare_as_3d(input_ds, patch=False)
+            target_tensor = self._dataset_to_tensor(target_ds)
+            logging.info(f"SqueezeFormer input tensor shape: {input_tensor.shape}")
+            logging.info(f"SqueezeFormer target tensor shape: {target_tensor.shape}")
         else:
             raise ValueError(f"Unknown model name: {model_name}")
 
         return input_tensor, target_tensor
 
-    def _prepare_for_unet(self, input_ds: xr.Dataset) -> torch.Tensor:
+    def _prepare_as_3d(self, input_ds: xr.Dataset, patch=False) -> torch.Tensor:
         """ """
         S = (
             self.remove_high_altitude_specific_humidity_levels
@@ -465,12 +470,18 @@ class ClimSimFromRawDataset(Dataset):
             )
 
         ds_stacked = input_ds.stack(obs=("sample", "ncol"))
-        array = ds_stacked.to_array().transpose("obs", "variable", "lev")
-        reshaped_data_padded = np.pad(
-            array, ((0, 0), (0, 0), (0, 4)), mode="constant", constant_values=0
-        )
-        reshaped_data_padded = reshaped_data_padded.astype("float32")
-        tensor = torch.from_numpy(reshaped_data_padded)
+        array = ds_stacked.to_array()
+        if patch:
+            array = array.transpose("obs", "variable", "lev")
+            np_array = np.pad(
+                array, ((0, 0), (0, 0), (0, patch)), mode="constant", constant_values=0
+            )
+        else:
+            array = array.transpose("obs", "lev", "variable")
+            np_array = array.to_numpy()
+
+        np_array = np_array.astype("float32")
+        tensor = torch.from_numpy(np_array)
         return tensor
 
     def _dataset_to_tensor(self, input_ds: xr.Dataset) -> tuple:
