@@ -13,6 +13,22 @@ import torch.nn.functional as F
 import logging
 
 
+class ScaleBias(nn.Module):
+    def __init__(self, num_features: int):
+        """
+        Constructs a Scale and Bias module.
+
+        Args:
+            num_features: Number of features of the input feature map
+        """
+        super().__init__()
+        self.scale = nn.Parameter(torch.ones(num_features))
+        self.bias = nn.Parameter(torch.zeros(num_features))
+
+    def forward(self, x):
+        return x * self.scale + self.bias
+
+
 class ECA(nn.Module):
     """
     Constructs a ECA module.
@@ -69,13 +85,18 @@ class Conv1DBlock(nn.Module):
         self.bn = nn.BatchNorm1d(self.post_glu_dim)
         self.activation = nn.SiLU()
         self.conv = nn.Conv1d(
-            self.post_glu_dim, self.post_glu_dim, kernel_size=3, padding=1, stride=1
+            self.post_glu_dim,
+            self.post_glu_dim,
+            groups=self.post_glu_dim,  # depthwise convolution
+            kernel_size=3,
+            padding=1,
+            stride=1,
         )
         self.eca = ECA(channel=self.post_glu_dim, k_size=5)
-
         self.project = nn.Conv1d(
             in_channels=self.post_glu_dim, out_channels=out_dim, kernel_size=1
         )
+        self.scale_bias = ScaleBias(out_dim)
 
     def forward(self, x):
         """
@@ -84,8 +105,8 @@ class Conv1DBlock(nn.Module):
         Returns:
             torch.Tensor: Output tensor of shape (batch_size, Levels, out_dim)
         """
-        x = x.transpose(1, 2)  # (batch_size, expand_dim, Levels)
         residual = x
+        x = x.transpose(1, 2)  # (batch_size, expand_dim, Levels)
 
         x = self.expand(x)  # (batch_size, expand_dim, Levels)
 
@@ -96,8 +117,9 @@ class Conv1DBlock(nn.Module):
         x = self.eca(x)
 
         x = self.project(x)
-        x = x + residual  # Residual connection
         x = x.transpose(1, 2)  # (batch_size, Levels, out_dim)
+        x = self.scale_bias(x)
+        x = x + residual  # Residual connection
 
         return x
 
@@ -116,6 +138,7 @@ class SelfAttentionBlock(nn.Module):
             embed_dim=embed_dim, num_heads=num_heads, batch_first=True
         )
 
+        self.scale_bias = ScaleBias(embed_dim)
         self.ln1 = nn.LayerNorm(embed_dim)
 
     def forward(self, x):
@@ -125,6 +148,7 @@ class SelfAttentionBlock(nn.Module):
         """
         residual = x
         x, att_w = self.mha(x, x, x)
+        x = self.scale_bias(x)
         x = x + residual  # Residual connection
 
         # with torch.no_grad():
@@ -243,6 +267,7 @@ class ResidualGluMlp(nn.Module):
         self.fc1 = nn.Linear(in_dim, expanded_dim)
         self.glu = nn.GLU(dim=-1)
         self.fc2 = nn.Linear(expanded_dim // 2, in_dim)
+        self.scale_bias = ScaleBias(in_dim)
         self.ln = nn.LayerNorm(in_dim)
 
     def forward(self, x):
@@ -254,6 +279,7 @@ class ResidualGluMlp(nn.Module):
         x = self.fc1(x)
         x = self.glu(x)
         x = self.fc2(x)
+        x = self.scale_bias(x)
         x = x + residual  # Residual connection
         x = self.ln(x)
         return x
