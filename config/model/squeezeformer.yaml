@@ -2,16 +2,18 @@ name: squeezeformer
 
 
 single_run_configuration:
-  embed_dim: 384
+  num_encoder_blocks: 12
+  num_heads: 8
+  embed_dim: 256
   head_dim: 2048
-  lr: 0.0005
+  lr: 1e-4
   batch_size: 1024
   optimizer: AdamW
   scheduler: 
     name: lambda_lr
     num_warmup_steps: 0
     warmup_method: 'exp'
-    num_training_steps: ${max_epochs}
+    num_training_steps: ${testing.epochs}
     num_cycles: 0.5
 
   

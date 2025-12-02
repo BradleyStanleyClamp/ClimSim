@@ -320,6 +320,7 @@ class SqueezeFormer2(nn.Module):
 
         # Prediction
         self.prediction_head = nn.Linear(head_dim, out_dim)
+        self.elapsed_time_ms = []
 
     def forward(self, x):
         """
@@ -329,7 +330,9 @@ class SqueezeFormer2(nn.Module):
         Returns:
             torch.Tensor: Output tensor of shape (batch_size, variables) .eg (batch_size, 128) (as this format is used for evaluation)
         """
-
+        start = torch.cuda.Event(enable_timing=True)
+        end = torch.cuda.Event(enable_timing=True)
+        start.record()
         # Embedding
         for layer in self.embedding:
             x = layer(x)
@@ -346,6 +349,9 @@ class SqueezeFormer2(nn.Module):
         x = self.prediction_head(x)
 
         x = self._reshape_to_standard_format(x)
+        end.record()
+        torch.cuda.synchronize()
+        self.elapsed_time_ms.append(start.elapsed_time(end))
         return x
 
     def _reshape_to_standard_format(self, x):
