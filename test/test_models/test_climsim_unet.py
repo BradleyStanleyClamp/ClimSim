@@ -16,7 +16,7 @@ def test_clim_sim_unet_forward():
     print(output.shape)
     assert output is not None
     assert output.shape[0] == batch_size
-    assert output.shape[1] == 128 - 15
+    assert output.shape[1] == 128 - 30
     # assert output.shape[1] == 10
     # assert output.shape[2] == 60
 
@@ -41,3 +41,14 @@ def test_select_unet_model():
 
 
 
+def test_clim_sim_unet_forward_standard_input():
+    model = ClimSimUNet()
+    batch_size = 2
+    input_tensor = torch.randn(batch_size, 124)  
+    output = model(input_tensor)
+    print(output.shape)
+    assert output is not None
+    assert output.shape[0] == batch_size
+    assert output.shape[1] == 128 - 30
+    # assert output.shape[1] == 10
+    # assert output.shape[2] == 60

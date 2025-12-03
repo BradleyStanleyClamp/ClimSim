@@ -407,9 +407,10 @@ class SqueezeFormer(nn.Module):
         )
         reshaped_x = reshaped_x.permute(1, 2, 0)  # shape (batch, levels, features)
 
-        print(
-            f"Reshaped input from standard format to (batch, levels, features): {reshaped_x.shape}"
+        logging.info(
+            f"Reshaped input from standard format {x.shape} to model input format {reshaped_x.shape}"
         )
+
         return reshaped_x
 
     def _reshape_to_standard_format(self, x: torch.Tensor) -> torch.Tensor:
@@ -420,7 +421,6 @@ class SqueezeFormer(nn.Module):
         Returns:
             reshaped_x: (torch.Tensor) (batch, features) reshaped output data
         """
-        
 
         # flatten the first two levels into (n, 120) in one op
         first_two = (
