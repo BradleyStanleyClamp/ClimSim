@@ -64,7 +64,8 @@ def main(cfg: DictConfig):
     # path_to_results = '/home/users/bradlesc/projects/ClimSim/logs/p2.1.1/7/unet_year_groups_multiseed_003_2025-11-07-09-16-56'
     # path_to_results = '/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/6/multiseed_monthly_first_3_years_2025-11-25-15-20-48'
     # path_to_results = '/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/6/unet_multiseed_2025-11-25-22-11-05'
-    path_to_results = "/home/users/bradlesc/projects/ClimSim/logs/p2.1.1/9/squeezeformer_multiseed_2025-11-27-03-29-03"
+    # path_to_results = "/home/users/bradlesc/projects/ClimSim/logs/p2.1.1/9/squeezeformer_multiseed_2025-11-27-03-29-03"
+    path_to_results = "/home/users/bradlesc/projects/ClimSim/logs/p2.1.1/9/squeezeformer_multiseed_2025-12-02-10-42-26"
     for subfolder in os.listdir(path_to_results):
         full_path = os.path.join(path_to_results, subfolder)
         if os.path.isdir(full_path) and (

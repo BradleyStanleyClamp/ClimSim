@@ -40,15 +40,8 @@ def select_base_model(
         unet = models.ClimSimUNet()
         return unet
     elif model_name == "squeezeformer":
-        # squeezeformer = models.SqueezeFormer(
-        #     in_dim=data_params.input_dim,
-        #     embed_dim=model_params.embed_dim,
-        #     levels=data_params.levels,
-        #     head_dim=model_params.head_dim,
-        #     out_dim=data_params.output_dim,
-        # )
 
-        squeezeformer = models.SqueezeFormer2(
+        squeezeformer = models.SqueezeFormer(
             in_dim=data_params.input_dim,
             embed_dim=model_params.embed_dim,
             out_dim=data_params.output_dim,

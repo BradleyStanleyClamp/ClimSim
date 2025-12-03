@@ -116,9 +116,4 @@ def standard_training_from_cfg(
             logging.info(f"Model saved at: {model_save_path}")
 
 
-        elapsed_times = model.model.elapsed_time_ms
-        if len(elapsed_times) > 0:
-            avg_time = sum(elapsed_times) / len(elapsed_times)
-            logging.info(f"Average inference time per forward pass: {avg_time:.4f} ms")
-
         return test_results, run.config

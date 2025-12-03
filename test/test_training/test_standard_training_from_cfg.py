@@ -21,10 +21,11 @@ def test_standard_training_from_cfg():
             overrides=[
                 "sweep=True",
                 "testing=qt",
+                
                 "dataset.dataset_testing_sample_rates.quick=1",
                 "dataset.base_folder_path=/home/users/bradlesc/projects/ClimSim/test/unit_test_sets/dummy_low_res_climsim/filename_testing",
                 "dataset.group_method=False",
-                "dataset.remove_high_altitude_specific_humidity_levels=False",
+                "dataset.remove_high_altitude_specific_humidity_levels=15",
             ],
         )
 

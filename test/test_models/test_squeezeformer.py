@@ -19,18 +19,16 @@ def test_squeezeformer_initialization():
         in_dim=in_dim,
         embed_dim=embed_dim,
         head_dim=head_dim,
-        levels=levels,
         out_dim=out_dim,
+        num_heads=1,
+        num_encoder_blocks=2,
     )
-    assert model.in_dim == in_dim
-    assert model.embed_dim == embed_dim
-    assert model.out_dim == out_dim
 
 
 def test_squeezeformer_forward_pass():
     in_dim = 6
     embed_dim = 384
-    out_dim = 8
+    out_dim = 10
     batch_size = 4
     levels = 60
     head_dim = 128
@@ -40,42 +38,39 @@ def test_squeezeformer_forward_pass():
         embed_dim=embed_dim,
         head_dim=head_dim,
         out_dim=out_dim,
-        levels=levels,
+        num_heads=1,
+        num_encoder_blocks=2,
     )
     input_tensor = torch.randn(batch_size, levels, in_dim)
     output_tensor = model(input_tensor)
 
-    assert output_tensor[0].shape == (batch_size, levels, out_dim)
+    assert output_tensor.shape == (batch_size, 113)
 
 
-def test_Conv1DBlockSqueezeFormer():
-    block = models.Conv1DBlockSqueezeFormer(
-        in_features=44, levels=60, kernel_size=15, dilation_rate=1, expand_ratio=4
-    )
-    input_tensor = torch.randn(2, 60, 44)  # (batch, levels, features)
+def test_Conv1DBlock():
+    block = models.Conv1DBlock(embed_dim=256, out_dim=256, expand_ratio=4)
+    input_tensor = torch.randn(2, 60, 256)  # (batch, levels, features)
     output_tensor = block(input_tensor)
 
-    assert output_tensor.shape == (2, 60, 44)  # (batch, levels, in_features)
+    assert output_tensor.shape == (2, 60, 256)  # (batch, levels, in_features)
 
 
 def test_ECA():
-    input_tensor = torch.randn(2, 60, 768)  # (batch, levels, channels)
-    eca = models.ECA(levels=60, kernel_size=5)
+    input_tensor = torch.randn(2, 60, 256)  # (batch, levels, channels)
+    eca = models.ECA(channel=256)
     output_tensor = eca(input_tensor)
 
-    assert output_tensor.shape == (2, 60, 768)
+    assert output_tensor.shape == (2, 60, 256)
 
 
-def test_TransformerEncoder():
+def test_SelfAttentionBlock():
     embed_dim = 128
     num_heads = 8
     feedforward_dim = 512
     batch_size = 2
     levels = 30
 
-    encoder = models.TransformerEncoder(
-        embed_dim=embed_dim, num_heads=num_heads, feedforward_dim=feedforward_dim
-    )
+    encoder = models.SelfAttentionBlock(embed_dim=embed_dim, num_heads=num_heads)
     input_tensor = torch.randn(batch_size, levels, embed_dim)
     output_tensor = encoder(input_tensor)
 
@@ -86,6 +81,8 @@ def test_load_squeezeformer():
     model_params = DictConfig(
         {
             "embed_dim": 384,
+            "num_heads": 8,
+            "num_encoder_blocks": 2,
             "head_dim": 2048,
             "lr": 0.0005,
             "batch_size": 1024,
@@ -101,9 +98,8 @@ def test_load_squeezeformer():
     )
     data_params = DictConfig(
         {
-            "in_dim": 6,
-            "out_dim": 8,
-            "levels": 60,
+            "input_dim": 6,
+            "output_dim": 8,
         }
     )
 
@@ -121,6 +117,8 @@ def test_squeezeformer_proper_setup():
         {
             "embed_dim": 384,
             "head_dim": 2048,
+            "num_heads": 8,
+            "num_encoder_blocks": 2,
             "lr": 0.0005,
             "batch_size": 4,
             "optimizer": "AdamW",
@@ -203,7 +201,7 @@ def test_squeezeformer_on_climsim_from_raw():
         mode="train",
         dataset_testing_type="full",
         dataset_cfg=dataset_config,
-        model='squeezeformer',
+        model="squeezeformer",
         unit_test_specific_methods=False,
     )
 
@@ -211,6 +209,8 @@ def test_squeezeformer_on_climsim_from_raw():
         {
             "embed_dim": 384,
             "head_dim": 2048,
+            "num_heads": 8,
+            "num_encoder_blocks": 2,
             "lr": 0.0005,
             "batch_size": 4,
             "optimizer": "AdamW",
@@ -244,5 +244,3 @@ def test_squeezeformer_on_climsim_from_raw():
     print(f"Sample input shape: {sample_input.shape}")
     output = model(sample_input)
     assert output.shape == (model_params.batch_size, 113)
-
-    
