@@ -500,7 +500,12 @@ class ClimSimFromRawDataset(Dataset):
                     self.remove_high_altitude_specific_humidity_levels
                     if (
                         self.remove_high_altitude_specific_humidity_levels
-                        and (varname == "state_q0001" or varname == "ptend_q0001")
+                        and (
+                            varname == "state_q0001"
+                            or varname == "ptend_q0001"
+                            or varname == "state_t"
+                            or varname == "ptend_t"
+                        )
                     )
                     else 0
                 )

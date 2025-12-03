@@ -62,9 +62,7 @@ class ECA(nn.Module):
 
 
 class Conv1DBlock(nn.Module):
-    def __init__(
-        self, embed_dim: int, out_dim: int, expand_ratio: int = 4
-    ):
+    def __init__(self, embed_dim: int, out_dim: int, expand_ratio: int = 4):
         """
         Block implementing a 1D convolutional layer. Currently based on my unet implementation. The convolution is applied along the 'levels' dimension.
         Args:
@@ -353,6 +351,10 @@ class SqueezeFormer(nn.Module):
         Returns:
             torch.Tensor: Output tensor of shape (batch_size, variables) .eg (batch_size, 128) (as this format is used for evaluation)
         """
+        # If standard input is goven, then we can reshape
+        if x.ndim == 2:
+            x = self._reshape_from_standard_format(x)
+
         # Embedding
         for layer in self.embedding:
             x = layer(x)
@@ -371,7 +373,46 @@ class SqueezeFormer(nn.Module):
         x = self._reshape_to_standard_format(x)
         return x
 
-    def _reshape_to_standard_format(self, x):
+    def _reshape_from_standard_format(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Reshapes the input from standard format (batch, features) to (batch, levels, variables)
+        (Note: I think I am interchanging 'variables' and 'features' here)
+
+        Args:
+            x: (torch.Tensor) (batch, features) input data in standard format
+
+        Returns:
+            reshaped_x: (torch.Tensor) (batch, levels, features) reshaped input data
+
+        """
+        num_levels = 45
+
+        reshaped_x = torch.stack(
+            [
+                x[:, 0:num_levels],
+                x[:, num_levels : num_levels + num_levels],
+                torch.repeat_interleave(
+                    x[:, 2 * num_levels].unsqueeze(1), num_levels, dim=-1
+                ),
+                torch.repeat_interleave(
+                    x[:, 2 * num_levels + 1].unsqueeze(1), num_levels, dim=-1
+                ),
+                torch.repeat_interleave(
+                    x[:, 2 * num_levels + 2].unsqueeze(1), num_levels, dim=-1
+                ),
+                torch.repeat_interleave(
+                    x[:, 2 * num_levels + 3].unsqueeze(1), num_levels, dim=-1
+                ),
+            ]
+        )
+        reshaped_x = reshaped_x.permute(1, 2, 0)  # shape (batch, levels, features)
+
+        print(
+            f"Reshaped input from standard format to (batch, levels, features): {reshaped_x.shape}"
+        )
+        return reshaped_x
+
+    def _reshape_to_standard_format(self, x: torch.Tensor) -> torch.Tensor:
         """
         Reshapes the output to standard format (batch, variables) from (batch, levels, features)
         Args:
@@ -379,14 +420,15 @@ class SqueezeFormer(nn.Module):
         Returns:
             reshaped_x: (torch.Tensor) (batch, features) reshaped output data
         """
+        
 
         # flatten the first two levels into (n, 120) in one op
         first_two = (
             x[:, :, 0:2].transpose(1, 2).reshape(x.shape[0], -1)
         )  # shape (n, 2*60) == (n,120)
-        first_two = first_two[
-            :, :-15
-        ]  # HARDCODED REMOVAL OF TOP SH Levels # shape (n, 105) which is set to 0 in the input
+        # first_two = first_two[
+        #     :, :-15
+        # ]  # HARDCODED REMOVAL OF TOP SH Levels # shape (n, 105) which is set to 0 in the input
 
         # compute the per-level means for levels 2..9 in one op
         means_2_to_9 = x[:, :, 2:10].mean(dim=1)  # shape (n, 8)
