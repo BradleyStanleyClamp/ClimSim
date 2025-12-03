@@ -1,7 +1,9 @@
 """
 Script for selecting optimizers for training.
 """
+
 import torch
+
 
 def select_optimizer(optimizer_name: str):
     """
@@ -15,7 +17,7 @@ def select_optimizer(optimizer_name: str):
         return torch.optim.Adam
     elif optimizer_name == "RAdam":
         return torch.optim.RAdam
+    elif optimizer_name == "AdamW":
+        return torch.optim.AdamW
     else:
         raise ValueError(f"Optimizer {optimizer_name} not recognized.")
-    
-

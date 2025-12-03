@@ -1,0 +1,16 @@
+# General evaluation configuration that is used for rigorous evaluation of a selected model
+
+defaults:
+  - _self_
+  - project: config
+  - wandb/wkey: wkey
+  # - model: yus_mlp
+  - dataset: climsim_from_raw
+  - dataset/general_dataset_config: general_dataset_config
+  - hydra: default
+  - testing: qt
+  - override hydra/launcher: slurm_gpu
+
+multirun_dir_name: evaluate_trained_models
+
+datasplit_to_use: test

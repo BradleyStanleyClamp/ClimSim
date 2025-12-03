@@ -19,8 +19,9 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 import json
 from pathlib import Path
-import plotting 
+import plotting
 import os
+
 
 def load_energy_distance_results(path: Path | str = None) -> dict:
     """
@@ -28,7 +29,9 @@ def load_energy_distance_results(path: Path | str = None) -> dict:
     If path is None, defaults to cwd()/energy_distance.json.
     Returns an empty dict if the file does not exist or fails to load.
     """
-    results_path = Path(path) if path is not None else Path.cwd() / "energy_distance.json"
+    results_path = (
+        Path(path) if path is not None else Path.cwd() / "energy_distance.json"
+    )
     if not results_path.exists():
         logging.warning(f"energy_distance results file not found: {results_path}")
         return {}
@@ -36,13 +39,18 @@ def load_energy_distance_results(path: Path | str = None) -> dict:
         with results_path.open("r") as f:
             return json.load(f)
     except Exception as e:
-        logging.error(f"Failed to load energy_distance results from {results_path}: {e}")
+        logging.error(
+            f"Failed to load energy_distance results from {results_path}: {e}"
+        )
         return {}
 
-@hydra.main(version_base=None, config_path="../../config", config_name="evaluate_data_groups")
+
+@hydra.main(
+    version_base=None, config_path="../../config", config_name="evaluate_data_groups"
+)
 def main(cfg: DictConfig):
 
-        # Seeding everything
+    # Seeding everything
     seed_everything(cfg.project.seed)
 
     torch.set_float32_matmul_precision("medium")
@@ -51,24 +59,28 @@ def main(cfg: DictConfig):
 
     fig, ax = plt.subplots(figsize=(8, 4))
 
-
     # path_to_results = '/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/1/multi_seed_mlp_performance_on_year_grouped_data_2025-10-30-10-25-04'
     # path_to_results = '/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/4/yus_mlp_multi_seed_reduced_sh_001_2025-11-18-14-58-24'
     # path_to_results = '/home/users/bradlesc/projects/ClimSim/logs/p2.1.1/7/unet_year_groups_multiseed_003_2025-11-07-09-16-56'
     # path_to_results = '/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/6/multiseed_monthly_first_3_years_2025-11-25-15-20-48'
-    path_to_results = '/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/6/unet_multiseed_2025-11-25-22-11-05'
+    # path_to_results = '/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/6/unet_multiseed_2025-11-25-22-11-05'
+    # path_to_results = "/home/users/bradlesc/projects/ClimSim/logs/p2.1.1/9/squeezeformer_multiseed_2025-11-27-03-29-03"
+    path_to_results = "/home/users/bradlesc/projects/ClimSim/logs/p2.1.1/9/squeezeformer_multiseed_2025-12-02-10-42-26"
     for subfolder in os.listdir(path_to_results):
-        if subfolder == 'climsim_unet_group_2':
-            logging.warning(f"Skipping folder: {subfolder}")
-            continue
         full_path = os.path.join(path_to_results, subfolder)
-        if os.path.isdir(full_path) and (subfolder.startswith('yus') or subfolder.startswith('climsim')):
+        if os.path.isdir(full_path) and (
+            subfolder.startswith("yus")
+            or subfolder.startswith("climsim")
+            or subfolder.startswith("squeezeformer")
+        ):
             print(f"Processing folder: {subfolder}")
-            results_file = os.path.join(full_path, 'test_results.json')
-            with open(results_file, 'r') as f:
+            results_file = os.path.join(full_path, "test_results.json")
+            with open(results_file, "r") as f:
                 results = json.load(f)
-            
-                test_losses = [results[str(i)][0]['test/loss'] for i in range(len(results))]
+
+                test_losses = [
+                    results[str(i)][0]["test/loss"] for i in range(len(results))
+                ]
                 year_group = int(subfolder[-1])
                 x = [year_group] * len(test_losses)
                 ax.scatter(x, test_losses)
@@ -80,7 +92,6 @@ def main(cfg: DictConfig):
     # with open(path_to_baseline, 'r') as f:
     #     baseline_results = json.load(f)
     #     baseline_losses = [baseline_results[str(i)][0]['test/loss'] for i in range(len(baseline_results))]
-
 
     # # baseline_y = 0.003736531361937523
     # for i in range(len(baseline_losses)):
@@ -96,9 +107,7 @@ def main(cfg: DictConfig):
     ax.grid(True)
     fig.tight_layout()
 
-
-    save_path = 'multi_seed_year_group.png'
-
+    save_path = "multi_seed_year_group.png"
 
     # ensure save_path doesn't collide; append _1, _2, ... before the suffix until an unused filename is found
     save_path = Path(save_path)
@@ -119,6 +128,7 @@ def main(cfg: DictConfig):
     fig.savefig(save_path, dpi=200, transparent=True)
     logging.info(f"Saved plot to {save_path}")
     plt.close(fig)
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

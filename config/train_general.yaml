@@ -4,7 +4,7 @@ defaults:
   - _self_
   - project: config
   - wandb/wkey: wkey
-  - model: climsim_mlp
+  - model: yus_mlp
   - dataset: climsim_from_raw #sub_sampled_low_res
   - dataset/general_dataset_config: general_dataset_config
   - hydra: default
@@ -13,6 +13,8 @@ defaults:
 
 # Naming 
 multirun_dir_name: ${model.name}_group_${dataset.group_by_months.target_group}
+
+target_group: False
 
 # Training parameters
 max_epochs: 10
