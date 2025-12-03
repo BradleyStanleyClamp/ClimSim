@@ -5,3 +5,4 @@ from .kl_divergence import *
 from .energy_distance import *
 from .general_metric_utils import *
 from .output_weighting import *
+from .metrics_calculator import *

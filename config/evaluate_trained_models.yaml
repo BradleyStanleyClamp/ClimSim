@@ -14,3 +14,11 @@ defaults:
 multirun_dir_name: evaluate_trained_models
 
 datasplit_to_use: test
+target_group: 0 # Which group to use as the training set
+
+
+models:
+  yus_mlp: "/home/users/bradlesc/projects/ClimSim/logs/p2.1.1/8/testing/quick_test/2025-12-03-17-01-10"
+  climsim_unet: "/home/users/bradlesc/projects/ClimSim/logs/p2.1.1/8/testing/quick_test/2025-12-03-17-01-28"
+  squeezeformer: "/home/users/bradlesc/projects/ClimSim/logs/p2.1.1/8/testing/quick_test/2025-12-03-17-01-40"
+

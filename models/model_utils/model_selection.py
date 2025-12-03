@@ -42,9 +42,9 @@ def select_base_model(
     elif model_name == "squeezeformer":
 
         squeezeformer = models.SqueezeFormer(
-            in_dim=data_params.input_dim,
+            in_dim=6, #data_params.input_dim,
             embed_dim=model_params.embed_dim,
-            out_dim=data_params.output_dim,
+            out_dim=10, #data_params.output_dim,
             head_dim=model_params.head_dim,
             num_heads=model_params.num_heads,
             num_encoder_blocks=model_params.num_encoder_blocks,

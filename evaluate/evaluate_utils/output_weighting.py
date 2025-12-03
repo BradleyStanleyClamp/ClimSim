@@ -4,6 +4,7 @@ The code is based on the `output_weighting` function in ClimSim's
 `data_utils.py`.
 """
 
+import logging
 import xarray as xr
 import torch
 from omegaconf import DictConfig
@@ -23,9 +24,9 @@ class OutputWeighting:
 
         self.grid_info = xr.open_dataset(self.cfg.dataset.path_to_grid_info)
 
-        self.max_t_level_index = 60 - self.top_levels_to_remove
-        self.min_sh_level_index = 60
-        self.max_sh_level_index = 120 - self.top_levels_to_remove
+        self.max_t_level_index = 45
+        self.min_sh_level_index = 45
+        self.max_sh_level_index = 90
 
     def weight(
         self, data: torch.Tensor, testset: torch.utils.data.Dataset
@@ -45,11 +46,17 @@ class OutputWeighting:
         Returns:
             xr.Dataset: The weighted dataset.
         """
+        logging.info("Applying output weighting...")
         ds = self._reshape_outputs(data)
+        logging.info(f"Reshaped outputs to dataset")
         ds = self.undo_output_scaling(ds)
+        logging.info("Undid output scaling")
         ds = self._vertical_weighting(ds, testset)
+        logging.info("Applied vertical weighting")
         ds = self._weight_by_area(ds)
+        logging.info("Applied area weighting")
         ds = self._unit_conversion(ds)
+        logging.info("Applied unit conversion")
 
         return ds
 

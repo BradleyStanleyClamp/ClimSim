@@ -312,7 +312,7 @@ class SqueezeFormer(nn.Module):
 
         super().__init__()
         logging.info(
-            f"Initializing SqueezeFormer2 with in_dim={in_dim}, embed_dim={embed_dim}, out_dim={out_dim}"
+            f"Initializing SqueezeFormer with in_dim={in_dim}, embed_dim={embed_dim}, out_dim={out_dim}"
         )
 
         # Embedding

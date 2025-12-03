@@ -23,6 +23,7 @@ class ClimSimFromRawDataset(Dataset):
         model: str = None,
         normalisation_stats: dict = None,
         unit_test_specific_methods: bool = False,
+        get_normalisation_stats_only: bool = False,
         num_workers: int = 1,
     ):
         super().__init__()
@@ -77,8 +78,12 @@ class ClimSimFromRawDataset(Dataset):
                 n_workers=num_workers, threads_per_worker=1, memory_limit="8GB"
             )
             parallel = True
+            logging.info(
+                f"Using Dask with {num_workers} workers for parallel processing."
+            )
         else:
             parallel = False
+            logging.info("Using single worker for processing.")
 
         start_time = time.time()
         input_ds, target_ds = self._combine_datasets(
@@ -109,6 +114,9 @@ class ClimSimFromRawDataset(Dataset):
             v1_targets=dataset_cfg.v1_targets,
         )
         logging.info(f"Normalised data in {time.time() - start_time} seconds")
+
+        if get_normalisation_stats_only:
+            return
 
         start_time = time.time()
         self.input, self.target = self._prepare_data(
@@ -438,7 +446,7 @@ class ClimSimFromRawDataset(Dataset):
             input_tensor = self._dataset_to_tensor(input_ds)
             target_tensor = self._dataset_to_tensor(target_ds)
         elif model_name == "climsim_unet":
-            input_tensor = self._prepare_as_3d(input_ds, patch=4)
+            input_tensor = self._prepare_as_3d(input_ds, patch=3)
             target_tensor = self._dataset_to_tensor(target_ds)
             # target_tensor = self._prepare_for_unet(target_ds)
             logging.info(f"UNet input tensor shape: {input_tensor.shape}")
@@ -460,14 +468,17 @@ class ClimSimFromRawDataset(Dataset):
             if (self.remove_high_altitude_specific_humidity_levels)
             else 0
         )
-        if "state_q0001" in input_ds:
-            input_ds["state_q0001"] = input_ds["state_q0001"].where(
-                input_ds["state_q0001"].lev < input_ds["state_q0001"].lev[S], 0.0
-            )
-        elif "ptend_q0001" in input_ds:
-            input_ds["ptend_q0001"] = input_ds["ptend_q0001"].where(
-                input_ds["ptend_q0001"].lev < input_ds["ptend_q0001"].lev[S], 0.0
-            )
+
+        input_ds = input_ds.isel(lev=slice(0, 60 - S))
+
+        # if "state_q0001" in input_ds:
+        #     input_ds["state_q0001"] = input_ds["state_q0001"].where(
+        #         input_ds["state_q0001"].lev < input_ds["state_q0001"].lev[S], 0.0
+        #     )
+        # elif "ptend_q0001" in input_ds:
+        #     input_ds["ptend_q0001"] = input_ds["ptend_q0001"].where(
+        #         input_ds["ptend_q0001"].lev < input_ds["ptend_q0001"].lev[S], 0.0
+        #     )
 
         ds_stacked = input_ds.stack(obs=("sample", "ncol"))
         array = ds_stacked.to_array()

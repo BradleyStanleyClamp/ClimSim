@@ -1,7 +1,7 @@
 dataset_name: 'climsim_from_raw'
 
-input_dim: 124
-output_dim: 128
+input_dim: 94 #124
+output_dim: 98 #128
 levels: 60
 
 base_folder_path: '/gws/nopw/j04/iecdt/bstanleyclamp/ClimSim_lowres/train/'

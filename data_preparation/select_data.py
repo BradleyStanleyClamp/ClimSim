@@ -55,10 +55,17 @@ def get_dataset(
             dataset_cfg,
             model=model,
             normalisation_stats=normalisation_stats,
+            num_workers=int(dataset_cfg.general_dataset_config.num_workers),
         )
 
 
-def get_dataloader(dataset_cfg, mode, dataset_testing_type, batch_size) -> DataLoader:
+def get_dataloader(
+    dataset_cfg,
+    mode: str,
+    dataset_testing_type: str,
+    batch_size: int,
+    dataset: Dataset = None,
+) -> DataLoader:
     """
     Function that gets you the specified dataloader, and only shuffles if in training mode
     Args:
@@ -67,14 +74,17 @@ def get_dataloader(dataset_cfg, mode, dataset_testing_type, batch_size) -> DataL
             dataset_testing_fractions: (DictConfig) configuration containing the fractions for quick and reduced datasets
         mode: (str) one of 'train', 'val' or 'test', specifying which dataset split to return
         dataset_testing_type: (str) size of dataset to be used, related to the type of testing e.g quick, reduced, full
+        batch_size: (int) batch size for the dataloader
+        dataset: (Dataset, optional) precomputed dataset to use. If None, the dataset will be loaded based on the provided configuration.
 
     Returns:
         DataLoader: the specified dataloader
     """
-    dataset = get_dataset(dataset_cfg, mode, dataset_testing_type)
+    if dataset is None:
+        dataset = get_dataset(dataset_cfg, mode, dataset_testing_type)
     return DataLoader(
         dataset,
-        batch_size=dataset_cfg.batch_size,
+        batch_size=batch_size,
         shuffle=(mode == "train"),
         num_workers=int(dataset_cfg.general_dataset_config.num_workers),
         persistent_workers=dataset_cfg.general_dataset_config.persistent_workers,
@@ -99,20 +109,26 @@ def get_all_datasets(
     """
     train_dataset = get_dataset(dataset_cfg, "train", dataset_testing_type, model=model)
     logging.info(f"trainset loaded with {len(train_dataset)} samples")
-    
+
     if hasattr(train_dataset, "normalisation_stats"):
         logging.info("Passing normalisation stats to val and test datasets")
         normalisation_stats = train_dataset.normalisation_stats
     else:
         normalisation_stats = None
-    
+
     logging.warning(f"Note: temporarily hardcoding that test=val!!!")
-    val_dataset = get_dataset(dataset_cfg, "val", dataset_testing_type, model=model, normalisation_stats=normalisation_stats)
+    val_dataset = get_dataset(
+        dataset_cfg,
+        "val",
+        dataset_testing_type,
+        model=model,
+        normalisation_stats=normalisation_stats,
+    )
     logging.info(f"valset loaded with {len(val_dataset)} samples")
     # test_dataset = get_dataset(dataset_cfg, "test", dataset_testing_type, model=model, normalisation_stats=normalisation_stats)
     # logging.info(f"testset loaded with {len(test_dataset)} samples")
 
-    return train_dataset, val_dataset, val_dataset #test_dataset
+    return train_dataset, val_dataset, val_dataset  # test_dataset
 
 
 def get_all_dataloaders(
