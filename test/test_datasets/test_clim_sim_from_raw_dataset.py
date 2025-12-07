@@ -312,6 +312,7 @@ def test_climsim_from_raw_dataset_unit_test_spatial_selection_none():
     assert np.array_equal(input_dataset.to_array(), input_dataset_out.to_array())
     assert np.array_equal(target_dataset.to_array(), output_dataset_out.to_array())
 
+
 def test_climsim_from_raw_dataset_unit_test_spatial_selection_northern_hemisphere():
     dataset = data_preparation.ClimSimFromRawDataset(
         mode="train",
@@ -333,7 +334,10 @@ def test_climsim_from_raw_dataset_unit_test_spatial_selection_northern_hemispher
     )
 
     input_dataset_out, target_dataset_out = dataset._spatial_selection(
-        input_dataset, target_dataset, path_to_grid_info, spatial_selection_method='northern_hemisphere'
+        input_dataset,
+        target_dataset,
+        path_to_grid_info,
+        spatial_selection_method="northern_hemisphere",
     )
     # Check that only northern hemisphere latitudes are selected
     grid_info = xr.open_dataset(path_to_grid_info)
@@ -341,9 +345,6 @@ def test_climsim_from_raw_dataset_unit_test_spatial_selection_northern_hemispher
     northern_hemisphere_indices = np.where(latitudes.values > 0)[0]
     assert input_dataset_out.sizes["ncol"] == len(northern_hemisphere_indices)
     assert target_dataset_out.sizes["ncol"] == len(northern_hemisphere_indices)
-
-
-
 
 
 def test_climsim_from_raw_dataset_unit_test_normalise_dataset():
@@ -472,8 +473,6 @@ def test_climsim_from_raw_dataset_unit_test_prepare_data():
         model_name=None,
         input_ds=input_ds,
         target_ds=target_ds,
-        v1_inputs=v1_inputs,
-        v1_targets=v1_targets,
     )
     assert isinstance(input_tensor, torch.Tensor)
     assert isinstance(target_tensor, torch.Tensor)
@@ -492,6 +491,7 @@ def test_climsim_from_raw_dataset_init_sample_data():
             "base_folder_path": data_path,
             "target_years": ["0001"],
             "target_months": ["02"],
+            "levels": 45,
             "dataset_testing_num_files": {"full": 1},
             "v1_inputs": v1_inputs,
             "v1_targets": v1_targets,
@@ -513,15 +513,15 @@ def test_climsim_from_raw_dataset_init_sample_data():
     assert isinstance(dataset.input, torch.Tensor)
     assert isinstance(dataset.target, torch.Tensor)
     assert dataset.input.shape[0] == dataset.target.shape[0]
-    assert dataset.input.shape[1] == 124
-    assert dataset.target.shape[1] == 128
+    assert dataset.input.shape[1] == 94
+    assert dataset.target.shape[1] == 98
 
     x, y = dataset[0]
     assert torch.equal(x, dataset.input[0])
     assert torch.equal(y, dataset.target[0])
 
-    assert len(x) == 124
-    assert len(y) == 128
+    assert len(x) == 94
+    assert len(y) == 98
 
 
 def test_climsim_from_raw_dataset_init_sample_data_train_and_test():
@@ -534,6 +534,7 @@ def test_climsim_from_raw_dataset_init_sample_data_train_and_test():
             "base_folder_path": data_path,
             "target_years": ["0001"],
             "target_months": ["02"],
+            "levels": 45,
             "dataset_testing_num_files": {"full": 1},
             "v1_inputs": v1_inputs,
             "v1_targets": v1_targets,
@@ -567,10 +568,10 @@ def test_climsim_from_raw_dataset_init_sample_data_train_and_test():
     assert isinstance(test_dataset.target, torch.Tensor)
     assert dataset.input.shape[0] == dataset.target.shape[0]
     assert test_dataset.input.shape[0] == test_dataset.target.shape[0]
-    assert dataset.input.shape[1] == 124
-    assert dataset.target.shape[1] == 128
-    assert test_dataset.input.shape[1] == 124
-    assert test_dataset.target.shape[1] == 128
+    assert dataset.input.shape[1] == 94
+    assert dataset.target.shape[1] == 98
+    assert test_dataset.input.shape[1] == 94
+    assert test_dataset.target.shape[1] == 98
 
     with pytest.raises(ValueError):
         _ = data_preparation.ClimSimFromRawDataset(
@@ -593,6 +594,7 @@ def test_climsim_from_raw_dataset_init_sample_data_remove_high_altitude_specific
             "base_folder_path": data_path,
             "target_years": ["0001"],
             "target_months": ["02"],
+            "levels": 45,
             "dataset_testing_num_files": {"full": 1},
             "v1_inputs": v1_inputs,
             "v1_targets": v1_targets,
@@ -615,18 +617,93 @@ def test_climsim_from_raw_dataset_init_sample_data_remove_high_altitude_specific
     assert isinstance(dataset.input, torch.Tensor)
     assert isinstance(dataset.target, torch.Tensor)
     assert dataset.input.shape[0] == dataset.target.shape[0]
-    assert (
-        dataset.input.shape[1]
-        == 124 - dataset_config.remove_high_altitude_specific_humidity_levels
-    )
-    assert (
-        dataset.target.shape[1]
-        == 128 - dataset_config.remove_high_altitude_specific_humidity_levels
-    )
+    assert dataset.input.shape[1] == 94
+    assert dataset.target.shape[1] == 98
 
     x, y = dataset[0]
     assert torch.equal(x, dataset.input[0])
     assert torch.equal(y, dataset.target[0])
 
-    assert len(x) == 124 - dataset_config.remove_high_altitude_specific_humidity_levels
-    assert len(y) == 128 - dataset_config.remove_high_altitude_specific_humidity_levels
+    assert len(x) == 94
+    assert len(y) == 98
+
+
+def test_dataset_to_flattened_tensor():
+    dataset = data_preparation.ClimSimFromRawDataset(
+        mode="train",
+        dataset_testing_type="full",
+        dataset_cfg={},
+        model=None,
+        unit_test_specific_methods=True,
+    )
+
+    x = np.arange(94)
+    x1 = x[0:45].reshape(1, 1, 45)
+    x2 = x[45:90].reshape(1, 1, 45)
+    x3 = x[90:91].reshape(1, 1)
+    x4 = x[91:92].reshape(1, 1)
+    x5 = x[92:93].reshape(1, 1)
+    x6 = x[93:94].reshape(1, 1)
+
+    xr_dataset = xr.Dataset(
+        data_vars={
+            "var1": (("sample", "ncol", "lev"), x1),
+            "var2": (("sample", "ncol", "lev"), x2),
+            "var3": (("sample", "ncol"), x3),
+            "var4": (("sample", "ncol"), x4),
+            "var5": (("sample", "ncol"), x5),
+            "var6": (("sample", "ncol"), x6),
+        }
+    )
+
+    tensor = dataset._dataset_to_flattened_tensor(xr_dataset)
+    print(tensor.shape)  # Expecting (1, 94)
+    assert tensor.shape == (1, 94)
+    assert torch.equal(tensor, torch.tensor(x).reshape(1, 94))
+
+
+def test_dataset_to_column_tensor():
+    dataset = data_preparation.ClimSimFromRawDataset(
+        mode="train",
+        dataset_testing_type="full",
+        dataset_cfg={},
+        model=None,
+        unit_test_specific_methods=True,
+    )
+
+    x = np.arange(94)
+    x1 = x[0:45].reshape(1, 1, 45)
+    x2 = x[45:90].reshape(1, 1, 45)
+    x3 = x[90:91].reshape(1, 1)
+    x4 = x[91:92].reshape(1, 1)
+    x5 = x[92:93].reshape(1, 1)
+    x6 = x[93:94].reshape(1, 1)
+
+    xr_dataset = xr.Dataset(
+        data_vars={
+            "var1": (("sample", "ncol", "lev"), x1),
+            "var2": (("sample", "ncol", "lev"), x2),
+            "var3": (("sample", "ncol"), x3),
+            "var4": (("sample", "ncol"), x4),
+            "var5": (("sample", "ncol"), x5),
+            "var6": (("sample", "ncol"), x6),
+        }
+    )
+
+    tensor = dataset._dataset_to_column_tensors(xr_dataset)
+    print(tensor.shape)  # Expecting (1, 94)
+    assert tensor.shape == (1, 6, 45)
+    assert torch.equal(tensor[0][0], torch.tensor(x1).reshape(1, 45).float().squeeze())
+    assert torch.equal(tensor[0][1], torch.tensor(x2).reshape(1, 45).float().squeeze())
+    assert torch.equal(
+        tensor[0][2][0], torch.tensor(x3).reshape(1, 1).float().squeeze()
+    )
+    assert torch.equal(
+        tensor[0][3][0], torch.tensor(x4).reshape(1, 1).float().squeeze()
+    )
+    assert torch.equal(
+        tensor[0][4][0], torch.tensor(x5).reshape(1, 1).float().squeeze()
+    )
+    assert torch.equal(
+        tensor[0][5][0], torch.tensor(x6).reshape(1, 1).float().squeeze()
+    )

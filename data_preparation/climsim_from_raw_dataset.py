@@ -102,6 +102,14 @@ class ClimSimFromRawDataset(Dataset):
             dataset_cfg.path_to_grid_info,
             spatial_selection_method=dataset_cfg.spatial_selection_method,
         )
+        logging.info(f'spatially selected dataset columns: {input_ds.sizes["ncol"]}')
+
+        input_ds, target_ds = self._level_selection(
+            input_ds,
+            target_ds,
+            levels=dataset_cfg.levels,
+        )
+        logging.info(f"Selected {dataset_cfg.levels} levels from dataset.")
 
         start_time = time.time()
         (
@@ -125,8 +133,6 @@ class ClimSimFromRawDataset(Dataset):
             self.model,
             self.normalised_input_ds,
             self.normalised_target_ds,
-            v1_inputs=dataset_cfg.v1_inputs,
-            v1_targets=dataset_cfg.v1_targets,
         )
         logging.info(f"Prepared data in {time.time() - start_time} seconds")
 
@@ -391,37 +397,62 @@ class ClimSimFromRawDataset(Dataset):
         # Scaling targets based on original ClimSim approach
         out_scale = xr.open_dataset(output_scale_file_path)
         out_scale = out_scale[list(v1_targets)]
+        out_scale = out_scale.sel(lev=input_ds.lev)
         target_ds = target_ds * out_scale
 
         return input_ds, target_ds, normalisation_stats
+
+    def _level_selection(
+        self,
+        input_ds: xr.Dataset,
+        target_ds: xr.Dataset,
+        levels: int,
+    ) -> tuple:
+        """
+        Selects the specified number of vertical levels from the datasets.
+
+        Returns:
+            Tuple of (input dataset with selected levels, target dataset with selected levels).
+        """
+        input_ds = input_ds.isel(lev=slice(0, levels))
+        target_ds = target_ds.isel(lev=slice(0, levels))
+        return input_ds, target_ds
 
     def _prepare_data(
         self,
         model_name: str,
         input_ds: xr.Dataset,
         target_ds: xr.Dataset,
-        v1_inputs: list,
-        v1_targets: list,
     ) -> tuple:
         """
         Prepares the data into a format ready for the specified model.
 
+        Args:
+            model_name: Name of the model (e.g., 'mlp', 'climsim_unet', 'squeezeformer').
+            input_ds: Input xarray dataset.
+            target_ds: Target xarray dataset.
+
         Returns:
-            Tuple of (input tensor, target tensor). With shape (num_samples, num_features)
+            Tuple of (input tensor, target tensor). With shape depending on the model.
+            standard: (num_samples, num_features)
+            UNet: (num_samples, num_variables, num_levs + patch)
+            SqueezeFormer: (num_samples, num_levs, num_variables)
         """
         standard_data = [None, "mlp", "yus_mlp"]
         if model_name in standard_data:
-            input_tensor = self._dataset_to_tensor(input_ds)
-            target_tensor = self._dataset_to_tensor(target_ds)
+            input_tensor = self._dataset_to_flattened_tensor(input_ds)
+            target_tensor = self._dataset_to_flattened_tensor(target_ds)
         elif model_name == "climsim_unet":
-            input_tensor = self._prepare_as_3d(input_ds, patch=3)
-            target_tensor = self._dataset_to_tensor(target_ds)
-            # target_tensor = self._prepare_for_unet(target_ds)
+            input_tensor = self._dataset_to_column_tensors(input_ds, patch=3)
+            target_tensor = self._dataset_to_flattened_tensor(target_ds)
             logging.info(f"UNet input tensor shape: {input_tensor.shape}")
             logging.info(f"UNet target tensor shape: {target_tensor.shape}")
         elif model_name == "squeezeformer":
-            input_tensor = self._prepare_as_3d(input_ds, patch=False)
-            target_tensor = self._dataset_to_tensor(target_ds)
+            input_tensor = self._dataset_to_column_tensors(input_ds, patch=0)
+            input_tensor = input_tensor.permute(
+                0, 2, 1
+            )  # (num_samples, num_levs, num_variables)
+            target_tensor = self._dataset_to_flattened_tensor(target_ds)
             logging.info(f"SqueezeFormer input tensor shape: {input_tensor.shape}")
             logging.info(f"SqueezeFormer target tensor shape: {target_tensor.shape}")
         else:
@@ -429,42 +460,38 @@ class ClimSimFromRawDataset(Dataset):
 
         return input_tensor, target_tensor
 
-    def _prepare_as_3d(self, input_ds: xr.Dataset, patch=False) -> torch.Tensor:
-        """ """
-        S = (
-            self.remove_high_altitude_specific_humidity_levels
-            if (self.remove_high_altitude_specific_humidity_levels)
-            else 0
-        )
+    def _dataset_to_column_tensors(
+        self, input_ds: xr.Dataset, patch=False
+    ) -> torch.Tensor:
+        """
+        Prepares the input dataset as 3D tensors for models like UNet or SqueezeFormer.
+        Converting scalars into vectors by duplicating values
 
-        input_ds = input_ds.isel(lev=slice(0, 60 - S))
+        Args:
+            input_ds: Input xarray dataset.
+            patch: If True, patches the lev dimension with zeros.
 
-        # if "state_q0001" in input_ds:
-        #     input_ds["state_q0001"] = input_ds["state_q0001"].where(
-        #         input_ds["state_q0001"].lev < input_ds["state_q0001"].lev[S], 0.0
-        #     )
-        # elif "ptend_q0001" in input_ds:
-        #     input_ds["ptend_q0001"] = input_ds["ptend_q0001"].where(
-        #         input_ds["ptend_q0001"].lev < input_ds["ptend_q0001"].lev[S], 0.0
-        #     )
+        Returns:
+            PyTorch tensor of shape (num_samples, num_variables, num_levs + patch)
+        """
 
         ds_stacked = input_ds.stack(obs=("sample", "ncol"))
-        array = ds_stacked.to_array()
-        if patch:
-            array = array.transpose("obs", "variable", "lev")
-            np_array = np.pad(
-                array, ((0, 0), (0, 0), (0, patch)), mode="constant", constant_values=0
-            )
-        else:
-            array = array.transpose("obs", "lev", "variable")
-            np_array = array.to_numpy()
 
-        np_array = np_array.astype("float32")
+        array = ds_stacked.to_array()  # (variable, obs, lev)
+
+        array = array.transpose("obs", "variable", "lev")
+        np_array = np.pad(
+            array, ((0, 0), (0, 0), (0, patch)), mode="constant", constant_values=0
+        ).astype("float32")
+
         tensor = torch.from_numpy(np_array)
         return tensor
 
-    def _dataset_to_tensor(self, input_ds: xr.Dataset) -> tuple:
-        """ """
+    def _dataset_to_flattened_tensor(self, input_ds: xr.Dataset) -> tuple:
+        """
+        Converts an xarray Dataset into a flattened PyTorch tensor of shape (num_samples, num_features).
+        Each variable and its levels are flattened into a single feature dimension.
+        """
         ds_stacked = input_ds.stack(obs=("sample", "ncol"))
 
         da_list = []
@@ -475,22 +502,9 @@ class ClimSimFromRawDataset(Dataset):
                 # bring to (lev, obs) view (no copy; xarray reorder)
                 da_view = da.transpose("lev", "obs")
                 L = da_view.sizes["lev"]
-                S = (
-                    self.remove_high_altitude_specific_humidity_levels
-                    if (
-                        self.remove_high_altitude_specific_humidity_levels
-                        and (
-                            varname == "state_q0001"
-                            or varname == "ptend_q0001"
-                            or varname == "state_t"
-                            or varname == "ptend_t"
-                        )
-                    )
-                    else 0
-                )
-                da_view = da_view.isel(lev=slice(S, L))
+
                 # name the features for each level
-                var_feature_names = [f"{varname}_lev{i}" for i in range(S, L)]
+                var_feature_names = [f"{varname}_lev{i}" for i in range(0, L)]
             else:
                 # expand a fake lev dimension of length 1 -> (lev=1, obs)
                 da_view = da.expand_dims({"lev": [0]}).transpose("lev", "obs")
@@ -513,17 +527,7 @@ class ClimSimFromRawDataset(Dataset):
 
         combined = combined.astype("float32")
 
-        # compute once (may be large)
-        start_time = time.time()
-        arr = combined.data.compute()  # returns numpy array if small enough
-        logging.info(
-            f"DataArray to numpy array compute time: {time.time() - start_time}"
-        )
-
-        # ensure contiguous and owned
-        arr = np.ascontiguousarray(arr)
-
-        tensor = torch.from_numpy(arr)
+        tensor = torch.from_numpy(combined.to_numpy())
 
         return tensor
 
