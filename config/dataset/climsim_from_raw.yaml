@@ -1,8 +1,9 @@
 dataset_name: 'climsim_from_raw'
 
-input_dim: 94 #124
-output_dim: 98 #128
+# input_dim: 94 #124
+# output_dim: 98 #128
 levels: 60
+spatial_selection_method: False
 
 base_folder_path: '/gws/nopw/j04/iecdt/bstanleyclamp/ClimSim_lowres/train/'
 path_to_grid_info: '/home/users/bradlesc/projects/ClimSim/grid_info/ClimSim_low-res_grid-info.nc'
@@ -36,11 +37,10 @@ group_by_months:
   test_group: ['09', '10', '11']
   val_group: ['09', '10', '11'] # Currently val and test are the same, but could be changed later
 
-remove_high_altitude_specific_humidity_levels: 15
 
-# Old:
-
+# OLD SETTINGS - FOR REFERENCE ONLY:
 # dataset_testing_sample_rates:
+# remove_high_altitude_specific_humidity_levels: 15
 #   unit_test: 1
 #   quick: 1000
 #   reduced: 100

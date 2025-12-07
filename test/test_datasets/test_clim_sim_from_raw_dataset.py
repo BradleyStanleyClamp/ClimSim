@@ -285,6 +285,67 @@ def test_climsim_from_raw_dataset_unit_test_combine_datasets():
     assert target_ds.sizes["sample"] == 3
 
 
+def test_climsim_from_raw_dataset_unit_test_spatial_selection_none():
+    dataset = data_preparation.ClimSimFromRawDataset(
+        mode="train",
+        dataset_testing_type="qt",
+        dataset_cfg=None,
+        model=None,
+        unit_test_specific_methods=True,
+    )
+
+    # Create dummy input and target datasets
+    input_data = np.random.rand(1000, 384, 60)
+    target_data = np.random.rand(1000, 384, 60)
+
+    input_dataset = xr.Dataset({"state_t": (("sample", "ncol", "lev"), input_data)})
+    target_dataset = xr.Dataset({"ptend_t": (("sample", "ncol", "lev"), target_data)})
+
+    path_to_grid_info = (
+        "/home/users/bradlesc/projects/ClimSim/grid_info/ClimSim_low-res_grid-info.nc"
+    )
+
+    input_dataset_out, output_dataset_out = dataset._spatial_selection(
+        input_dataset, target_dataset, path_to_grid_info, spatial_selection_method=False
+    )
+
+    assert np.array_equal(input_dataset.to_array(), input_dataset_out.to_array())
+    assert np.array_equal(target_dataset.to_array(), output_dataset_out.to_array())
+
+def test_climsim_from_raw_dataset_unit_test_spatial_selection_northern_hemisphere():
+    dataset = data_preparation.ClimSimFromRawDataset(
+        mode="train",
+        dataset_testing_type="qt",
+        dataset_cfg=None,
+        model=None,
+        unit_test_specific_methods=True,
+    )
+
+    # Create dummy input and target datasets
+    input_data = np.random.rand(1000, 384, 60)
+    target_data = np.random.rand(1000, 384, 60)
+
+    input_dataset = xr.Dataset({"state_t": (("sample", "ncol", "lev"), input_data)})
+    target_dataset = xr.Dataset({"ptend_t": (("sample", "ncol", "lev"), target_data)})
+
+    path_to_grid_info = (
+        "/home/users/bradlesc/projects/ClimSim/grid_info/ClimSim_low-res_grid-info.nc"
+    )
+
+    input_dataset_out, target_dataset_out = dataset._spatial_selection(
+        input_dataset, target_dataset, path_to_grid_info, spatial_selection_method='northern_hemisphere'
+    )
+    # Check that only northern hemisphere latitudes are selected
+    grid_info = xr.open_dataset(path_to_grid_info)
+    latitudes = grid_info["lat"]
+    northern_hemisphere_indices = np.where(latitudes.values > 0)[0]
+    assert input_dataset_out.sizes["ncol"] == len(northern_hemisphere_indices)
+    assert target_dataset_out.sizes["ncol"] == len(northern_hemisphere_indices)
+
+
+
+
+
 def test_climsim_from_raw_dataset_unit_test_normalise_dataset():
 
     dataset = data_preparation.ClimSimFromRawDataset(
@@ -437,6 +498,7 @@ def test_climsim_from_raw_dataset_init_sample_data():
             "output_scale_file_path": output_scale_file_path,
             "group_method": False,
             "path_to_grid_info": "/home/users/bradlesc/projects/ClimSim/grid_info/ClimSim_low-res_grid-info.nc",
+            "spatial_selection_method": False,
         }
     )
 
@@ -478,6 +540,7 @@ def test_climsim_from_raw_dataset_init_sample_data_train_and_test():
             "output_scale_file_path": output_scale_file_path,
             "group_method": False,
             "path_to_grid_info": "/home/users/bradlesc/projects/ClimSim/grid_info/ClimSim_low-res_grid-info.nc",
+            "spatial_selection_method": False,
         }
     )
 
@@ -537,6 +600,7 @@ def test_climsim_from_raw_dataset_init_sample_data_remove_high_altitude_specific
             "group_method": False,
             "remove_high_altitude_specific_humidity_levels": 2,
             "path_to_grid_info": "/home/users/bradlesc/projects/ClimSim/grid_info/ClimSim_low-res_grid-info.nc",
+            "spatial_selection_method": False,
         }
     )
 

@@ -97,7 +97,10 @@ class ClimSimFromRawDataset(Dataset):
         logging.info(f"Combined dataset samples: {input_ds.sizes['sample']}")
 
         input_ds, target_ds = self._spatial_selection(
-            input_ds, target_ds, dataset_cfg.path_to_grid_info
+            input_ds,
+            target_ds,
+            dataset_cfg.path_to_grid_info,
+            spatial_selection_method=dataset_cfg.spatial_selection_method,
         )
 
         start_time = time.time()
@@ -251,7 +254,6 @@ class ClimSimFromRawDataset(Dataset):
                 f"Not enough files ({N}) to sample {num_files} files for each of train, val, and test."
             )
 
-
         perm = np.random.permutation(N)
         if mode == "train":
             indices = perm[0:num_files]
@@ -314,114 +316,48 @@ class ClimSimFromRawDataset(Dataset):
         return combined_input_ds, combined_target_ds
 
     def _spatial_selection(
-        self, input_ds: xr.Dataset, target_ds: xr.Dataset, path_to_grid_info
+        self,
+        input_ds: xr.Dataset,
+        target_ds: xr.Dataset,
+        path_to_grid_info: str,
+        spatial_selection_method: str = False,
     ) -> tuple:
         """
         Subselects spatial region from dataset based on configuration.
 
-        V1 is hardcoded to select the northern hemisphere
+        Args:
+            input_ds: Input xarray dataset.
+            target_ds: Target xarray dataset.
+            path_to_grid_info: Path to grid information file.
+            spatial_selection_method: Method to use for spatial selection.
+
+        Returns:
+            Tuple of (spatially selected input dataset, spatially selected target dataset).
+
+        V1 was hardcoded to select the northern hemisphere
+        v2 is
         """
         logging.info("Selecting northern hemisphere columns only.")
         grid_info = xr.open_dataset(path_to_grid_info)
         latitudes = grid_info["lat"]
-        northern_hemisphere = latitudes.values > 0
 
-        self.latitudes = latitudes.sel(ncol=northern_hemisphere)
-        self.longitudes = grid_info["lon"].sel(ncol=northern_hemisphere)
-        self.num_latlon = northern_hemisphere.sum().item()
+        if spatial_selection_method is False:
+            return input_ds, target_ds
+        elif spatial_selection_method == "northern_hemisphere":
 
-        input_ds = input_ds.sel(ncol=northern_hemisphere)
-        target_ds = target_ds.sel(ncol=northern_hemisphere)
-        return input_ds, target_ds
+            northern_hemisphere = latitudes.values > 0
 
-    def _combine_datasets_also_old(
-        self,
-        sampled_input_filenames: list,
-        sampled_target_filenames: list,
-        v1_inputs: list,
-        v1_targets: list,
-    ) -> tuple:
-        """
-        Loads and combines the data from the selected filenames into a single xarray dataset. It sub selects the taget variables and removes samples where target variables may not be present.
+            self.latitudes = latitudes.sel(ncol=northern_hemisphere)
+            self.longitudes = grid_info["lon"].sel(ncol=northern_hemisphere)
+            self.num_latlon = northern_hemisphere.sum().item()
 
-        Returns:
-            Tuple of (combined input dataset, combined target dataset).
-        """
-        combined_input_ds = xr.open_mfdataset(
-            sampled_input_filenames,
-            combine="nested",
-            concat_dim="sample",
-            # coords="minimal",
-            # data_vars="minimal",
-            # compat="override",
-        )
-
-        combined_target_ds = xr.open_mfdataset(
-            sampled_target_filenames,
-            combine="nested",
-            concat_dim="sample",
-            # coords="minimal",
-            # data_vars="minimal",
-            # compat="override",
-        )
-
-        try:
-            combined_input_ds = combined_input_ds[list(v1_inputs)]
-            combined_target_ds["ptend_t"] = (
-                combined_target_ds["state_t"] - combined_input_ds["state_t"]
-            ) / 1200
-
-            combined_target_ds["ptend_q0001"] = (
-                combined_target_ds["state_q0001"] - combined_input_ds["state_q0001"]
-            ) / 1200
-
-            combined_target_ds = combined_target_ds[list(v1_targets)]
-
-        except KeyError as e:
-            raise RuntimeError(
-                f"A required variable is missing from the lazy-loaded dataset: {e}"
+            input_ds = input_ds.sel(ncol=northern_hemisphere)
+            target_ds = target_ds.sel(ncol=northern_hemisphere)
+            return input_ds, target_ds
+        else:
+            raise ValueError(
+                f"Unknown spatial selection method: {spatial_selection_method}"
             )
-
-        return combined_input_ds, combined_target_ds
-
-    def _combine_datasets_old(
-        self,
-        sampled_input_filenames: list,
-        sampled_target_filenames: list,
-        v1_inputs: list,
-        v1_targets: list,
-    ) -> tuple:
-        """
-        Loads and combines the data from the selected filenames into a single xarray dataset. It sub selects the taget variables and removes samples where target variables may not be present.
-
-        Returns:
-            Tuple of (combined input dataset, combined target dataset).
-        """
-        new_input_dataset_list = []
-        new_target_dataset_list = []
-        for input_file, target_file in zip(
-            sampled_input_filenames, sampled_target_filenames
-        ):
-            input_ds = xr.open_dataset(input_file)
-            target_ds = xr.open_dataset(target_file)
-            target_ds["ptend_t"] = (
-                target_ds["state_t"] - input_ds["state_t"]
-            ) / 1200  # Tendancy [K/s] (sample rate of 20mins)
-            target_ds["ptend_q0001"] = (
-                target_ds["state_q0001"] - input_ds["state_q0001"]
-            ) / 1200  # Q1 Tendancy [kg/kg/s] (sample rate of 20mins)
-            try:
-                new_input_dataset_list.append(input_ds[list(v1_inputs)])
-                new_target_dataset_list.append(target_ds[list(v1_targets)])
-            except:
-                # raise a warning
-                logging.warning(
-                    f"Skipping file pair: {input_file}, {target_file} due to missing variables."
-                )
-                continue
-        combined_input_ds = xr.concat(new_input_dataset_list, dim="sample")
-        combined_target_ds = xr.concat(new_target_dataset_list, dim="sample")
-        return combined_input_ds, combined_target_ds
 
     def _normalise_datasets(
         self,

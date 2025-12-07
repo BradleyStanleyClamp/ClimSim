@@ -9,7 +9,7 @@ defaults:
   - evaluate: evaluate_metrics
   - hydra: default
   - testing: qt
-  - override hydra/launcher: slurm_cpu #slurm_gpu
+  - override hydra/launcher: slurm_gpu
 
 multirun_dir_name: ${evaluation_options[0]}_${metric_name}  #eval_data_groups
 
