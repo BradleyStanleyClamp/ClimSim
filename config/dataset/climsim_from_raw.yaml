@@ -16,11 +16,11 @@ target_months: ['02'] # Only used if group_method is false
 v1_inputs: ['state_t','state_q0001','state_ps','pbuf_SOLIN','pbuf_LHFLX','pbuf_SHFLX']
 v1_targets: ['ptend_t','ptend_q0001','cam_out_NETSW','cam_out_FLWDS','cam_out_PRECSC','cam_out_PRECC','cam_out_SOLS','cam_out_SOLL','cam_out_SOLSD', "cam_out_SOLLD"]
 
-dataset_testing_sample_rates:
+dataset_testing_num_files:
   unit_test: 1
-  quick: 1000
+  quick: 10
   reduced: 100
-  full: 7
+  full: 2000
 
 # Grouping Settings for splitting into different subgroups to achieve distribution shifts to test generalisation capabilities
 group_method: group_by_months # Whether to select a year of data to train on, if not false should be the year [0, 6] to select
@@ -37,3 +37,11 @@ group_by_months:
   val_group: ['09', '10', '11'] # Currently val and test are the same, but could be changed later
 
 remove_high_altitude_specific_humidity_levels: 15
+
+# Old:
+
+# dataset_testing_sample_rates:
+#   unit_test: 1
+#   quick: 1000
+#   reduced: 100
+#   full: 7

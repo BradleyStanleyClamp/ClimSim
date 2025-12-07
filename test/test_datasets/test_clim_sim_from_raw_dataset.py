@@ -129,14 +129,14 @@ def test_climsim_from_raw_dataset_unit_test_get_dataset_filenames_working():
         target_years=dataset_config.target_years,
         target_months=dataset_config.target_months,
     )
-    assert len(input_filenames) == 2
-    assert len(target_filenames) == 2
+    assert len(input_filenames) == 3
+    assert len(target_filenames) == 3
     for input_file, target_file in zip(input_filenames, target_filenames):
         assert "E3SM-MMF.mli" in input_file
         assert "E3SM-MMF.mlo" in target_file
 
 
-def test_climsim_from_raw_dataset_unit_test_sample_filenames_failing():
+def test_climsim_from_raw_dataset_unit_test_get_dataset_filenames_failing():
     base_dir = Path(__file__).resolve().parents[1]
     data_path = os.path.join(
         base_dir, "unit_test_sets", "dummy_low_res_climsim/", "filename_testing"
@@ -169,6 +169,8 @@ def test_climsim_from_raw_dataset_unit_test_sample_filenames_failing():
 
 
 def test_climsim_from_raw_dataset_unit_test_sample_filenames():
+    # For reproducibility
+
     dataset = data_preparation.ClimSimFromRawDataset(
         mode="train",
         dataset_testing_type="qt",
@@ -181,21 +183,65 @@ def test_climsim_from_raw_dataset_unit_test_sample_filenames():
     sampled_input_filenames, sampled_target_filenames = dataset._sample_filenames(
         input_filelist=input_filenames,
         target_filelist=target_filenames,
-        sample_rate=3,
+        mode="train",
+        num_files=3,
     )
-    assert len(sampled_input_filenames) == 4
-    assert len(sampled_target_filenames) == 4
+    assert len(sampled_input_filenames) == 3
+    assert len(sampled_target_filenames) == 3
+
     assert sampled_input_filenames == [
-        "E3SM-MMF.mli.0.nc",
-        "E3SM-MMF.mli.3.nc",
-        "E3SM-MMF.mli.6.nc",
-        "E3SM-MMF.mli.9.nc",
+        "E3SM-MMF.mli.2.nc",
+        "E3SM-MMF.mli.8.nc",
+        "E3SM-MMF.mli.4.nc",
     ]
     assert sampled_target_filenames == [
-        "E3SM-MMF.mlo.0.nc",
-        "E3SM-MMF.mlo.3.nc",
-        "E3SM-MMF.mlo.6.nc",
+        "E3SM-MMF.mlo.2.nc",
+        "E3SM-MMF.mlo.8.nc",
+        "E3SM-MMF.mlo.4.nc",
+    ]
+    sampled_input_filenames, sampled_target_filenames = dataset._sample_filenames(
+        input_filelist=input_filenames,
+        target_filelist=target_filenames,
+        mode="val",
+        num_files=3,
+    )
+    assert len(sampled_input_filenames) == 3
+    assert len(sampled_target_filenames) == 3
+
+    print(sampled_input_filenames)
+    print(sampled_target_filenames)
+
+    assert sampled_input_filenames == [
+        "E3SM-MMF.mli.9.nc",
+        "E3SM-MMF.mli.1.nc",
+        "E3SM-MMF.mli.6.nc",
+    ]
+    assert sampled_target_filenames == [
         "E3SM-MMF.mlo.9.nc",
+        "E3SM-MMF.mlo.1.nc",
+        "E3SM-MMF.mlo.6.nc",
+    ]
+    sampled_input_filenames, sampled_target_filenames = dataset._sample_filenames(
+        input_filelist=input_filenames,
+        target_filelist=target_filenames,
+        mode="test",
+        num_files=3,
+    )
+    assert len(sampled_input_filenames) == 3
+    assert len(sampled_target_filenames) == 3
+
+    print(sampled_input_filenames)
+    print(sampled_target_filenames)
+
+    assert sampled_input_filenames == [
+        "E3SM-MMF.mli.7.nc",
+        "E3SM-MMF.mli.3.nc",
+        "E3SM-MMF.mli.0.nc",
+    ]
+    assert sampled_target_filenames == [
+        "E3SM-MMF.mlo.7.nc",
+        "E3SM-MMF.mlo.3.nc",
+        "E3SM-MMF.mlo.0.nc",
     ]
 
 
@@ -235,8 +281,8 @@ def test_climsim_from_raw_dataset_unit_test_combine_datasets():
     assert "state_q0001" in input_ds
     assert "ptend_t" in target_ds
     assert "ptend_q0001" in target_ds
-    assert input_ds.sizes["sample"] == 2
-    assert target_ds.sizes["sample"] == 2
+    assert input_ds.sizes["sample"] == 3
+    assert target_ds.sizes["sample"] == 3
 
 
 def test_climsim_from_raw_dataset_unit_test_normalise_dataset():
@@ -385,7 +431,7 @@ def test_climsim_from_raw_dataset_init_sample_data():
             "base_folder_path": data_path,
             "target_years": ["0001"],
             "target_months": ["02"],
-            "dataset_testing_sample_rates": {"full": 1},
+            "dataset_testing_num_files": {"full": 1},
             "v1_inputs": v1_inputs,
             "v1_targets": v1_targets,
             "output_scale_file_path": output_scale_file_path,
@@ -426,7 +472,7 @@ def test_climsim_from_raw_dataset_init_sample_data_train_and_test():
             "base_folder_path": data_path,
             "target_years": ["0001"],
             "target_months": ["02"],
-            "dataset_testing_sample_rates": {"full": 1},
+            "dataset_testing_num_files": {"full": 1},
             "v1_inputs": v1_inputs,
             "v1_targets": v1_targets,
             "output_scale_file_path": output_scale_file_path,
@@ -484,7 +530,7 @@ def test_climsim_from_raw_dataset_init_sample_data_remove_high_altitude_specific
             "base_folder_path": data_path,
             "target_years": ["0001"],
             "target_months": ["02"],
-            "dataset_testing_sample_rates": {"full": 1},
+            "dataset_testing_num_files": {"full": 1},
             "v1_inputs": v1_inputs,
             "v1_targets": v1_targets,
             "output_scale_file_path": output_scale_file_path,

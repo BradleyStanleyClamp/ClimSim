@@ -64,9 +64,8 @@ class ClimSimFromRawDataset(Dataset):
             self._sample_filenames(
                 self.input_filenames,
                 self.target_filenames,
-                sample_rate=dataset_cfg.dataset_testing_sample_rates[
-                    dataset_testing_type
-                ],
+                num_files=dataset_cfg.dataset_testing_num_files[dataset_testing_type],
+                mode=mode,
             )
         )
         logging.info(
@@ -213,30 +212,63 @@ class ClimSimFromRawDataset(Dataset):
         self,
         input_filelist: list,
         target_filelist: list,
-        sample_rate: int,
-        start_index: int = 0,
-        end_index: int = -1,
+        num_files: int,
+        mode: str,
+        seed: int = 0,
+        # Old:
+        # sample_rate: int = 1,
+        # start_index: int = 0,
+        # end_index: int = -1,
     ) -> tuple:
         """
-        Downsamples from the full list of filenames based on the a specified scale factor (stride).
+        Shuffles full list and samples filenames based on mode and quantity size. The format will be consistent as:
+        train: shuffled_data[0:num_train_files]
+        val: shuffled_data[num_train_files:2*num_val_files]
+        test: shuffled_data[2*num_val_files:3*num_test_files]
+
+        Old version: Downsamples from the full list of filenames based on the a specified scale factor (stride).
 
         args:
             input_filelist: List of input filenames.
             target_filelist: List of target filenames.
-            sample_rate: Integer scale factor for downsampling (e.g., 2 means every 2nd file is kept).
-            start_index: Starting index for sampling.
-            end_index: Ending index for sampling.
+            num_files: Number of files to sample.
+            mode: Mode of the dataset ('train', 'val', 'test').
+
+
+            Old:
+            # sample_rate: Integer scale factor for downsampling (e.g., 2 means every 2nd file is kept).
+            # start_index: Starting index for sampling.
+            # end_index: Ending index for sampling.
 
         Returns:
             Tuple of (sorted) sampled filenames for the dataset.
         """
-        end_index = end_index if end_index != -1 else len(input_filelist)
-        sampled_input_filelist = sorted(input_filelist)[
-            start_index:end_index:sample_rate
-        ]
-        sampled_target_filelist = sorted(target_filelist)[
-            start_index:end_index:sample_rate
-        ]
+        np.random.seed(seed)
+        N = len(input_filelist)
+
+        if N < num_files * 3:
+            raise ValueError(
+                f"Not enough files ({N}) to sample {num_files} files for each of train, val, and test."
+            )
+
+
+        perm = np.random.permutation(N)
+        if mode == "train":
+            indices = perm[0:num_files]
+        elif mode == "val":
+            indices = perm[num_files : 2 * num_files]
+        elif mode == "test":
+            indices = perm[2 * num_files : 3 * num_files]
+        else:
+            raise ValueError(f"Unknown mode: {mode}")
+
+        # index as numpy arrays (fast)
+        inp_arr = np.array(input_filelist)
+        tgt_arr = np.array(target_filelist)
+
+        sampled_input_filelist = inp_arr[indices].tolist()
+        sampled_target_filelist = tgt_arr[indices].tolist()
+
         assert check_matching_files(sampled_input_filelist, sampled_target_filelist)
         return sampled_input_filelist, sampled_target_filelist
 
