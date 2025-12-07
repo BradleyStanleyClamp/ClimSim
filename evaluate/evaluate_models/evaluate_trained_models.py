@@ -22,9 +22,9 @@ import evaluate
 import plotting
 
 
-def get_first_trained_model(path: str) -> Tuple:
+def get_trained_models(path: str) -> Tuple:
     """
-    Temp function for getting the first model within the folder and returning its checkpoint path and config parameters
+    Collects all trained model checkpoints and their configurations from the specified directory.
     Args:
         path (str): The directory path containing the trained models.
     Returns:
@@ -46,7 +46,6 @@ def get_first_trained_model(path: str) -> Tuple:
                 if re.match(r"run_config_\d+\.yaml$", f)
             ]
             config_files.sort()  # Picks "run_config_0.yaml" first
-            first_config = config_files[0] if config_files else None
 
             # --- Find checkpoint files ---
             ckpt_files = [
@@ -55,32 +54,10 @@ def get_first_trained_model(path: str) -> Tuple:
                 if re.match(r"(squeezeformer|climsim|yus)_.*\.ckpt$", f)
             ]
             ckpt_files.sort()
-            first_ckpt = ckpt_files[0] if ckpt_files else None
 
-            logging.info("  First config: %s", first_config)
-            logging.info("  First ckpt:   %s", first_ckpt)
+            # config = OmegaConf.load(os.path.join(full_path, first_config))
 
-            config = OmegaConf.load(os.path.join(full_path, first_config))
-
-            return os.path.join(full_path, first_ckpt), (config)
-
-
-def _to_json_serializable(x):
-    # numpy arrays -> lists, numpy scalars -> native python, torch tensors already turned to numpy earlier
-    if isinstance(x, np.ndarray):
-        return x.tolist()
-    if isinstance(x, (np.generic,)):
-        return x.item()
-    if isinstance(x, dict):
-        return {k: _to_json_serializable(v) for k, v in x.items()}
-    if isinstance(x, list):
-        return [_to_json_serializable(v) for v in x]
-    if isinstance(x, tuple):
-        return tuple(_to_json_serializable(v) for v in x)
-    if isinstance(x, numbers.Number):
-        # covers python float/int and numpy scalars
-        return x
-    return x  # fallback (strings, bools, None)
+            return ckpt_files, config_files, full_path
 
 
 @hydra.main(
@@ -136,11 +113,20 @@ def main(cfg: DictConfig):
 
     for model_name, model_path in cfg.models.items():
         logging.info(f"Evaluating model: {model_name} from path: {model_path}")
-        checkpoint_path, model_config = get_first_trained_model(model_path)
-        model = models.load_model_from_checkpoint(
-            checkpoint_path, model_name, model_config, cfg.dataset
-        )
-        loaded_models[model_name] = {"model": model}
+        ckpt_files, config_files, full_path = get_trained_models(model_path)
+        for seed, (ckpt_file, config_file) in enumerate(zip(ckpt_files, config_files)):
+            logging.info(
+                f"  Loading model checkpoint: {ckpt_file} with config: {config_file}"
+            )
+            checkpoint_path = os.path.join(full_path, ckpt_file)
+            config_path = os.path.join(full_path, config_file)
+
+            model_config = OmegaConf.load(config_path)
+
+            model = models.load_model_from_checkpoint(
+                checkpoint_path, model_name, model_config, cfg.dataset
+            )
+            loaded_models[(model_name, seed)] = {"model": model}
 
     logging.info("All models loaded successfully.")
 
@@ -200,14 +186,45 @@ def main(cfg: DictConfig):
                 results[metric_name][var] = metric_result
                 logging.info(f"{metric_name} for {var}: {metric_result.mean():.2f}")
 
-        results_dict[name] = results
+        if name[0] not in results_dict:
+            results_dict[name[0]] = {}
+
+        results_dict[name[0]][name[1]] = results
+
+    plotting_values = {}
+    for model_name, seeds_dict in results_dict.items():
+        n = len(seeds_dict)
+
+        for metric_name in metrics_calculator.metrics_dict.keys():
+            for var in weighted_targets.data_vars:
+
+                values = [seeds_dict[seed][metric_name][var] for seed in seeds_dict]
+
+                # sample SD → SE
+                standard_error = np.std(values, ddof=1) / np.sqrt(n)
+                mean = np.mean(values)
+
+                # logging.info(
+                #     f"Model: {model_name}, Metric: {metric_name}, Variable: {var}, "
+                #     f"Standard Error across seeds: {standard_error:.4f}"
+                # )
+                if model_name not in plotting_values:
+                    plotting_values[model_name] = {}
+                if metric_name not in plotting_values[model_name]:
+                    plotting_values[model_name][metric_name] = {}
+                if var not in plotting_values[model_name][metric_name]:
+                    plotting_values[model_name][metric_name][var] = {}
+                plotting_values[model_name][metric_name][var][
+                    "standard_error"
+                ] = standard_error
+                plotting_values[model_name][metric_name][var]["mean"] = mean
 
     with open(f"results.json", "w") as f:
-        json.dump((results_dict), f)
-
+        json.dump((results_dict), f, indent=4)
 
     plotting.init_plotting_settings()
-    plotting.plot_trained_model_evaluations(results_dict)
+    plotting.plot_trained_model_evaluations(plotting_values)
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

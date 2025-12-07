@@ -5,7 +5,7 @@ import xarray as xr
 
 
 def test_output_weighting_reshape_outputs():
-    output_weighting = evaluate.OutputWeighting(cfg=None)
+    output_weighting = evaluate.OutputWeighting(cfg=None, unit_test=True)
 
     x = torch.randn(1920, 119)  # Example input tensor
     reshaped_ds = output_weighting._reshape_outputs(x)
@@ -32,7 +32,7 @@ def test_output_weighting_reshape_outputs():
 
 def test_output_weighting_undo_output_scaling(tmp_path):
 
-    output_weighting = evaluate.OutputWeighting(cfg=None)
+    output_weighting = evaluate.OutputWeighting(cfg=None, unit_test=True)
 
     # Create a mock scaling dataset
     scale_data = {
@@ -73,6 +73,6 @@ def test_output_weighting_undo_output_scaling(tmp_path):
     assert unscaled_ds["netsw"].values[0, 0] == 30.0 / 3.0
     assert unscaled_ds["flwds"].values[0, 0] == 40.0 / 4.0
 
-def test_vertical_weighting():
-    # TODO
-    pass
+# def test_vertical_weighting():
+#     # TODO
+#     pass

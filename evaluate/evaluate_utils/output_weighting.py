@@ -13,7 +13,7 @@ import numpy as np
 
 class OutputWeighting:
     def __init__(
-        self, cfg: DictConfig, num_latlon: int = 192, top_levels_to_remove: int = 15
+        self, cfg: DictConfig, num_latlon: int = 192, top_levels_to_remove: int = 15, unit_test: bool = False
     ):
         """
         Initialize the OutputWeighting class.
@@ -22,12 +22,13 @@ class OutputWeighting:
         self.num_latlon = num_latlon
         self.top_levels_to_remove = top_levels_to_remove
 
-        self.grid_info = xr.open_dataset(self.cfg.dataset.path_to_grid_info)
-
         self.max_t_level_index = 45
         self.min_sh_level_index = 45
         self.max_sh_level_index = 90
 
+        if unit_test:
+            return
+        self.grid_info = xr.open_dataset(self.cfg.dataset.path_to_grid_info)
     def weight(
         self, data: torch.Tensor, testset: torch.utils.data.Dataset
     ) -> xr.Dataset:
@@ -39,6 +40,8 @@ class OutputWeighting:
             testset: The test dataset containing normalization stats and input data.
 
         Uses:
+            self._reshape_outputs
+            self.undo_output_scaling
             self._vertical_weighting
             self._weight_by_area
             self._unit_conversion

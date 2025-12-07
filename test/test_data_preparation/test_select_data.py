@@ -276,6 +276,7 @@ def test_get_climsim_from_raw():
             "dataset_testing_sample_rates": {"reduced": 1},
             "group_method": False,
             "path_to_grid_info": "/home/users/bradlesc/projects/ClimSim/grid_info/ClimSim_low-res_grid-info.nc",
+            "general_dataset_config": {"num_workers": 1},
         }
     )
     mode = "train"
@@ -335,6 +336,8 @@ def test_get_climsim_from_raw_with_test():
             "dataset_testing_sample_rates": {"reduced": 1},
             "group_method": False,
             "path_to_grid_info": "/home/users/bradlesc/projects/ClimSim/grid_info/ClimSim_low-res_grid-info.nc",
+            "general_dataset_config": {"num_workers": 1},
+
 
         }
     )
@@ -404,6 +407,8 @@ def test_get_datasets_from_raw():
             "dataset_testing_sample_rates": {"reduced": 1},
             "group_method": False,
             "path_to_grid_info": "/home/users/bradlesc/projects/ClimSim/grid_info/ClimSim_low-res_grid-info.nc",
+            "general_dataset_config": {"num_workers": 1},
+
 
         }
     )
