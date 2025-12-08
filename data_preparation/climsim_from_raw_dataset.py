@@ -33,13 +33,6 @@ class ClimSimFromRawDataset(Dataset):
         self.model = model
         self.normalisation_stats = normalisation_stats
 
-        if hasattr(dataset_cfg, "remove_high_altitude_specific_humidity_levels"):
-            self.remove_high_altitude_specific_humidity_levels = (
-                dataset_cfg.remove_high_altitude_specific_humidity_levels
-            )
-        else:
-            self.remove_high_altitude_specific_humidity_levels = False
-
         if unit_test_specific_methods:
             # For unit testing, we can skip the full initialization as we want to test specific methods only
             return
@@ -96,11 +89,18 @@ class ClimSimFromRawDataset(Dataset):
 
         logging.info(f"Combined dataset samples: {input_ds.sizes['sample']}")
 
+        if mode == "test" or mode == "val":
+            spatial_selection_method = "northern_hemisphere"
+            logging.info(
+                f"Applying spatial selection method: {spatial_selection_method} as mode is {mode}"
+            )
+        else:
+            spatial_selection_method = dataset_cfg.spatial_selection_method
         input_ds, target_ds = self._spatial_selection(
             input_ds,
             target_ds,
             dataset_cfg.path_to_grid_info,
-            spatial_selection_method=dataset_cfg.spatial_selection_method,
+            spatial_selection_method=spatial_selection_method,
         )
         logging.info(f'spatially selected dataset columns: {input_ds.sizes["ncol"]}')
 
@@ -109,7 +109,7 @@ class ClimSimFromRawDataset(Dataset):
             target_ds,
             levels=dataset_cfg.levels,
         )
-        logging.info(f"Selected {dataset_cfg.levels} levels from dataset.")
+        logging.info(f"Selected {input_ds.sizes['lev']} levels from dataset.")
 
         start_time = time.time()
         (
@@ -150,7 +150,7 @@ class ClimSimFromRawDataset(Dataset):
             dataset_cfg, "group_method"
         ), "Dataset config must have 'group_method'"
 
-        if dataset_cfg.group_method is False:
+        if dataset_cfg.group_method is None or dataset_cfg.group_method == "None":
             target_years = dataset_cfg.target_years
             target_months = dataset_cfg.target_months
             return target_years, target_months
@@ -162,11 +162,11 @@ class ClimSimFromRawDataset(Dataset):
         group_method_cfg = dataset_cfg[dataset_cfg.group_method]
         target_years = dataset_cfg.target_years
         if mode == "train":
-            target_months = group_method_cfg.groups[int(group_method_cfg.target_group)]
+            target_months = group_method_cfg.groups[group_method_cfg.target_group]
         elif mode == "val":
-            target_months = group_method_cfg.val_group
+            target_months = list(group_method_cfg.val_group.values())[0]
         elif mode == "test":
-            target_months = group_method_cfg.test_group
+            target_months = list(group_method_cfg.test_group.values())[0]
 
         return target_years, target_months
 
@@ -343,7 +343,6 @@ class ClimSimFromRawDataset(Dataset):
         V1 was hardcoded to select the northern hemisphere
         v2 is
         """
-        logging.info("Selecting northern hemisphere columns only.")
         grid_info = xr.open_dataset(path_to_grid_info)
         latitudes = grid_info["lat"]
 
@@ -410,12 +409,15 @@ class ClimSimFromRawDataset(Dataset):
     ) -> tuple:
         """
         Selects the specified number of vertical levels from the datasets.
+        Note: Assumes the levels are ordered from top of atmosphere index at 0 to surface at max index. And the max levels is 60.
 
         Returns:
             Tuple of (input dataset with selected levels, target dataset with selected levels).
         """
-        input_ds = input_ds.isel(lev=slice(0, levels))
-        target_ds = target_ds.isel(lev=slice(0, levels))
+        max_levels = 60
+        start = max_levels - levels
+        input_ds = input_ds.isel(lev=slice(start, max_levels))
+        target_ds = target_ds.isel(lev=slice(start, max_levels))
         return input_ds, target_ds
 
     def _prepare_data(
@@ -503,6 +505,18 @@ class ClimSimFromRawDataset(Dataset):
                 da_view = da.transpose("lev", "obs")
                 L = da_view.sizes["lev"]
 
+                # # ---
+                # S = (
+                #     15
+                #     if ((varname == "state_q0001" or varname == "ptend_q0001"))
+                #     else 0
+                # )
+                # da_view = da_view.isel(lev=slice(S, L))
+                # # name the features for each level
+                # var_feature_names = [f"{varname}_lev{i}" for i in range(S, L)]
+
+                # # ---
+
                 # name the features for each level
                 var_feature_names = [f"{varname}_lev{i}" for i in range(0, L)]
             else:
@@ -528,6 +542,10 @@ class ClimSimFromRawDataset(Dataset):
         combined = combined.astype("float32")
 
         tensor = torch.from_numpy(combined.to_numpy())
+
+        # check for nans or infs
+        if torch.isnan(tensor).any() or torch.isinf(tensor).any():
+            raise ValueError("NaN or Inf values found in the tensor.")
 
         return tensor
 

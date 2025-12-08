@@ -11,7 +11,7 @@ defaults:
   - testing: qt
   - override hydra/launcher: slurm_gpu
 
-multirun_dir_name: ${evaluation_options[0]}_${metric_name}  #eval_data_groups
+multirun_dir_name: levels_${dataset.levels} #${evaluation_options[0]}_${metric_name}  #eval_data_groups
 
 evaluation_options: 
   - multivariate
@@ -23,7 +23,7 @@ metric_name: energy_distance #kl_divergence #
 permutation_test: False # whether to perform permutation test for statistical significance, if False, just computes metric once, if value > 1, permutation test is performed
 
 
-target_group: 0 # which data group to use as target when computing multivariate metrics, ignored for marginals
+target_group: None # which data group to use as target when computing multivariate metrics, ignored for marginals
 
 vis_marginals: # marginal distributions for visualisation
   sample_size: 1000000

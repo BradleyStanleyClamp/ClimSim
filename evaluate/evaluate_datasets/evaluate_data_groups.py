@@ -48,19 +48,19 @@ def main(cfg: DictConfig):
         raise ValueError(
             "cfg.dataset.group_method must be set to a valid grouping method, cannot be False for evaluating data groups."
         )
-    num_data_groups = cfg.dataset[group_method].num_groups
+    groups = cfg.dataset[group_method].groups.keys()
+    test_group = list(cfg.dataset[group_method].test_group.keys())[0]
 
     # Load trainset and testset
     # trainset = data_preparation.get_dataset(cfg.dataset, "train", cfg.testing.dataset_testing_type)
 
     # Iterate through each data group
     full_results = {option_name: {} for option_name in cfg.evaluation_options}
-    for group_idx in range(num_data_groups):
-        logging.info(f"Evaluating data group {group_idx + 1} / {num_data_groups}")
+    for group_idx in groups:
+        logging.info(f"Evaluating data group {group_idx} compared to {test_group}.")
 
         # Get data groups
         cfg.dataset[group_method].target_group = group_idx
-        
 
         start_time = time.perf_counter()
         trainset = data_preparation.get_dataset(
@@ -133,6 +133,7 @@ def main(cfg: DictConfig):
     if "marginals" in cfg.evaluation_options:
         plotting.plot_standard_feature_marginals(
             full_results["marginals"],
+            levels=cfg.dataset.levels,
             save_path="marginal_distribution_distances.png",
         )
 

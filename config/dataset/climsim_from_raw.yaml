@@ -3,15 +3,16 @@ dataset_name: 'climsim_from_raw'
 # input_dim: 94 #124
 # output_dim: 98 #128
 levels: 45
-spatial_selection_method: False
+spatial_selection_method: northern_hemisphere # Options: 'northern_hemisphere'
 
-base_folder_path: '/gws/nopw/j04/iecdt/bstanleyclamp/ClimSim_lowres/train/'
+base_folder_path: '/work/scratch-pw5/bradlesc/climsim/lowres/'
+# base_folder_path: '/gws/nopw/j04/iecdt/bstanleyclamp/ClimSim_lowres/train/'
 path_to_grid_info: '/home/users/bradlesc/projects/ClimSim/grid_info/ClimSim_low-res_grid-info.nc'
 
 # base_folder_path: '/gws/nopw/j04/iecdt/bstanleyclamp/subsampled_low_res_reduced_for_testing/ClimSim_low-res/train/'
 
 output_scale_file_path: '/home/users/bradlesc/projects/ClimSim/preprocessing/normalizations/outputs/output_scale.nc'
-target_years: ['0001','0002','0003'] #,'0004','0005','0006','0007','0008','0009']
+target_years: ['0001','0002','0003' ,'0004'] #,'0005','0006','0007','0008','0009']
 target_months: ['02'] # Only used if group_method is false
 
 v1_inputs: ['state_t','state_q0001','state_ps','pbuf_SOLIN','pbuf_LHFLX','pbuf_SHFLX']
@@ -28,14 +29,17 @@ group_method: group_by_months # Whether to select a year of data to train on, if
 
 
 group_by_months:
-  num_groups: 3 
+  num_groups: 3 #4 # Including self 
   target_group: ${target_group}
   groups: 
-    - ['12', '01', '02']
-    - ['03', '04', '05']
-    - ['06', '07', '08']
-  test_group: ['09', '10', '11']
-  val_group: ['09', '10', '11'] # Currently val and test are the same, but could be changed later
+    DJF: ['12', '01', '02']
+    MAM: ['03', '04', '05']
+    JJA: ['06', '07', '08']
+    SON: ['09', '10', '11']
+  test_group: 
+    SON: ['09', '10', '11']
+  val_group: 
+    SON: ['09', '10', '11'] 
 
 
 # OLD SETTINGS - FOR REFERENCE ONLY:

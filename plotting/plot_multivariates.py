@@ -23,11 +23,11 @@ def plot_multivariate_results(distance_dict: dict, metric_name: str, save_path: 
 
     # Accept dicts keyed by ints or strings; order by integer key when possible
     keys = list(distance_dict.keys())
-    try:
-        keys_sorted = sorted(keys, key=lambda k: int(k))
-    except Exception:
-        keys_sorted = sorted(keys)
-
+    # try:
+    #     keys_sorted = sorted(keys, key=lambda k: int(k))
+    # except Exception:
+    #     keys_sorted = sorted(keys)
+    keys_sorted = keys
     x = list(range(len(keys_sorted)))
 
     first_val = distance_dict[keys_sorted[0]]
@@ -53,7 +53,9 @@ def plot_multivariate_results(distance_dict: dict, metric_name: str, save_path: 
             xi, yi, marker="o", color=c, ecolor=c, elinewidth=1.2, capsize=3, zorder=1
         )
 
-    ax.set_xlabel("Training year")
+    ax.set_xlabel("Training group")
+    ax.set_xticks(x)
+    ax.set_xticklabels(keys_sorted)
     ax.set_ylabel(f"{metric_name.replace('_', ' ').title()}")
     ax.set_title(
         f"{metric_name.replace('_', ' ').title()} between train distribution \n and test distribution"
