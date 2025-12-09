@@ -31,8 +31,9 @@ class ClimSimNpyDataset(Dataset):
         self,
         dataset_cfg,
         dataset_testing_type: str,
-        group_idx,
+        mode: str = None,
         normalisation_stats=None,
+        seed=None,
     ):
         """
         Initializes the ClimSimNpyDataset.
@@ -43,14 +44,30 @@ class ClimSimNpyDataset(Dataset):
             group_idx (str): Identifier for the data group to load.
             normalisation_stats (dict, optional): Precomputed normalization statistics. If None, statistics will be computed from the data.
         """
-        logging.info(f"Building dataset for group: {group_idx}")
+        if mode == "val":
+            group_idx = list(dataset_cfg[dataset_cfg.group_method].val_group.keys())[0]
+        elif mode == "test":
+            group_idx = list(dataset_cfg[dataset_cfg.group_method].test_group.keys())[0]
+        else:
+            group_idx = dataset_cfg[dataset_cfg.group_method].target_group
+            
+        self.group_idx = group_idx
+        logging.info(f"Building dataset for group: {self.group_idx}")
+
         self.data_dir = dataset_cfg.data_dir
         self.input_file = dataset_cfg.input_file
         self.target_file = dataset_cfg.target_file
         sample_rate = f"sample_rate_{dataset_cfg.dataset_testing_sample_rates[dataset_testing_type]}"
         logging.info(f"Using sample rate directory: {sample_rate}")
+
         self.normalize = dataset_cfg.normalize
-        self.group_idx = group_idx
+        self.mode = mode
+        if self.mode not in ["train", "val", "test"]:
+            if mode == None:
+                logging.info("Mode is None: Using full data")
+            raise ValueError(
+                f"Invalid mode: {self.mode}. Expected one of ['train', 'val', 'test', None]."
+            )
 
         # Load input and target data from npy files
         self.input = np.load(
@@ -59,6 +76,24 @@ class ClimSimNpyDataset(Dataset):
         self.target = np.load(
             os.path.join(self.data_dir, self.group_idx, sample_rate, self.target_file)
         )
+
+        # Split data based on mode
+        np.random.seed(seed)
+        N, _ = self.input.shape
+        perm = np.random.permutation(N)
+        n_train = int(N * dataset_cfg.split.train)
+        n_val = int(N * dataset_cfg.split.val)
+        if self.mode == "train":
+            indices = perm[:n_train]
+        elif self.mode == "val":
+            indices = perm[n_train : n_train + n_val]
+        elif self.mode == "test":
+            indices = perm[n_train + n_val :]
+
+        if self.mode != None:
+            logging.info(f"Using: {self.mode} with {len(indices)} samples")
+            self.input = self.input[indices]
+            self.target = self.target[indices]
 
         # Apply feature wise normalization if specified
         if self.normalize:

@@ -17,6 +17,11 @@ output_scale_file_path: '/home/users/bradlesc/projects/ClimSim/preprocessing/nor
 
 v1_targets: ['ptend_t','ptend_q0001','cam_out_NETSW','cam_out_FLWDS','cam_out_PRECSC','cam_out_PRECC','cam_out_SOLS','cam_out_SOLL','cam_out_SOLSD', "cam_out_SOLLD"]
 
+split:
+  train: 0.8
+  val: 0.10
+  test: 0.10
+
 
 dataset_testing_sample_rates:
   quick: 10000
@@ -34,8 +39,6 @@ group_by_months:
     JJA: []
     SON: []
   test_group: 
-    # SON: []
-    DJF: []
+    SON: []
   val_group: 
-    # SON: []
-    DJF: []
+    SON: []
