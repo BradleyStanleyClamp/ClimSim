@@ -14,7 +14,7 @@ defaults:
 # Naming 
 multirun_dir_name: ${model.name}_group_${dataset.group_by_months.target_group}
 
-target_group: False
+target_group: None
 
 # Training parameters
 max_epochs: 10

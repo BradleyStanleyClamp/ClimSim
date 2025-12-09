@@ -63,9 +63,9 @@ def test_climsim_from_raw_dataset_unit_test_select_target_years_months():
             "group_method": "group_by_months",  # Whether to select a year of data to train on, if not false should be the year [0, 6] to select
             "group_by_months": {
                 "num_groups": 3,  # (02, 03, 04)
-                "target_group": 1,
-                "groups": [["02"], ["03"], ["04"]],
-                "test_group": ["05"],
+                "target_group": "03",
+                "groups": {'02': ["02"], "03": ["03"], "04": ["04"]},
+                "test_group": {"05": ["05"]},
             },
         }
     )
@@ -496,9 +496,9 @@ def test_climsim_from_raw_dataset_init_sample_data():
             "v1_inputs": v1_inputs,
             "v1_targets": v1_targets,
             "output_scale_file_path": output_scale_file_path,
-            "group_method": False,
-            "path_to_grid_info": "/home/users/bradlesc/projects/ClimSim/grid_info/ClimSim_low-res_grid-info.nc",
+            "group_method": None,
             "spatial_selection_method": False,
+            "path_to_grid_info": "/home/users/bradlesc/projects/ClimSim/grid_info/ClimSim_low-res_grid-info.nc",
         }
     )
 
@@ -539,7 +539,7 @@ def test_climsim_from_raw_dataset_init_sample_data_train_and_test():
             "v1_inputs": v1_inputs,
             "v1_targets": v1_targets,
             "output_scale_file_path": output_scale_file_path,
-            "group_method": False,
+            "group_method": None,
             "path_to_grid_info": "/home/users/bradlesc/projects/ClimSim/grid_info/ClimSim_low-res_grid-info.nc",
             "spatial_selection_method": False,
         }
@@ -599,7 +599,7 @@ def test_climsim_from_raw_dataset_init_sample_data_remove_high_altitude_specific
             "v1_inputs": v1_inputs,
             "v1_targets": v1_targets,
             "output_scale_file_path": output_scale_file_path,
-            "group_method": False,
+            "group_method": None,
             "remove_high_altitude_specific_humidity_levels": 2,
             "path_to_grid_info": "/home/users/bradlesc/projects/ClimSim/grid_info/ClimSim_low-res_grid-info.nc",
             "spatial_selection_method": False,

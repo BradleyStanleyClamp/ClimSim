@@ -44,7 +44,7 @@ def test_squeezeformer_forward_pass():
     input_tensor = torch.randn(batch_size, levels, in_dim)
     output_tensor = model(input_tensor)
 
-    assert output_tensor.shape == (batch_size, 113)
+    assert output_tensor.shape == (batch_size, 128)
 
 
 def test_Conv1DBlock():
@@ -151,7 +151,7 @@ def test_squeezeformer_proper_setup():
 
     output = model(data)
 
-    assert output.shape == (model_params.batch_size, 113)
+    assert output.shape == (model_params.batch_size, 128)
 
 
 v1_inputs = [
@@ -187,12 +187,13 @@ def test_squeezeformer_on_climsim_from_raw():
             "base_folder_path": data_path,
             "target_years": ["0001"],
             "target_months": ["02"],
-            "dataset_testing_sample_rates": {"full": 1},
+            "dataset_testing_num_files": {"full": 1},
+            "levels": 60,
+            "spatial_selection_method": False,
             "v1_inputs": v1_inputs,
             "v1_targets": v1_targets,
             "output_scale_file_path": output_scale_file_path,
-            "group_method": False,
-            "remove_high_altitude_specific_humidity_levels": 15,
+            "group_method": "None",
             "path_to_grid_info": "/home/users/bradlesc/projects/ClimSim/grid_info/ClimSim_low-res_grid-info.nc",
         }
     )
@@ -243,7 +244,7 @@ def test_squeezeformer_on_climsim_from_raw():
     sample_input, sample_output = next(iter(data_loader))
     print(f"Sample input shape: {sample_input.shape}")
     output = model(sample_input)
-    assert output.shape == (model_params.batch_size, 113)
+    assert output.shape == (model_params.batch_size, 128)
 
 
 def test_squeezeformer_on_climsim_from_raw_standard_format():
@@ -257,12 +258,13 @@ def test_squeezeformer_on_climsim_from_raw_standard_format():
             "base_folder_path": data_path,
             "target_years": ["0001"],
             "target_months": ["02"],
-            "dataset_testing_sample_rates": {"full": 1},
+            "levels": 60,
+            "spatial_selection_method": False,
+            "dataset_testing_num_files": {"full": 1},
             "v1_inputs": v1_inputs,
             "v1_targets": v1_targets,
             "output_scale_file_path": output_scale_file_path,
-            "group_method": False,
-            "remove_high_altitude_specific_humidity_levels": 15,
+            "group_method": "None",
             "path_to_grid_info": "/home/users/bradlesc/projects/ClimSim/grid_info/ClimSim_low-res_grid-info.nc",
         }
     )

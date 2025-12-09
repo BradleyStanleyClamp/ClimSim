@@ -22,10 +22,9 @@ def test_standard_training_from_cfg():
                 "sweep=True",
                 "testing=qt",
                 
-                "dataset.dataset_testing_sample_rates.quick=1",
+                "dataset.dataset_testing_num_files.quick=1",
                 "dataset.base_folder_path=/home/users/bradlesc/projects/ClimSim/test/unit_test_sets/dummy_low_res_climsim/filename_testing",
-                "dataset.group_method=False",
-                "dataset.remove_high_altitude_specific_humidity_levels=15",
+                "dataset.group_method='None'",
             ],
         )
 
@@ -58,11 +57,10 @@ def test_unet_standard_training_from_cfg():
                 "sweep=True",
                 "testing=qt",
                 "model=climsim_unet",
-                "dataset.dataset_testing_sample_rates.quick=1",
+                "dataset.dataset_testing_num_files.quick=1",
                 "dataset.base_folder_path=/home/users/bradlesc/projects/ClimSim/test/unit_test_sets/dummy_low_res_climsim/filename_testing",
                 "max_epochs=1",
-                "dataset.group_method=False",
-                "dataset.remove_high_altitude_specific_humidity_levels=False",
+                "dataset.group_method='None'",
             ],
         )
 
@@ -107,10 +105,9 @@ def test_standard_training_from_cfg_squeezeformer():
             overrides=[
                 "sweep=True",
                 "testing=qt",
-                "dataset.dataset_testing_sample_rates.quick=1",
+                "dataset.dataset_testing_num_files.quick=1",
                 "dataset.base_folder_path=/home/users/bradlesc/projects/ClimSim/test/unit_test_sets/dummy_low_res_climsim/filename_testing",
-                "dataset.group_method=False",
-                "dataset.remove_high_altitude_specific_humidity_levels=15",
+                "dataset.group_method='None'",
             ],
         )
 
