@@ -7,7 +7,6 @@ levels: 45
 normalize: True 
 
 target_group: ${target_group}
-sample_rate: 7
 
 data_dir: '/work/scratch-pw5/bradlesc/climsim/processed/group_by_months/'
 input_file: input.npy
@@ -19,8 +18,24 @@ output_scale_file_path: '/home/users/bradlesc/projects/ClimSim/preprocessing/nor
 v1_targets: ['ptend_t','ptend_q0001','cam_out_NETSW','cam_out_FLWDS','cam_out_PRECSC','cam_out_PRECC','cam_out_SOLS','cam_out_SOLL','cam_out_SOLSD', "cam_out_SOLLD"]
 
 
-dataset_testing_num_files:
-  unit_test: 1
-  quick: 10
+dataset_testing_sample_rates:
+  quick: 10000
   reduced: 100
-  full: 1000
+  full: 7
+
+
+group_method: group_by_months # Whether to select a year of data to train on, 
+group_by_months:
+  num_groups: 4 # Including self 
+  target_group: ${target_group}
+  groups: 
+    DJF: []
+    MAM: []
+    JJA: []
+    SON: []
+  test_group: 
+    # SON: []
+    DJF: []
+  val_group: 
+    # SON: []
+    DJF: []

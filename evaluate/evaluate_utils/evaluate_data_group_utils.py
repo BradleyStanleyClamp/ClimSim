@@ -219,6 +219,7 @@ def evaluate_data_group(
             logging.info(f"Marginal {i} {cfg.metric_name} Value: {observed_metric:.6f}")
 
     if "composition_metrics" in evaluation_options:
+        num_features = trainset.input.shape[1]
         results["composition_metrics"] = []
         for i in range(num_features):
             trainset_feature = trainset.input[:, i]

@@ -27,16 +27,28 @@ import logging
 
 
 class ClimSimNpyDataset(Dataset):
-    def __init__(self, dataset_cfg, group_idx, normalisation_stats=None):
+    def __init__(
+        self,
+        dataset_cfg,
+        dataset_testing_type: str,
+        group_idx,
+        normalisation_stats=None,
+    ):
         """
         Initializes the ClimSimNpyDataset.
 
         Args:
+            dataset_cfg: Configuration object containing dataset parameters.
+            dataset_testing_type (str): Type of testing e.g qt, dr, full
+            group_idx (str): Identifier for the data group to load.
+            normalisation_stats (dict, optional): Precomputed normalization statistics. If None, statistics will be computed from the data.
         """
+        logging.info(f"Building dataset for group: {group_idx}")
         self.data_dir = dataset_cfg.data_dir
         self.input_file = dataset_cfg.input_file
         self.target_file = dataset_cfg.target_file
-        sample_rate = f"sample_rate_{dataset_cfg.sample_rate}"
+        sample_rate = f"sample_rate_{dataset_cfg.dataset_testing_sample_rates[dataset_testing_type]}"
+        logging.info(f"Using sample rate directory: {sample_rate}")
         self.normalize = dataset_cfg.normalize
         self.group_idx = group_idx
 

@@ -52,6 +52,7 @@ def main(cfg: DictConfig):
     start_time = time.time()
     trainset = data_preparation.ClimSimNpyDataset(
         dataset_cfg=cfg.dataset,
+        dataset_testing_type=cfg.testing.dataset_testing_type,
         group_idx=cfg.target_group,
         normalisation_stats=None,
     )

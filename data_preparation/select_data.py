@@ -57,6 +57,21 @@ def get_dataset(
             normalisation_stats=normalisation_stats,
             num_workers=int(dataset_cfg.general_dataset_config.num_workers),
         )
+    elif dataset_cfg.dataset_name == "climsim_from_npy":
+        if mode == "train":
+            group_indx = dataset_cfg[dataset_cfg.group_method].target_group
+        elif mode == "val":
+            group_indx = list(dataset_cfg[dataset_cfg.group_method].val_group.keys())[0]
+        elif mode == "test":
+            group_indx = list(dataset_cfg[dataset_cfg.group_method].test_group.keys())[
+                0
+            ]
+        return data_preparation.ClimSimNpyDataset(
+            dataset_cfg,
+            dataset_testing_type,
+            group_indx,
+            normalisation_stats=normalisation_stats,
+        )
 
 
 def get_dataloader(
