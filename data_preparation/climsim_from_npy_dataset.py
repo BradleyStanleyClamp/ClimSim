@@ -44,30 +44,18 @@ class ClimSimNpyDataset(Dataset):
             group_idx (str): Identifier for the data group to load.
             normalisation_stats (dict, optional): Precomputed normalization statistics. If None, statistics will be computed from the data.
         """
-        if mode == "val":
-            group_idx = list(dataset_cfg[dataset_cfg.group_method].val_group.keys())[0]
-        elif mode == "test":
-            group_idx = list(dataset_cfg[dataset_cfg.group_method].test_group.keys())[0]
-        else:
-            group_idx = dataset_cfg[dataset_cfg.group_method].target_group
-            
-        self.group_idx = group_idx
-        logging.info(f"Building dataset for group: {self.group_idx}")
-
+        super().__init__()
+        self.seed = seed
+        self.dataset_cfg = dataset_cfg
         self.data_dir = dataset_cfg.data_dir
         self.input_file = dataset_cfg.input_file
         self.target_file = dataset_cfg.target_file
-        sample_rate = f"sample_rate_{dataset_cfg.dataset_testing_sample_rates[dataset_testing_type]}"
-        logging.info(f"Using sample rate directory: {sample_rate}")
-
-        self.normalize = dataset_cfg.normalize
         self.mode = mode
-        if self.mode not in ["train", "val", "test"]:
-            if mode == None:
-                logging.info("Mode is None: Using full data")
-            raise ValueError(
-                f"Invalid mode: {self.mode}. Expected one of ['train', 'val', 'test', None]."
-            )
+
+        self._get_group_idx()
+
+        sample_rate = f"sample_rate_{self.dataset_cfg.dataset_testing_sample_rates[dataset_testing_type]}"
+        logging.info(f"Using sample rate directory: {sample_rate}")
 
         # Load input and target data from npy files
         self.input = np.load(
@@ -76,47 +64,14 @@ class ClimSimNpyDataset(Dataset):
         self.target = np.load(
             os.path.join(self.data_dir, self.group_idx, sample_rate, self.target_file)
         )
+        logging.info(f"Loaded input shape: {self.input.shape}")
+        logging.info(f"Loaded target shape: {self.target.shape}")
 
         # Split data based on mode
-        np.random.seed(seed)
-        N, _ = self.input.shape
-        perm = np.random.permutation(N)
-        n_train = int(N * dataset_cfg.split.train)
-        n_val = int(N * dataset_cfg.split.val)
-        if self.mode == "train":
-            indices = perm[:n_train]
-        elif self.mode == "val":
-            indices = perm[n_train : n_train + n_val]
-        elif self.mode == "test":
-            indices = perm[n_train + n_val :]
-
-        if self.mode != None:
-            logging.info(f"Using: {self.mode} with {len(indices)} samples")
-            self.input = self.input[indices]
-            self.target = self.target[indices]
+        self._split_data()
 
         # Apply feature wise normalization if specified
-        if self.normalize:
-            if normalisation_stats is not None:
-                logging.info("Using provided normalization statistics.")
-                self.normalisation_stats = normalisation_stats
-            else:
-                logging.info("Calculating normalization statistics from data.")
-                self.normalisation_stats = {
-                    "mean": self.input.mean(axis=0),
-                    "max": self.input.max(axis=0),
-                    "min": self.input.min(axis=0),
-                }
-
-            self.input = (self.input - self.normalisation_stats["mean"]) / (
-                self.normalisation_stats["max"] - self.normalisation_stats["min"]
-            )
-            out_scale = self._process_output_scaling(
-                dataset_cfg.output_scale_file_path,
-                dataset_cfg.v1_targets,
-                dataset_cfg.levels,
-            )
-            self.target = self.target * out_scale
+        self._feature_wise_normalization(normalisation_stats)
 
         # Convert to torch tensors
         self.input = torch.tensor(self.input, dtype=torch.float32)
@@ -140,6 +95,24 @@ class ClimSimNpyDataset(Dataset):
         """
         return self.input[idx], self.target[idx]
 
+    def _get_group_idx(self) -> str:
+        """
+        Determines the target group from the config
+        """
+        if self.mode == "val":
+            group_idx = list(
+                self.dataset_cfg[self.dataset_cfg.group_method].val_group.keys()
+            )[0]
+        elif self.mode == "test":
+            group_idx = list(
+                self.dataset_cfg[self.dataset_cfg.group_method].test_group.keys()
+            )[0]
+        else:
+            group_idx = self.dataset_cfg[self.dataset_cfg.group_method].target_group
+
+        self.group_idx = group_idx
+        logging.info(f"Building dataset for group: {self.group_idx}")
+
     def _process_output_scaling(
         self, path_to_scaling_file: str, target_variables: list, levels: int
     ) -> np.ndarray:
@@ -162,3 +135,71 @@ class ClimSimNpyDataset(Dataset):
         )
 
         return out_scale
+
+    def _split_data(self):
+        """
+        Splits the data into train, val, and test sets based on the specified mode.
+
+        Uses:
+            self.dataset_cfg.split: A dictionary containing the split ratios for train, val, and test sets.
+            self.mode: The mode of the dataset ('train', 'val', 'test', or None).
+            self.seed: Seed for random number generator to ensure reproducibility.
+
+        """
+        if self.mode not in ["train", "val", "test"]:
+            if self.mode == None:
+                logging.info("Mode is None: Using full data")
+                return
+            raise ValueError(
+                f"Invalid mode: {self.mode}. Expected one of ['train', 'val', 'test', None]."
+            )
+
+        np.random.seed(self.seed)
+        N, _ = self.input.shape
+        perm = np.random.permutation(N)
+        n_train = int(N * self.dataset_cfg.split.train)
+        n_val = int(N * self.dataset_cfg.split.val)
+        if self.mode == "train":
+            indices = perm[:n_train]
+        elif self.mode == "val":
+            indices = perm[n_train : n_train + n_val]
+        elif self.mode == "test":
+            indices = perm[n_train + n_val :]
+
+        logging.info(f"Using: {self.mode} with {len(indices)} samples")
+        self.input = self.input[indices]
+        self.target = self.target[indices]
+
+    def _feature_wise_normalization(self, normalisation_stats=None):
+        """
+        Applies feature-wise normalization to the input and target data.
+
+        Args:
+            normalisation_stats (dict, optional): Precomputed normalization statistics. If None, statistics will be computed from the data.
+        """
+        self.normalize = self.dataset_cfg.normalize
+        if self.normalize:
+            if normalisation_stats is not None:
+                logging.info("Using provided normalization statistics.")
+                self.normalisation_stats = normalisation_stats
+            else:
+                logging.info("Calculating normalization statistics from data.")
+                self.normalisation_stats = {
+                    "mean": self.input.mean(axis=0),
+                    "max": self.input.max(axis=0),
+                    "min": self.input.min(axis=0),
+                }
+
+            self.input = (self.input - self.normalisation_stats["mean"]) / (
+                self.normalisation_stats["max"] - self.normalisation_stats["min"]
+            )
+            out_scale = self._process_output_scaling(
+                self.dataset_cfg.output_scale_file_path,
+                self.dataset_cfg.v1_targets,
+                self.dataset_cfg.levels,
+            )
+            self.target = self.target * out_scale
+
+        else:
+            logging.info("Normalization not applied as per configuration.")
+            return
