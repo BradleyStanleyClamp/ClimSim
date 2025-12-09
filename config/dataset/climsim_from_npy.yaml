@@ -1,0 +1,26 @@
+dataset_name: 'climsim_from_npy'
+
+input_dim: 94 #124
+output_dim: 98 #128
+levels: 45
+
+normalize: True 
+
+target_group: ${target_group}
+sample_rate: 7
+
+data_dir: '/work/scratch-pw5/bradlesc/climsim/processed/group_by_months/'
+input_file: input.npy
+target_file: target.npy
+
+
+output_scale_file_path: '/home/users/bradlesc/projects/ClimSim/preprocessing/normalizations/outputs/output_scale.nc'
+
+v1_targets: ['ptend_t','ptend_q0001','cam_out_NETSW','cam_out_FLWDS','cam_out_PRECSC','cam_out_PRECC','cam_out_SOLS','cam_out_SOLL','cam_out_SOLSD', "cam_out_SOLLD"]
+
+
+dataset_testing_num_files:
+  unit_test: 1
+  quick: 10
+  reduced: 100
+  full: 1000

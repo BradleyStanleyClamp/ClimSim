@@ -18,8 +18,8 @@ timeout_min: 120
 mem_gb: 32
 
 # evaluate data group metric settings
-sample_size: 1000
-n_samples: 10
+sample_size: False
+n_samples: False
 batch_size: False
 
 
