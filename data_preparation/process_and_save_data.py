@@ -1,8 +1,11 @@
-from .climsim_from_raw_dataset import ClimsimFromRawDataset
+"""
+Script to load .nc files, process them into datasets, and save as .npy files for faster loading later.
 
+"""
 
 import json
 import warnings
+from dask.distributed import Client
 
 
 import hydra
@@ -32,45 +35,88 @@ import data_preparation
 logger = logging.getLogger(__name__)
 
 
-@hydra.main(version_base=None, config_path="../config", config_name="train_general")
+@hydra.main(
+    version_base=None, config_path="../config", config_name="process_and_save_data"
+)
 def main(cfg: DictConfig):
 
     # Seeding everything
     train.seed_everything(cfg.project.seed)
 
     torch.set_float32_matmul_precision("medium")
+    num_workers = cfg.dataset.general_dataset_config.num_workers
+    climsim_from_raw = data_preparation.ClimSimFromRawDataset(
+        mode="all",
+        dataset_testing_type=cfg.testing.dataset_testing_type,
+        dataset_cfg=cfg.dataset,
+        model=None,
+        normalisation_stats=None,
+        unit_test_specific_methods=True,
+        num_workers=num_workers,
+    )
 
-    # TODO: plotting init
+    target_years, target_months = climsim_from_raw._select_target_years_months(
+        mode="train", dataset_cfg=cfg.dataset
+    )
 
-    # Wandb login
-    if cfg.wandb.wkey.wkey is not None:
-        wandb.login(key=cfg.wandb.wkey.wkey)
+    input_filenames, target_filenames = climsim_from_raw._get_dataset_filenames(
+        cfg.dataset.base_folder_path,
+        target_years,
+        target_months,
+    )
+    logging.info(f"Total files found: {len(input_filenames)}")
+
+    # manual sampling to reduce data size for testing
+    start_index = 0
+    end_index = len(input_filenames)
+    sample_rate = cfg.sample_rate
+    sampled_input_filenames = sorted(input_filenames)[start_index:end_index:sample_rate]
+    sampled_target_filenames = sorted(target_filenames)[
+        start_index:end_index:sample_rate
+    ]
+    assert data_preparation.check_matching_files(
+        sampled_input_filenames, sampled_target_filenames
+    )
+    logging.info(
+        f"Files after sampling ({cfg.sample_rate}): {len(sampled_input_filenames)}"
+    )
+
+    if num_workers > 1:
+        client = Client(n_workers=num_workers, threads_per_worker=1, memory_limit="8GB")
+        parallel = True
+        logging.info(f"Using Dask with {num_workers} workers for parallel processing.")
     else:
-        raise ValueError("Error: fill wkey.yaml file with API key")
+        parallel = False
+        logging.info("Using single worker for processing.")
 
-    wandb_config = omegaconf.OmegaConf.to_container(
-        cfg.model.single_run_configuration, resolve=True, throw_on_missing=True
+    input_ds, target_ds = climsim_from_raw._combine_datasets(
+        sampled_input_filenames,
+        sampled_target_filenames,
+        v1_inputs=cfg.dataset.v1_inputs,
+        v1_targets=cfg.dataset.v1_targets,
+        parallel=parallel,
     )
 
-    logging.info("Setup complete, starting training")
+    input_ds, target_ds = climsim_from_raw._level_selection(
+        input_ds,
+        target_ds,
+        levels=cfg.dataset.levels,
+    )
+    logging.info(f"Selected {input_ds.sizes['lev']} levels from dataset.")
 
-    datasets = data_preparation.get_all_datasets(
-        cfg.dataset, cfg.testing.dataset_testing_type, model=cfg.model.name
+    input, target = climsim_from_raw._prepare_data(
+        None,
+        input_ds,
+        target_ds,
     )
 
-    test_result, run_cfg = train.standard_training_from_cfg(
-        cfg,
-        datasets,
-        wandb_config,
-        f"{cfg.multirun_dir_name}_{cfg.project.timestamp}",
-        enable_checkpointing=False,
-    )
+    save_folder = cfg.save_processed_data_path
+    if not os.path.exists(save_folder):
+        os.makedirs(save_folder)
+    np.save(os.path.join(save_folder, "input.npy"), input)
+    np.save(os.path.join(save_folder, "target.npy"), target)
+    logging.info(f"Processed data saved to {save_folder}")
 
-    with open("run_config.yaml", "w") as f:
-        yaml.safe_dump(run_cfg.as_dict(), f)
-
-    with open("test_results.json", "w") as f:
-        json.dump(test_result, f, indent=4, default=str)
 
 
 if __name__ == "__main__":

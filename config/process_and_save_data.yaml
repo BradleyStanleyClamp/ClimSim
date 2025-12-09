@@ -1,0 +1,18 @@
+
+defaults:
+  - _self_
+  - project: config
+  - wandb/wkey: wkey
+  - dataset: climsim_from_raw
+  - dataset/general_dataset_config: general_dataset_config
+  - evaluate: evaluate_metrics
+  - hydra: default
+  - testing: qt
+  - override hydra/launcher: slurm_cpu
+
+multirun_dir_name: process_and_save_data_${target_group}_${sample_rate}
+
+target_group: 'DJF'
+sample_rate: 7
+
+save_processed_data_path: '/work/scratch-pw5/bradlesc/climsim/processed/group_by_months/${target_group}/sample_rate_${sample_rate}/'
