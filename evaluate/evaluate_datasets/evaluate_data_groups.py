@@ -112,6 +112,12 @@ def main(cfg: DictConfig):
             json.dump(full_results["marginals"], f, indent=2)
         logging.info(f"Saved marginal distribution distances results to {results_path}")
 
+    if "composition_metrics" in cfg.evaluation_options:
+        results_path = Path.cwd() / f"composition_metrics_{cfg.metric_name}.json"
+        with open(results_path, "w") as f:
+            json.dump(full_results["composition_metrics"], f, indent=2)
+        logging.info(f"Saved composition metrics results to {results_path}")
+
     # Plotting results
     if "vis_marginals" in cfg.evaluation_options:
         marginal_data = full_results["vis_marginals"][0]
@@ -135,6 +141,11 @@ def main(cfg: DictConfig):
             full_results["marginals"],
             levels=cfg.dataset.levels,
             save_path="marginal_distribution_distances.png",
+        )
+
+    if "composition_metrics" in cfg.evaluation_options:
+        plotting.plot_marginal_composition_analysis(
+            full_results["composition_metrics"],
         )
 
 

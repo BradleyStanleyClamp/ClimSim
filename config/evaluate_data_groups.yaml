@@ -11,11 +11,12 @@ defaults:
   - testing: qt
   - override hydra/launcher: slurm_gpu
 
-multirun_dir_name: levels_${dataset.levels} #${evaluation_options[0]}_${metric_name}  #eval_data_groups
+multirun_dir_name: spatial_selection_method_${dataset.spatial_selection_method} #${evaluation_options[0]}_${metric_name}  #eval_data_groups
 
 evaluation_options: 
   - multivariate
   - marginals
+  - composition_metrics
   # - vis_marginals
   
 metric_name: energy_distance #kl_divergence #
