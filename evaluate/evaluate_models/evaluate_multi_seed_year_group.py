@@ -22,6 +22,8 @@ from pathlib import Path
 import plotting
 import os
 
+group_to_int = {"DJF": 0, "MAM": 1, "JJA": 2, "SON": 3}
+
 
 def load_energy_distance_results(path: Path | str = None) -> dict:
     """
@@ -65,7 +67,10 @@ def main(cfg: DictConfig):
     # path_to_results = '/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/6/multiseed_monthly_first_3_years_2025-11-25-15-20-48'
     # path_to_results = '/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/6/unet_multiseed_2025-11-25-22-11-05'
     # path_to_results = "/home/users/bradlesc/projects/ClimSim/logs/p2.1.1/9/squeezeformer_multiseed_2025-11-27-03-29-03"
-    path_to_results = "/home/users/bradlesc/projects/ClimSim/logs/p2.1.1/9/squeezeformer_multiseed_2025-12-02-10-42-26"
+    # path_to_results = "/home/users/bradlesc/projects/ClimSim/logs/p2.1.1/9/squeezeformer_multiseed_2025-12-02-10-42-26"
+    # path_to_results = "/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/11/yus_mlp_from_npy_multiseed_2025-12-10-09-37-03"
+    path_to_results = "/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/11/unet_from_npy_multiseed_2025-12-10-09-35-41"
+    
     for subfolder in os.listdir(path_to_results):
         full_path = os.path.join(path_to_results, subfolder)
         if os.path.isdir(full_path) and (
@@ -81,7 +86,8 @@ def main(cfg: DictConfig):
                 test_losses = [
                     results[str(i)][0]["test/loss"] for i in range(len(results))
                 ]
-                year_group = int(subfolder[-1])
+                # year_group = int(subfolder[-1])
+                year_group = group_to_int[subfolder.split("_")[-1]]
                 x = [year_group] * len(test_losses)
                 ax.scatter(x, test_losses)
 
@@ -101,6 +107,8 @@ def main(cfg: DictConfig):
     #         ax.axhline(y=baseline_losses[i], color='grey', linestyle='--', linewidth=1.5)
     # ax.legend(loc='best', fontsize='small')
 
+    ax.set_xticks([0, 1, 2, 3])
+    ax.set_xticklabels(["DJF", "MAM", "JJA", "SON"])
     ax.set_xlabel("Training data group index")
     ax.set_ylabel("Test MSE Loss")
     ax.set_title("Test MSE Loss vs Training Data Group Index")
