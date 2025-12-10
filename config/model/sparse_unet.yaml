@@ -2,8 +2,10 @@ name: sparse_unet
 
 
 single_run_configuration:
-  lr: 1e-4
   tau: 1.0
+  lambda_paths: 0.01
+  lambda_update_rate: 0.01
+  lr: 1e-4
   batch_size: 2048
   optimizer: Adam
   scheduler: 

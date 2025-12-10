@@ -66,8 +66,8 @@ class SparseAttention(nn.Module):
             logits, tau=self.tau, hard=True, dim=-1
         )  # (batch_size, 'levels', 'levels')
 
-        # Compute hard attention weights 
-        
+        # Compute hard attention weights
+
         sparse_att_weights = att_weights * adjacency  # (batch_size, 'levels', 'levels')
 
         # Apply attention
@@ -76,16 +76,26 @@ class SparseAttention(nn.Module):
 
         out = self.residual_connection(x) + out / np.sqrt(2.0)
 
-        return out
+        num_paths = adjacency.sum(dim=-1).mean().item()
+        return out, num_paths
 
 
 class SparseUNet(nn.Module):
-    def __init__(self, in_channels: int = 6, out_channels: int = 10, tau: float = 1.0):
+    def __init__(
+        self,
+        in_channels: int = 6,
+        out_channels: int = 10,
+        tau: float = 1.0,
+        lambda_paths: float = 0.01,
+        lambda_update_rate: float = 0.001,
+    ):
         """
         Initializes the SparseUNet model.
         """
         super().__init__()
         self.tau = tau
+        self.lambda_paths = lambda_paths
+        self.lambda_update_rate = lambda_update_rate
 
         self.enc = nn.ModuleList()
         self.dec = nn.ModuleList()
@@ -95,6 +105,17 @@ class SparseUNet(nn.Module):
         self.conv_out = nn.Conv1d(128, 10, kernel_size=3, padding=1)
 
     def forward(self, x):
+        """
+        Forward pass of the SparseUNet model.
+
+        Args:
+            x (torch.Tensor): Input tensor of shape (batch_size, features) or (batch_size, variables, levels)
+
+        Returns:
+            torch.Tensor: Output tensor of shape (batch_size, features)
+            float: Number of paths in the sparse attention adjacency matrix
+        """
+
         if x.dim() == 2:
             x = self._reshape_from_standard_format(x)
 
@@ -109,8 +130,8 @@ class SparseUNet(nn.Module):
             skips.append(x)
 
         # Mid
-        for layer in self.mid:
-            x = layer(x)
+        x, num_paths = self.mid[0](x)  # Sparse Attention
+        x = self.mid[1](x)  # ResBlock
 
         # Decoder
         for up_block in self.dec:
@@ -122,7 +143,7 @@ class SparseUNet(nn.Module):
         x = self.conv_out(x)
 
         x = self._reshape_to_standard_format(x)
-        return x
+        return x, num_paths
 
     def _reshape_from_standard_format(self, x: torch.Tensor) -> torch.Tensor:
         """
