@@ -105,7 +105,15 @@ class AttentionBlock(nn.Module):
             q, k, v, attn_mask=None, dropout_p=0.0, is_causal=False
         )
 
+        scale_factor = 1.0 / np.sqrt(C)
+        att_weight = q @ k.transpose(-2, -1) * scale_factor
+        self.att_weight = torch.nn.functional.softmax(att_weight, dim=-1) 
+
         h = h.permute(0, 2, 1)  # (B, C, L)
+
+        assert torch.allclose(
+            self.att_weight @ v, h.permute(0, 2, 1), atol=1e-6
+        ), f"Attention weights do not match output, max diff: {torch.max(torch.abs(self.att_weight @ v - h.permute(0, 2, 1)))}, first elements: {self.att_weight[0, :5, :5] @ v[0, :5, :].T}, {h[0, :, :5].T}"
 
         x = self.residual_connection(x) + h / np.sqrt(
             2.0
