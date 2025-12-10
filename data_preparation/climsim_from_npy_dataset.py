@@ -33,6 +33,7 @@ class ClimSimNpyDataset(Dataset):
         dataset_testing_type: str,
         mode: str = None,
         normalisation_stats=None,
+        model=None,
         seed=None,
     ):
         """
@@ -43,6 +44,9 @@ class ClimSimNpyDataset(Dataset):
             dataset_testing_type (str): Type of testing e.g qt, dr, full
             group_idx (str): Identifier for the data group to load.
             normalisation_stats (dict, optional): Precomputed normalization statistics. If None, statistics will be computed from the data.
+            mode (str, optional): Mode of the dataset ('train', 'val', 'test', or None). Defaults to None.
+            model (str, optional): Model name to determine data format conversion. Defaults to None.
+            seed (int, optional): Random seed for data splitting. Defaults to None.
         """
         super().__init__()
         self.seed = seed
@@ -51,6 +55,8 @@ class ClimSimNpyDataset(Dataset):
         self.input_file = dataset_cfg.input_file
         self.target_file = dataset_cfg.target_file
         self.mode = mode
+        self.levels = dataset_cfg.levels
+        self.model = model
 
         self._get_group_idx()
 
@@ -73,9 +79,14 @@ class ClimSimNpyDataset(Dataset):
         # Apply feature wise normalization if specified
         self._feature_wise_normalization(normalisation_stats)
 
+
         # Convert to torch tensors
         self.input = torch.tensor(self.input, dtype=torch.float32)
         self.target = torch.tensor(self.target, dtype=torch.float32)
+
+
+        # Convert input to required model format
+        self._convert_input_model_format()
 
     def __len__(self):
         """
@@ -94,6 +105,54 @@ class ClimSimNpyDataset(Dataset):
             tuple: (input_tensor, target_tensor)
         """
         return self.input[idx], self.target[idx]
+
+    def _convert_input_model_format(self):
+        """
+        Converts the input and target data to the required model format.
+        Currently assumes data is already in the correct shape.
+        """
+        if self.model in [None, "mlp", "yus_mlp"]:
+            # Data is already in (samples, features) format
+            logging.info("Data is in MLP format; no conversion needed.")
+            return
+        else:
+            reshaped_x = torch.stack(
+                [
+                    self.input[:, 0 : self.levels],
+                    self.input[:, self.levels : self.levels + self.levels],
+                    torch.repeat_interleave(
+                        self.input[:, 2 * self.levels].unsqueeze(1), self.levels, dim=-1
+                    ),
+                    torch.repeat_interleave(
+                        self.input[:, 2 * self.levels + 1].unsqueeze(1),
+                        self.levels,
+                        dim=-1,
+                    ),
+                    torch.repeat_interleave(
+                        self.input[:, 2 * self.levels + 2].unsqueeze(1),
+                        self.levels,
+                        dim=-1,
+                    ),
+                    torch.repeat_interleave(
+                        self.input[:, 2 * self.levels + 3].unsqueeze(1),
+                        self.levels,
+                        dim=-1,
+                    ),
+                ]
+            )
+            if self.model == "climsim_unet":
+                reshaped_x = reshaped_x.permute(
+                    1, 0, 2
+                )  # shape (batch, features, levels)
+                self.input = torch.nn.functional.pad(
+                    reshaped_x, (0, 3), mode="constant", value=0
+                )
+            elif self.model == "squeezeformer":
+                self.input = reshaped_x.permute(
+                    1, 2, 0
+                )  # shape (batch, levels, features)
+
+        logging.info(f"Converted input shape: {self.input.shape}")
 
     def _get_group_idx(self) -> str:
         """

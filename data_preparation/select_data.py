@@ -62,6 +62,7 @@ def get_dataset(
             dataset_cfg,
             dataset_testing_type,
             mode=mode,
+            model=model,
             normalisation_stats=normalisation_stats,
         )
 
