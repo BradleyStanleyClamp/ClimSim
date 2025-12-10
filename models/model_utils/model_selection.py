@@ -42,14 +42,21 @@ def select_base_model(
     elif model_name == "squeezeformer":
 
         squeezeformer = models.SqueezeFormer(
-            in_dim=6, #data_params.input_dim,
+            in_dim=6,  # data_params.input_dim,
             embed_dim=model_params.embed_dim,
-            out_dim=10, #data_params.output_dim,
+            out_dim=10,  # data_params.output_dim,
             head_dim=model_params.head_dim,
             num_heads=model_params.num_heads,
             num_encoder_blocks=model_params.num_encoder_blocks,
         )
         return squeezeformer
+    elif model_name == "sparse_unet":
+        sparse_unet = models.SparseUNet(
+            in_channels=data_params.input_dim,
+            out_channels=data_params.output_dim,
+            tau=model_params.tau,
+        )
+        return sparse_unet
     else:
         raise ValueError(f"Model {model_name} not recognized.")
 

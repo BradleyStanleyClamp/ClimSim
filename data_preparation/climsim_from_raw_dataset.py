@@ -444,7 +444,7 @@ class ClimSimFromRawDataset(Dataset):
         if model_name in standard_data:
             input_tensor = self._dataset_to_flattened_tensor(input_ds)
             target_tensor = self._dataset_to_flattened_tensor(target_ds)
-        elif model_name == "climsim_unet":
+        elif model_name == "climsim_unet" or model_name == "sparse_unet":
             input_tensor = self._dataset_to_column_tensors(input_ds, patch=3)
             target_tensor = self._dataset_to_flattened_tensor(target_ds)
             logging.info(f"UNet input tensor shape: {input_tensor.shape}")
