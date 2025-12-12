@@ -76,8 +76,9 @@ class SparseAttention(nn.Module):
 
         out = self.residual_connection(x) + out / np.sqrt(2.0)
 
-        num_paths = adjacency.sum(dim=-1).mean().item()
-        return out, num_paths
+        path_loss = F.sigmoid(logits).mean(dim=(1, 2)).mean().item()
+        # num_paths = adjacency.sum(dim=(1, 2)).mean().item()
+        return out, path_loss
 
 
 class SparseUNet(nn.Module):
@@ -88,14 +89,23 @@ class SparseUNet(nn.Module):
         tau: float = 1.0,
         lambda_paths: float = 0.01,
         lambda_update_rate: float = 0.001,
+        target_loss: float = 0.1,
     ):
         """
         Initializes the SparseUNet model.
+        Args:
+            in_channels (int): Number of input channels. Default is 6.
+            out_channels (int): Number of output channels. Default is 10.
+            tau (float): Temperature parameter for Gumbel-Softmax. Default is 1.0.
+            lambda_paths (float): Initial weight for the sparsity regularization term. Default is 0.01.
+            lambda_update_rate (float): Update rate for the lambda_paths parameter. Default is 0.001.
+            target_loss (float): Target loss value for GECO. Default is 0.1.
         """
         super().__init__()
         self.tau = tau
         self.lambda_paths = lambda_paths
         self.lambda_update_rate = lambda_update_rate
+        self.target_loss = target_loss
 
         self.enc = nn.ModuleList()
         self.dec = nn.ModuleList()

@@ -4,8 +4,8 @@ defaults:
   - _self_
   - project: config
   - wandb/wkey: wkey
-  - model: yus_mlp
-  - dataset: climsim_from_raw #sub_sampled_low_res
+  - model: sparse_unet #yus_mlp
+  - dataset: climsim_from_npy #climsim_from_raw #sub_sampled_low_res
   - dataset/general_dataset_config: general_dataset_config
   - hydra: default
   - testing: qt
@@ -14,13 +14,13 @@ defaults:
 # Naming 
 multirun_dir_name: ${model.name}_group_${dataset.group_by_months.target_group}
 
-target_group: None
+target_group: DJF #None
 
 # Training parameters
 max_epochs: 10
 
 # Sweep options 
-sweep: false
+sweep: False
 
 # Multi seed options
 train_seeds: [0,1,2,3,4,5,6,7,8,9]

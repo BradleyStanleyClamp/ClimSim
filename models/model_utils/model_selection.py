@@ -57,6 +57,7 @@ def select_base_model(
             tau=model_params.tau,
             lambda_paths=model_params.lambda_paths,
             lambda_update_rate=model_params.lambda_update_rate,
+            target_loss=model_params.target_loss,
         )
         return sparse_unet
     else:

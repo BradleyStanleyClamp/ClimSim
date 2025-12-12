@@ -140,7 +140,7 @@ class ClimSimNpyDataset(Dataset):
                     ),
                 ]
             )
-            if self.model == "climsim_unet":
+            if self.model == "climsim_unet" or self.model == "sparse_unet":
                 reshaped_x = reshaped_x.permute(
                     1, 0, 2
                 )  # shape (batch, features, levels)

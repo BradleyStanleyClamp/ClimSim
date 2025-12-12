@@ -9,6 +9,7 @@ import torch
 from torch import nn
 from models.model_utils.optimizers import select_optimizer
 from models.model_utils.schedulers import select_scheduler
+from omegaconf import DictConfig
 
 
 class LightningWrapper(L.LightningModule):
@@ -36,13 +37,15 @@ class LightningWrapper(L.LightningModule):
         # GECO parameters
         if hasattr(self.model, "lambda_paths"):
             self.lambda_paths = self.model.lambda_paths
-            self.target_loss = self.model.tau
+            self.target_loss = self.model.target_loss
             self.lambda_update_rate = self.model.lambda_update_rate
             self.ma_loss = torch.tensor(-1.0)  # Initialize moving average loss
-            
+
         self.loss = loss
         self.optimizer = optimizer
-        self.scheduler_cfg = scheduler_cfg
+        self.scheduler_cfg = (
+            DictConfig(scheduler_cfg) if scheduler_cfg is not None else None
+        )
         self.lr = lr
 
     def forward(self, x):
@@ -78,6 +81,7 @@ class LightningWrapper(L.LightningModule):
             loss = standard_loss + self.lambda_paths * num_paths
             self.log(f"{stage}/total_loss", loss)
             self.geco_update_lambda(standard_loss)
+            self.log(f"{stage}/lambda_paths", self.lambda_paths)
 
         else:
             y_hat = output
