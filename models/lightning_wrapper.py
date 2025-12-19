@@ -35,8 +35,9 @@ class LightningWrapper(L.LightningModule):
         self.model = model
 
         # GECO parameters
-        if hasattr(self.model, "lambda_paths"):
-            self.lambda_paths = self.model.lambda_paths
+        if hasattr(self.model, "log_lambda_paths"):
+            self.log_lambda_paths = self.model.log_lambda_paths
+            self.init_log_lambda_paths = self.model.log_lambda_paths
             self.target_loss = self.model.target_loss
             self.lambda_update_rate = self.model.lambda_update_rate
             self.ma_loss = torch.tensor(-1.0)  # Initialize moving average loss
@@ -72,16 +73,21 @@ class LightningWrapper(L.LightningModule):
 
         output = self(x)
         if isinstance(output, tuple):
-            y_hat, num_paths = output
+            y_hat, num_paths, pgt0 = output
 
             standard_loss = self.loss(y_hat, y)
             self.log(f"{stage}/num_paths", num_paths)
+            self.log(f"{stage}/pgt0", pgt0)
             self.log(f"{stage}/loss", standard_loss)
 
-            loss = standard_loss + self.lambda_paths * num_paths
-            self.log(f"{stage}/total_loss", loss)
-            self.geco_update_lambda(standard_loss)
-            self.log(f"{stage}/lambda_paths", self.lambda_paths)
+            if self.model.name == "sparse_unet":
+                loss = standard_loss + 10**self.log_lambda_paths * num_paths
+                self.log(f"{stage}/total_loss", loss)
+                self.geco_update_lambda(standard_loss)
+                self.log(f"{stage}/lambda_paths", self.log_lambda_paths)
+
+            else:
+                loss = standard_loss
 
         else:
             y_hat = output
@@ -169,7 +175,7 @@ class LightningWrapper(L.LightningModule):
         loss_diff = self.ma_loss - self.target_loss
         step = loss_diff * self.lambda_update_rate
         step = torch.clamp(step, max=max_step)
-        self.lambda_paths = self.lambda_paths - step
-        self.lambda_paths = torch.clamp(
-            self.lambda_paths, min=0, max=max_lambda_paths
+        self.log_lambda_paths = self.log_lambda_paths - step
+        self.log_lambda_paths = torch.clamp(
+            self.log_lambda_paths, min=self.init_log_lambda_paths, max=max_lambda_paths
         ).detach()

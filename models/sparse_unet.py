@@ -69,7 +69,7 @@ class SparseAttention(nn.Module):
         # Compute hard attention weights
 
         sparse_att_weights = att_weights * adjacency  # (batch_size, 'levels', 'levels')
-
+        self.sparse_att_weights = sparse_att_weights  # For inspection
         # Apply attention
         out = torch.matmul(sparse_att_weights, V)  # (batch_size, 'levels', 'variables')
         out = out.permute(0, 2, 1)  # (batch_size, 'variables', 'levels')
@@ -78,7 +78,9 @@ class SparseAttention(nn.Module):
 
         path_loss = F.sigmoid(logits).mean(dim=(1, 2)).mean().item()
         # num_paths = adjacency.sum(dim=(1, 2)).mean().item()
-        return out, path_loss
+        pgt0 = (logits > 0).sum(dim=(1, 2)).float().mean().item()
+
+        return out, path_loss, pgt0
 
 
 class SparseUNet(nn.Module):
@@ -87,7 +89,7 @@ class SparseUNet(nn.Module):
         in_channels: int = 6,
         out_channels: int = 10,
         tau: float = 1.0,
-        lambda_paths: float = 0.01,
+        log_lambda_paths: float = 0.01,
         lambda_update_rate: float = 0.001,
         target_loss: float = 0.1,
     ):
@@ -102,8 +104,9 @@ class SparseUNet(nn.Module):
             target_loss (float): Target loss value for GECO. Default is 0.1.
         """
         super().__init__()
+        self.name = "sparse_unet"
         self.tau = tau
-        self.lambda_paths = lambda_paths
+        self.log_lambda_paths = log_lambda_paths
         self.lambda_update_rate = lambda_update_rate
         self.target_loss = target_loss
 
@@ -140,7 +143,7 @@ class SparseUNet(nn.Module):
             skips.append(x)
 
         # Mid
-        x, num_paths = self.mid[0](x)  # Sparse Attention
+        x, num_paths, pgt0 = self.mid[0](x)  # Sparse Attention
         x = self.mid[1](x)  # ResBlock
 
         # Decoder
@@ -153,7 +156,7 @@ class SparseUNet(nn.Module):
         x = self.conv_out(x)
 
         x = self._reshape_to_standard_format(x)
-        return x, num_paths
+        return x, num_paths, pgt0
 
     def _reshape_from_standard_format(self, x: torch.Tensor) -> torch.Tensor:
         """

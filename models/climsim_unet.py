@@ -13,6 +13,7 @@ import logging
 from torch import nn
 import torch
 import numpy as np
+from torch.nn import functional as F
 
 
 def make_residual_connection(in_channels: int, out_channels: int):
@@ -101,24 +102,29 @@ class AttentionBlock(nn.Module):
         k = self.K(x).permute(0, 2, 1)  # (B, L, C)
         v = self.V(x).permute(0, 2, 1)  # (B, L, C)
 
-        h = torch.nn.functional.scaled_dot_product_attention(
-            q, k, v, attn_mask=None, dropout_p=0.0, is_causal=False
-        )
+        # h = torch.nn.functional.scaled_dot_product_attention(
+        #     q, k, v, attn_mask=None, dropout_p=0.0, is_causal=False
+        # )
 
         scale_factor = 1.0 / np.sqrt(C)
-        att_weight = q @ k.transpose(-2, -1) * scale_factor
-        self.att_weight = torch.nn.functional.softmax(att_weight, dim=-1) 
+        logits = q @ k.transpose(-2, -1) * scale_factor
+        self.att_weight = torch.nn.functional.softmax(logits, dim=-1)
 
+        h = self.att_weight @ v  # (B, L, C)
         h = h.permute(0, 2, 1)  # (B, C, L)
 
-        assert torch.allclose(
-            self.att_weight @ v, h.permute(0, 2, 1), atol=1e-6
-        ), f"Attention weights do not match output, max diff: {torch.max(torch.abs(self.att_weight @ v - h.permute(0, 2, 1)))}, first elements: {self.att_weight[0, :5, :5] @ v[0, :5, :].T}, {h[0, :, :5].T}"
+        # assert torch.allclose(
+        #     self.att_weight @ v, h.permute(0, 2, 1), atol=1e-6
+        # ), f"Attention weights do not match output, max diff: {torch.max(torch.abs(self.att_weight @ v - h.permute(0, 2, 1)))}, first elements: {self.att_weight[0, :5, :5] @ v[0, :5, :].T}, {h[0, :, :5].T}"
 
         x = self.residual_connection(x) + h / np.sqrt(
             2.0
         )  # Residual connection with normalisation of the variance to improve stability
-        return x
+
+        path_loss = F.sigmoid(logits).mean(dim=(1, 2)).mean().item()
+        # path_loss = #F.softmax(logits, dim=-1).mean(dim=(1, 2)).mean().item()
+        pgt0 = (logits > 0).sum(dim=(1, 2)).float().mean().item()
+        return x, path_loss, pgt0
 
 
 class ClimSimUNet(nn.Module):
@@ -127,7 +133,7 @@ class ClimSimUNet(nn.Module):
         Initializes the ClimSimUNet model.
         """
         super().__init__()
-
+        self.name = "climsim_unet"
         self.enc = nn.ModuleList()
         self.dec = nn.ModuleList()
 
@@ -153,8 +159,9 @@ class ClimSimUNet(nn.Module):
 
         # print(f"Bottom: {x.shape}")
         # Mid
-        for layer in self.mid:
-            x = layer(x)
+        # Mid
+        x, num_paths, pgt0 = self.mid[0](x)  # Sparse Attention
+        x = self.mid[1](x)  # ResBlock
         # print(f"After mid: {x.shape}")
 
         # Decoder
@@ -175,7 +182,7 @@ class ClimSimUNet(nn.Module):
         # x = x[:, :, :-4]  # Remove last 4 levels added for padding to 64 levels
 
         x = self._reshape_to_standard_format(x)
-        return x
+        return x, num_paths, pgt0
 
     def _reshape_from_standard_format(self, x: torch.Tensor) -> torch.Tensor:
         """

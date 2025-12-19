@@ -12,9 +12,9 @@ defaults:
   - override hydra/launcher: slurm_gpu
 
 # Naming 
-multirun_dir_name: ${model.name}_group_${dataset.group_by_months.target_group}
+multirun_dir_name: ${model.name}_group_${dataset.group_by_months.target_group}_log_lambda_${model.single_run_configuration.log_lambda_paths}_lambda_update_${model.single_run_configuration.lambda_update_rate}_target_loss_${model.single_run_configuration.target_loss}
 
-target_group: DJF #None
+target_group: MAM #None
 
 # Training parameters
 max_epochs: 10
