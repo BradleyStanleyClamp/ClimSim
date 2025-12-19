@@ -12,7 +12,7 @@ def test_clim_sim_unet_forward():
     model = ClimSimUNet()
     batch_size = 2
     input_tensor = torch.randn(batch_size, 6, 64)  # (batch_size, features, length)
-    output = model(input_tensor)
+    output, _, _ = model(input_tensor)
     print(output.shape)
     assert output is not None
     assert output.shape[0] == batch_size
@@ -45,7 +45,7 @@ def test_clim_sim_unet_forward_standard_input():
     model = ClimSimUNet()
     batch_size = 2
     input_tensor = torch.randn(batch_size, 124)  
-    output = model(input_tensor)
+    output, _, _ = model(input_tensor)
     print(output.shape)
     assert output is not None
     assert output.shape[0] == batch_size
