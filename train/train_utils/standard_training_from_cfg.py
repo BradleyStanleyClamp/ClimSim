@@ -13,7 +13,7 @@ import models
 from torch.utils.data import Dataset
 
 from pytorch_lightning.profilers import SimpleProfiler as pl_profiler
-
+import os
 
 def standard_training_from_cfg(
     cfg: DictConfig,
@@ -111,9 +111,11 @@ def standard_training_from_cfg(
 
         # Optional Saving the model if single run
         if not cfg.sweep:
+            model_folder_path = cfg.testing.checkpoint_folder_path
             model_save_path = f"{cfg.model.name}_{seed}_{cfg.project.timestamp}.ckpt"
-            trainer.save_checkpoint(model_save_path)
-            logging.info(f"Model saved at: {model_save_path}")
+            full_path = os.path.join(model_folder_path, model_save_path)
+            trainer.save_checkpoint(full_path)
+            logging.info(f"Model saved at: {full_path}")
 
 
         return test_results, run.config

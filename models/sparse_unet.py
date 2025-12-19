@@ -1,124 +1,114 @@
 """
-Script that implements a U-Net architecture based on description in [1] and code from [2].
+Script that implements the climsim unet found in .climsim_unet, but with hard attention and sparsity regularisation inspired by SPARTAN [1].
+The majority of the code is coppied from models/climsim_unet.py.
 
-[1]: Stable Machine-Learning Parameterization of Subgrid Processes in a Comprehensive Atmospheric Model Learned From Embedded Convection-Permitting Simulations
-Zeyuan Hu, Akshay Subramaniam, Zhiming Kuang, Jerry Lin, Sungduk Yu, Walter M. Hannah, Noah D. Brenowitz, Josh Romero, Michael S. Pritchard
-https://arxiv.org/abs/2407.00124
+References:
+[1] https://arxiv.org/abs/2411.06890
 
-
-[2] https://github.com/g4vrel/sde_ddpm/tree/master
 """
 
 import logging
-from torch import nn
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
 import numpy as np
+from models.climsim_unet import make_residual_connection, ResBlock
 
 
-def make_residual_connection(in_channels: int, out_channels: int):
-    """
-    Creates a residual connection. If the number of input and output channels differ, a 1x1 convolution is used to match dimensions.
-    Args:
-        in_channels (int): Number of input channels.
-        out_channels (int): Number of output channels.
-    Returns:
-        nn.Module: A module representing the residual connection.
-    """
-    if in_channels != out_channels:
-        return nn.Conv1d(in_channels, out_channels, kernel_size=1, stride=1, padding=0)
-    else:
-        return nn.Identity()
-
-
-class ResBlock(nn.Module):
-    def __init__(self, in_channels: int, out_channels: int, num_groups: int = 32):
+class SparseAttention(nn.Module):
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        tau: float = 1.0,
+        num_groups: int = 32,
+    ):
         """
-        Classical residual block.
-        Note: this may differ slightly from [1]'s implementation, as it is unclear exactly what they choose to do, for example:
-        1. The second silu activation after conv, the paper seems to say 'y =Conv1D(GM(Conv1D(silu(GM(x))))) + x' but the standard approach seems to be two?
+        Initilializes the SparseAttention module.
 
         Args:
             in_channels (int): Number of input channels.
             out_channels (int): Number of output channels.
-            num_groups (int): Number of groups for GroupNorm.
-        """
-
-        super().__init__()
-        self.in_channels = in_channels
-        self.out_channels = out_channels
-
-        self.block0 = self._make_block(in_channels, out_channels, num_groups)
-        self.block1 = self._make_block(out_channels, out_channels, num_groups)
-        self.residual_connection = make_residual_connection(in_channels, out_channels)
-
-    def _make_block(self, in_channels: int, out_channels: int, num_groups: int = 32):
-        """
-        Creates a residual block consisting of GroupNorm, SiLU activation, and a 1D convolution.
-        Args:
-            channels (int): Number of input channels.
-            num_groups (int): Number of groups for GroupNorm.
-        Returns:
-            nn.Sequential: A sequential container of the residual block.
-        """
-        return nn.Sequential(
-            nn.GroupNorm(num_groups=num_groups, num_channels=in_channels),
-            nn.SiLU(),
-            nn.Conv1d(in_channels, out_channels, kernel_size=3, padding=1, stride=1),
-        )
-
-    def forward(self, x):
-        h = self.block0(x)
-        h = self.block1(h)
-        x = (self.residual_connection(x) + h) / np.sqrt(
-            2.0
-        )  # Residual connection with normalisation of the variance to improve stability
-        return x
-
-
-class AttentionBlock(nn.Module):
-    def __init__(self, in_channels: int, out_channels: int, num_groups: int = 32):
-        """
-        Block for self attention mechanism.
-        Args:
-            in_channels (int): Number of input channels.
-            out_channels (int): Number of output channels.
+            tau (float): Temperature parameter for Gumbel-Softmax.
 
         """
         super().__init__()
+        self.tau = tau
 
         self.group_norm = nn.GroupNorm(num_groups=num_groups, num_channels=in_channels)
 
         self.Q = nn.Conv1d(in_channels, in_channels, kernel_size=1)
         self.K = nn.Conv1d(in_channels, in_channels, kernel_size=1)
         self.V = nn.Conv1d(in_channels, in_channels, kernel_size=1)
+
         self.residual_connection = make_residual_connection(in_channels, out_channels)
 
     def forward(self, x):
-        x = self.group_norm(x)
-
-        B, C, L = x.shape
-        q = self.Q(x).permute(0, 2, 1)  # (B, L, C)
-        k = self.K(x).permute(0, 2, 1)  # (B, L, C)
-        v = self.V(x).permute(0, 2, 1)  # (B, L, C)
-
-        h = torch.nn.functional.scaled_dot_product_attention(
-            q, k, v, attn_mask=None, dropout_p=0.0, is_causal=False
-        )
-
-        h = h.permute(0, 2, 1)  # (B, C, L)
-
-        x = self.residual_connection(x) + h / np.sqrt(
-            2.0
-        )  # Residual connection with normalisation of the variance to improve stability
-        return x
-
-
-class ClimSimUNet(nn.Module):
-    def __init__(self):
         """
-        Initializes the ClimSimUNet model.
+        x: (torch.Tensor) Input tensor of shape (batch_size, 'variables', 'levels'), where:
+            - 'levels' is the abstract representation of the levels + padding dimension after encoder
+            -  'variables' is the features dimension after encoder treated as the channels in the 1d conv sense
+        """
+        batch_size, variables, levels = x.shape
+        Q = self.Q(x).permute(0, 2, 1)  # (batch_size, 'levels','variables')
+        K = self.K(x).permute(0, 2, 1)  # (batch_size, 'levels','variables')
+        V = self.V(x).permute(0, 2, 1)  # (batch_size, 'levels','variables')
+
+        # Compute attention scores
+        logits = torch.matmul(Q, K.transpose(-2, -1)) / np.sqrt(
+            K.size(-1)
+        )  # (batch_size, 'levels', 'levels')
+
+        att_weights = F.softmax(logits, dim=-1)  # (batch_size, 'levels', 'levels')
+
+        # Gumbel-Softmax for hard attention
+        adjacency = F.gumbel_softmax(
+            logits, tau=self.tau, hard=True, dim=-1
+        )  # (batch_size, 'levels', 'levels')
+
+        # Compute hard attention weights
+
+        sparse_att_weights = att_weights * adjacency  # (batch_size, 'levels', 'levels')
+        self.sparse_att_weights = sparse_att_weights  # For inspection
+        # Apply attention
+        out = torch.matmul(sparse_att_weights, V)  # (batch_size, 'levels', 'variables')
+        out = out.permute(0, 2, 1)  # (batch_size, 'variables', 'levels')
+
+        out = self.residual_connection(x) + out / np.sqrt(2.0)
+
+        path_loss = F.sigmoid(logits).mean(dim=(1, 2)).mean().item()
+        # num_paths = adjacency.sum(dim=(1, 2)).mean().item()
+        pgt0 = (logits > 0).sum(dim=(1, 2)).float().mean().item()
+
+        return out, path_loss, pgt0
+
+
+class SparseUNet(nn.Module):
+    def __init__(
+        self,
+        in_channels: int = 6,
+        out_channels: int = 10,
+        tau: float = 1.0,
+        log_lambda_paths: float = 0.01,
+        lambda_update_rate: float = 0.001,
+        target_loss: float = 0.1,
+    ):
+        """
+        Initializes the SparseUNet model.
+        Args:
+            in_channels (int): Number of input channels. Default is 6.
+            out_channels (int): Number of output channels. Default is 10.
+            tau (float): Temperature parameter for Gumbel-Softmax. Default is 1.0.
+            lambda_paths (float): Initial weight for the sparsity regularization term. Default is 0.01.
+            lambda_update_rate (float): Update rate for the lambda_paths parameter. Default is 0.001.
+            target_loss (float): Target loss value for GECO. Default is 0.1.
         """
         super().__init__()
+        self.name = "sparse_unet"
+        self.tau = tau
+        self.log_lambda_paths = log_lambda_paths
+        self.lambda_update_rate = lambda_update_rate
+        self.target_loss = target_loss
 
         self.enc = nn.ModuleList()
         self.dec = nn.ModuleList()
@@ -128,6 +118,17 @@ class ClimSimUNet(nn.Module):
         self.conv_out = nn.Conv1d(128, 10, kernel_size=3, padding=1)
 
     def forward(self, x):
+        """
+        Forward pass of the SparseUNet model.
+
+        Args:
+            x (torch.Tensor): Input tensor of shape (batch_size, features) or (batch_size, variables, levels)
+
+        Returns:
+            torch.Tensor: Output tensor of shape (batch_size, features)
+            float: Number of paths in the sparse attention adjacency matrix
+        """
+
         if x.dim() == 2:
             x = self._reshape_from_standard_format(x)
 
@@ -135,39 +136,27 @@ class ClimSimUNet(nn.Module):
 
         skips = []
         # Encoder
-        # print("Encoder")
+
         for down_block in self.enc:
-            # print(f"  Down block: {x.shape}")
             for layer in down_block:
                 x = layer(x)
-                # print(f"    After layer: {x.shape}")
             skips.append(x)
 
-        # print(f"Bottom: {x.shape}")
         # Mid
-        for layer in self.mid:
-            x = layer(x)
-        # print(f"After mid: {x.shape}")
+        x, num_paths, pgt0 = self.mid[0](x)  # Sparse Attention
+        x = self.mid[1](x)  # ResBlock
 
         # Decoder
-        # print("Decoder")
         for up_block in self.dec:
-            # print(f"  Up block: {x.shape}")
             skip = skips.pop()
-            # print(f"    Skip: {skip.shape}")
             x = torch.cat((x, skip), dim=1)  # Concatenate skip connection
-            # print(f"    After concat: {x.shape}")
             for layer in up_block:
                 x = layer(x)
-                # print(f"    After layer: {x.shape}")
 
         x = self.conv_out(x)
 
-        # Removing padded layers
-        # x = x[:, :, :-4]  # Remove last 4 levels added for padding to 64 levels
-
         x = self._reshape_to_standard_format(x)
-        return x
+        return x, num_paths, pgt0
 
     def _reshape_from_standard_format(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -247,7 +236,7 @@ class ClimSimUNet(nn.Module):
 
         self.mid = nn.ModuleList(
             [
-                AttentionBlock(in_channels=256, out_channels=256),
+                SparseAttention(in_channels=256, out_channels=256, tau=self.tau),
                 ResBlock(in_channels=256, out_channels=256),
             ]
         )

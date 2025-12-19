@@ -18,6 +18,7 @@ time_analysis: False
 num_workers: 1
 timeout_min: 60
 mem_gb: 32
+checkpoint_folder_path: ''
 
 
 # evaluate data group metric settings

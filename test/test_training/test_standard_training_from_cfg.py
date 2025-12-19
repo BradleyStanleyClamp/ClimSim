@@ -19,9 +19,9 @@ def test_standard_training_from_cfg():
         cfg = compose(
             config_name="train_general",
             overrides=[
+                "dataset=climsim_from_raw",
                 "sweep=True",
                 "testing=qt",
-                
                 "dataset.dataset_testing_num_files.quick=1",
                 "dataset.base_folder_path=/home/users/bradlesc/projects/ClimSim/test/unit_test_sets/dummy_low_res_climsim/filename_testing",
                 "dataset.group_method='None'",
@@ -55,6 +55,7 @@ def test_unet_standard_training_from_cfg():
             config_name="train_general",
             overrides=[
                 "sweep=True",
+                "dataset=climsim_from_raw",
                 "testing=qt",
                 "model=climsim_unet",
                 "dataset.dataset_testing_num_files.quick=1",
@@ -104,6 +105,7 @@ def test_standard_training_from_cfg_squeezeformer():
             config_name="train_general",
             overrides=[
                 "sweep=True",
+                "dataset=climsim_from_raw",
                 "testing=qt",
                 "dataset.dataset_testing_num_files.quick=1",
                 "dataset.base_folder_path=/home/users/bradlesc/projects/ClimSim/test/unit_test_sets/dummy_low_res_climsim/filename_testing",

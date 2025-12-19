@@ -17,6 +17,7 @@ time_analysis: False
 num_workers: 6
 timeout_min: 1440
 mem_gb: 64
+checkpoint_folder_path: /gws/nopw/j04/iecdt/bstanleyclamp/checkpoints/${project.project}/${project.task}/${project.name}_${project.timestamp}/${multirun_dir_name}
 
 # evaluate data group metric settings
 sample_size: False #20000

@@ -1,0 +1,63 @@
+name: sparse_unet
+  
+sweep_configuration:
+  name: ${model.name}_sweep
+  method: random
+  metric:
+    name: val/loss
+    goal: minimize
+  early_terminate:
+    type: hyperband
+    min_iter: 5 # epochs
+  parameters:
+    tau:
+      distribution: constant
+      value: 1.0
+      # distribution: log_uniform_values
+      # min: 0.01
+      # max: 10
+    log_lambda_paths:
+      distribution: uniform
+      min: -6.0
+      max: -4.0
+      # distribution: constant
+      # value: 0
+    lambda_update_rate:
+      distribution: log_uniform_values
+      min: 1e-4
+      max: 1e-1
+    target_loss: # Remeber this is for the train set!
+      distribution: uniform
+      min: 0.0055
+      max: 0.0075
+    lr:
+      distribution: constant
+      value: 1e-4
+    batch_size:
+      distribution: constant
+      value: 2048
+    optimizer:
+      distribution: constant
+      value: "Adam"
+    scheduler:
+      distribution: constant
+      value: {name: step, step_size: 3, gamma: 0.5}
+
+
+
+
+single_run_configuration:
+  tau: 1.0
+  log_lambda_paths: -5.254
+  lambda_update_rate: 0.0009943
+  target_loss: 0.006508
+  lr: 1e-4
+  batch_size: 2048
+  optimizer: Adam
+  scheduler: 
+    name: step
+    step_size: 3 # epochs
+    gamma: 0.5
+
+  
+  

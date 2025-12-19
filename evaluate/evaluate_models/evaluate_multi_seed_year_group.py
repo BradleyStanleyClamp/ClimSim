@@ -69,7 +69,10 @@ def main(cfg: DictConfig):
     # path_to_results = "/home/users/bradlesc/projects/ClimSim/logs/p2.1.1/9/squeezeformer_multiseed_2025-11-27-03-29-03"
     # path_to_results = "/home/users/bradlesc/projects/ClimSim/logs/p2.1.1/9/squeezeformer_multiseed_2025-12-02-10-42-26"
     # path_to_results = "/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/11/yus_mlp_from_npy_multiseed_2025-12-10-09-37-03"
-    path_to_results = "/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/11/unet_from_npy_multiseed_2025-12-10-09-35-41"
+    # path_to_results = "/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/11/unet_from_npy_multiseed_2025-12-10-09-35-41"
+    # path_to_results = "/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/11/mlp_from_npy_multiseed_2025-12-10-15-08-48"
+    # path_to_results = "/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/11/mlp_from_npy_multiseed_2025-12-10-15-08-48"
+    path_to_results = "/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/11/squeezeformer_from_npy_multiseed_2025-12-10-11-35-13"
     
     for subfolder in os.listdir(path_to_results):
         full_path = os.path.join(path_to_results, subfolder)
@@ -77,6 +80,8 @@ def main(cfg: DictConfig):
             subfolder.startswith("yus")
             or subfolder.startswith("climsim")
             or subfolder.startswith("squeezeformer")
+            or subfolder.startswith("mlp")
+
         ):
             print(f"Processing folder: {subfolder}")
             results_file = os.path.join(full_path, "test_results.json")
