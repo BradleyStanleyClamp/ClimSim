@@ -184,6 +184,25 @@ class ClimSimUNet(nn.Module):
         x = self._reshape_to_standard_format(x)
         return x, num_paths, pgt0
 
+    def step(self, output, y, log, loss_metric, stage=None):
+        """
+        Generic step for training, validation, and testing.
+        Args:
+            batch (tuple): A tuple containing input data and target labels.
+            batch_idx (int): Index of the batch.
+            stage (str, optional): Stage of the step ('train', 'val', 'test'). Default is None.
+
+        """
+        y_hat, num_paths, pgt0 = output
+
+        loss = loss_metric(y_hat, y)
+        log(f"{stage}/num_paths", num_paths)
+        log(f"{stage}/pgt0", pgt0)
+        log(f"{stage}/loss", loss)
+
+        return loss
+
+
     def _reshape_from_standard_format(self, x: torch.Tensor) -> torch.Tensor:
         """
         Reshapes the input from standard format (batch, features) to (batch, levels+padding, variables)

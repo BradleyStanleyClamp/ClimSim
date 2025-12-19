@@ -34,14 +34,6 @@ class LightningWrapper(L.LightningModule):
 
         self.model = model
 
-        # GECO parameters
-        if hasattr(self.model, "log_lambda_paths"):
-            self.log_lambda_paths = self.model.log_lambda_paths
-            self.init_log_lambda_paths = self.model.log_lambda_paths
-            self.target_loss = self.model.target_loss
-            self.lambda_update_rate = self.model.lambda_update_rate
-            self.ma_loss = torch.tensor(-1.0)  # Initialize moving average loss
-
         self.loss = loss
         self.optimizer = optimizer
         self.scheduler_cfg = (
@@ -70,31 +62,17 @@ class LightningWrapper(L.LightningModule):
 
         """
         x, y = batch
-
         output = self(x)
-        if isinstance(output, tuple):
-            y_hat, num_paths, pgt0 = output
 
-            standard_loss = self.loss(y_hat, y)
-            self.log(f"{stage}/num_paths", num_paths)
-            self.log(f"{stage}/pgt0", pgt0)
-            self.log(f"{stage}/loss", standard_loss)
-
-            if self.model.name == "sparse_unet":
-                loss = standard_loss + 10**self.log_lambda_paths * num_paths
-                self.log(f"{stage}/total_loss", loss)
-                self.geco_update_lambda(standard_loss)
-                self.log(f"{stage}/lambda_paths", self.log_lambda_paths)
-
-            else:
-                loss = standard_loss
+        if hasattr(self.model, "step"):
+            loss = self.model.step(output, y, self.log, self.loss, stage)
 
         else:
+
             y_hat = output
 
             loss = self.loss(y_hat, y)
 
-        if stage:
             self.log(f"{stage}/loss", loss)
 
         return loss
@@ -150,32 +128,3 @@ class LightningWrapper(L.LightningModule):
 
         else:
             return optimizer
-
-    def geco_update_lambda(self, loss: torch.Tensor):
-        """
-        Update the lambda parameter using the loss. Keeps a moving average of the loss.
-        If the loss is below the target, the lambda is increased, otherwise it is decreased.
-        This allows the model to tighten the sparsity of the attention patterns while maintaining the same prediction loss.
-        This should be called after each forward pass.
-        """
-
-        # Internal parameters
-        mooving_average_alpha = 0.99
-        max_step = 1e-5
-        max_lambda_paths = 1e6
-
-        if self.ma_loss < 0:
-            self.ma_loss = loss
-        else:
-            self.ma_loss = (
-                mooving_average_alpha * self.ma_loss
-                + (1 - mooving_average_alpha) * loss
-            )
-        self.ma_loss = self.ma_loss.detach()
-        loss_diff = self.ma_loss - self.target_loss
-        step = loss_diff * self.lambda_update_rate
-        step = torch.clamp(step, max=max_step)
-        self.log_lambda_paths = self.log_lambda_paths - step
-        self.log_lambda_paths = torch.clamp(
-            self.log_lambda_paths, min=self.init_log_lambda_paths, max=max_lambda_paths
-        ).detach()

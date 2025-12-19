@@ -107,8 +107,11 @@ class SparseUNet(nn.Module):
         self.name = "sparse_unet"
         self.tau = tau
         self.log_lambda_paths = log_lambda_paths
+        self.init_log_lambda_paths = self.log_lambda_paths
         self.lambda_update_rate = lambda_update_rate
         self.target_loss = target_loss
+        self.ma_loss = torch.tensor(-1.0)  # Initialize moving average loss
+
 
         self.enc = nn.ModuleList()
         self.dec = nn.ModuleList()
@@ -157,6 +160,62 @@ class SparseUNet(nn.Module):
 
         x = self._reshape_to_standard_format(x)
         return x, num_paths, pgt0
+
+    def step(self, output, y, log, loss_metric, stage=None):
+        """
+        A single step for training, validation, and testing.
+        Args:
+            logger: Logger object for logging metrics.
+            batch (tuple): A tuple containing input data and target labels.
+            batch_idx (int): Index of the batch.
+            stage (str, optional): Stage of the step ('train', 'val', 'test'). Default is None.
+
+        Returns:
+            loss (torch.Tensor): Computed loss for the batch.
+
+        """
+        y_hat, num_paths, pgt0 = output
+
+        standard_loss = loss_metric(y_hat, y)
+        log(f"{stage}/num_paths", num_paths)
+        log(f"{stage}/pgt0", pgt0)
+        log(f"{stage}/loss", standard_loss)
+
+        loss = standard_loss + 10**self.log_lambda_paths * num_paths
+        log(f"{stage}/total_loss", loss)
+        self.geco_update_lambda(standard_loss)
+        log(f"{stage}/lambda_paths", self.log_lambda_paths)
+
+        return loss
+
+    def geco_update_lambda(self, loss: torch.Tensor):
+        """
+        Update the lambda parameter using the loss. Keeps a moving average of the loss.
+        If the loss is below the target, the lambda is increased, otherwise it is decreased.
+        This allows the model to tighten the sparsity of the attention patterns while maintaining the same prediction loss.
+        This should be called after each forward pass.
+        """
+
+        # Internal parameters
+        mooving_average_alpha = 0.99
+        max_step = 1e-5
+        max_lambda_paths = 1e6
+
+        if self.ma_loss < 0:
+            self.ma_loss = loss
+        else:
+            self.ma_loss = (
+                mooving_average_alpha * self.ma_loss
+                + (1 - mooving_average_alpha) * loss
+            )
+        self.ma_loss = self.ma_loss.detach()
+        loss_diff = self.ma_loss - self.target_loss
+        step = loss_diff * self.lambda_update_rate
+        step = torch.clamp(step, max=max_step)
+        self.log_lambda_paths = self.log_lambda_paths - step
+        self.log_lambda_paths = torch.clamp(
+            self.log_lambda_paths, min=self.init_log_lambda_paths, max=max_lambda_paths
+        ).detach()
 
     def _reshape_from_standard_format(self, x: torch.Tensor) -> torch.Tensor:
         """
