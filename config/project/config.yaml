@@ -1,7 +1,7 @@
 project: p2.1.4
 
-task: '5'
-name: vib_unet_no_skip
+task: '6'
+name: spatial_asymmetries
 timestamp: ${now:%Y-%m-%d-%H-%M-%S}
 
 seed: 0 # High level seed for general code reproducibility, this will not be used for multiseed runs or sweeps
