@@ -323,7 +323,6 @@ class SqueezeFormer(nn.Module):
             ]
         )
 
-        # Encoder (dummy for now)
         self.encoder = nn.ModuleList([])
         for _ in range(num_encoder_blocks):
             self.encoder.append(Conv1DBlock(embed_dim, embed_dim))
