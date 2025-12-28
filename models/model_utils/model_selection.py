@@ -63,9 +63,9 @@ def select_base_model(
     elif model_name == "vib_unet":
         vib_unet = models.VIBUNet(beta=model_params.beta)
         return vib_unet
-    elif model_name == "vib_unet_no_skips":
-        vib_unet_no_skips = models.VIBUNetNoSkips(beta=model_params.beta)
-        return vib_unet_no_skips
+    elif model_name == "vib_unet_spatial":
+        vib_unet_spatial = models.VIBUNetSpatial(beta=model_params.beta)
+        return vib_unet_spatial
     else:
         raise ValueError(f"Model {model_name} not recognized.")
 

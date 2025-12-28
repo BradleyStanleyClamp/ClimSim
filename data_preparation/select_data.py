@@ -65,6 +65,18 @@ def get_dataset(
             model=model,
             normalisation_stats=normalisation_stats,
         )
+    elif dataset_cfg.dataset_name == "climsim_from_npy_non_stacked":
+        return data_preparation.ClimSimNpyDatasetNonStacked(
+            dataset_cfg,
+            dataset_testing_type,
+            mode=mode,
+            model=model,
+            normalisation_stats=normalisation_stats,
+        )
+    else:
+        raise ValueError(
+            f"Dataset {dataset_cfg.dataset_name} not recognized. Available datasets are: subsampled_low_res, climsim_from_raw, climsim_from_npy, climsim_from_npy_non_stacked"
+        )
 
 
 def get_dataloader(

@@ -7,3 +7,4 @@ from .squeezeformer import *
 from .sparse_unet import *
 from .vib_unet import *
 from .vib_unet_no_skips import *
+from .vib_unet_spatial import *

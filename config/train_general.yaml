@@ -5,7 +5,7 @@ defaults:
   - project: config
   - wandb/wkey: wkey
   - model: vib_unet #yus_mlp
-  - dataset: climsim_from_npy #climsim_from_raw #sub_sampled_low_res
+  - dataset: climsim_from_npy_non_stacked #climsim_from_raw #sub_sampled_low_res
   - dataset/general_dataset_config: general_dataset_config
   - hydra: default
   - testing: qt

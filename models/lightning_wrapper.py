@@ -12,6 +12,7 @@ from models.model_utils.schedulers import select_scheduler
 from omegaconf import DictConfig
 import math
 
+
 class LightningWrapper(L.LightningModule):
     def __init__(
         self,
@@ -61,8 +62,15 @@ class LightningWrapper(L.LightningModule):
             stage (str, optional): Stage of the step ('train', 'val', 'test'). Default is None.
 
         """
-        x, y = batch
-        output = self(x)
+        if len(batch) == 2:
+            x, y = batch
+            output = self(x)
+        elif len(batch) == 4:
+            xnh, xsh, ynh, ysh = batch
+            output_nh = self(xnh)
+            output_sh = self(xsh)
+            output = (output_nh, output_sh)
+            y = (ynh, ysh)
 
         if hasattr(self.model, "step"):
             loss = self.model.step(output, y, self.log, self.loss, stage)
@@ -129,7 +137,6 @@ class LightningWrapper(L.LightningModule):
         else:
             return optimizer
 
-
     def check_gradients(
         self,
         high_threshold: float = 1e3,
@@ -151,7 +158,13 @@ class LightningWrapper(L.LightningModule):
         grads = [p.grad.detach() for p in self.parameters() if p.grad is not None]
         if len(grads) == 0:
             # nothing to do
-            return {"total_norm": 0.0, "max_grad": 0.0, "min_nonzero_grad": 0.0, "zero_frac": 1.0, "problem": None}
+            return {
+                "total_norm": 0.0,
+                "max_grad": 0.0,
+                "min_nonzero_grad": 0.0,
+                "zero_frac": 1.0,
+                "problem": None,
+            }
 
         # total norm (sqrt of sum of squared param norms)
         try:
@@ -159,7 +172,9 @@ class LightningWrapper(L.LightningModule):
             total_norm = torch.norm(norms).item()  # scalar
         except Exception:
             # fallback robust computation
-            total_norm = math.sqrt(sum(float(g.float().norm().item()) ** 2 for g in grads))
+            total_norm = math.sqrt(
+                sum(float(g.float().norm().item()) ** 2 for g in grads)
+            )
 
         # max absolute element-wise gradient
         max_grad = max(float(g.abs().max().item()) for g in grads)
@@ -197,20 +212,52 @@ class LightningWrapper(L.LightningModule):
 
         # Log scalars with Lightning so WandB (or other logger) captures them
         # log_prefix can be 'train/' or 'val/' if you want to distinguish
-        pref = f"{log_prefix}grad/" if log_prefix and not log_prefix.endswith("/") else f"{log_prefix}grad/"
+        pref = (
+            f"{log_prefix}grad/"
+            if log_prefix and not log_prefix.endswith("/")
+            else f"{log_prefix}grad/"
+        )
         # use self.log so Lightning routes it to the logger (WandB)
         try:
-            self.log(f"{pref}total_norm", total_norm, prog_bar=False, on_step=False, on_epoch=True)
-            self.log(f"{pref}max_grad", max_grad, prog_bar=False, on_step=False, on_epoch=True)
-            self.log(f"{pref}min_nonzero_grad", min_nonzero, prog_bar=False, on_step=False, on_epoch=True)
-            self.log(f"{pref}zero_frac", zero_frac, prog_bar=False, on_step=False, on_epoch=True)
+            self.log(
+                f"{pref}total_norm",
+                total_norm,
+                prog_bar=False,
+                on_step=False,
+                on_epoch=True,
+            )
+            self.log(
+                f"{pref}max_grad",
+                max_grad,
+                prog_bar=False,
+                on_step=False,
+                on_epoch=True,
+            )
+            self.log(
+                f"{pref}min_nonzero_grad",
+                min_nonzero,
+                prog_bar=False,
+                on_step=False,
+                on_epoch=True,
+            )
+            self.log(
+                f"{pref}zero_frac",
+                zero_frac,
+                prog_bar=False,
+                on_step=False,
+                on_epoch=True,
+            )
         except Exception:
             # if self.log not available for some reason, fallback to logging
-            logging.info(f"Grad metrics: total_norm={total_norm:.3e}, max_grad={max_grad:.3e}, min_nonzero={min_nonzero:.3e}, zero_frac={zero_frac:.3f}")
+            logging.info(
+                f"Grad metrics: total_norm={total_norm:.3e}, max_grad={max_grad:.3e}, min_nonzero={min_nonzero:.3e}, zero_frac={zero_frac:.3f}"
+            )
 
         # For local debugging also emit a warning when problems detected
         if problem is not None:
-            logging.warning(f"[grad-check] detected '{problem}' grads: total_norm={total_norm:.3e}, max_grad={max_grad:.3e}, zero_frac={zero_frac:.3f}")
+            logging.warning(
+                f"[grad-check] detected '{problem}' grads: total_norm={total_norm:.3e}, max_grad={max_grad:.3e}, zero_frac={zero_frac:.3f}"
+            )
 
         return {
             "total_norm": total_norm,
@@ -227,4 +274,9 @@ class LightningWrapper(L.LightningModule):
         """
         # choose thresholds appropriate for your model / scale
         # Example: big networks might use high_threshold=1e2..1e3; low_threshold=1e-8..1e-6
-        self.check_gradients(high_threshold=1e3, low_threshold=1e-6, clip_grad_norm=None, log_prefix="train")
+        self.check_gradients(
+            high_threshold=1e3,
+            low_threshold=1e-6,
+            clip_grad_norm=None,
+            log_prefix="train",
+        )
