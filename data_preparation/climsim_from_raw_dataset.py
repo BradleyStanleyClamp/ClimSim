@@ -457,6 +457,9 @@ class ClimSimFromRawDataset(Dataset):
             target_tensor = self._dataset_to_flattened_tensor(target_ds)
             logging.info(f"SqueezeFormer input tensor shape: {input_tensor.shape}")
             logging.info(f"SqueezeFormer target tensor shape: {target_tensor.shape}")
+        elif model_name == "no_stack":
+            input_tensor = self._dataset_to_flattened_tensor_no_stack(input_ds)
+            target_tensor = self._dataset_to_flattened_tensor_no_stack(target_ds)
         else:
             raise ValueError(f"Unknown model name: {model_name}")
 
@@ -505,18 +508,6 @@ class ClimSimFromRawDataset(Dataset):
                 da_view = da.transpose("lev", "obs")
                 L = da_view.sizes["lev"]
 
-                # # ---
-                # S = (
-                #     15
-                #     if ((varname == "state_q0001" or varname == "ptend_q0001"))
-                #     else 0
-                # )
-                # da_view = da_view.isel(lev=slice(S, L))
-                # # name the features for each level
-                # var_feature_names = [f"{varname}_lev{i}" for i in range(S, L)]
-
-                # # ---
-
                 # name the features for each level
                 var_feature_names = [f"{varname}_lev{i}" for i in range(0, L)]
             else:
@@ -542,6 +533,69 @@ class ClimSimFromRawDataset(Dataset):
         combined = combined.astype("float32")
 
         tensor = torch.from_numpy(combined.to_numpy())
+
+        # check for nans or infs
+        if torch.isnan(tensor).any() or torch.isinf(tensor).any():
+            raise ValueError("NaN or Inf values found in the tensor.")
+
+        return tensor
+
+    def _dataset_to_flattened_tensor_no_stack(self, input_ds: xr.Dataset) -> tuple:
+        """
+        Convert an xarray Dataset into a flattened PyTorch tensor while preserving
+        the 'sample' and 'ncol' dimensions separately.
+
+        Returns:
+            tensor: torch.FloatTensor with shape (n_sample, ncol, n_feature)
+        Notes:
+            - Variables that have a 'lev' dimension are expanded into multiple features
+            (one per level) with names like '{varname}_lev{i}'.
+            - Variables without 'lev' become a single feature named '{varname}'.
+        """
+        # sanity check for expected dims
+        if not {"sample", "ncol"}.issubset(set(input_ds.dims)):
+            raise ValueError("input_ds must have 'sample' and 'ncol' dimensions")
+
+        da_list = []
+        feature_names = []
+
+        for varname, da in input_ds.data_vars.items():
+            # If there's a lev dim, bring to (lev, sample, ncol) view
+            if "lev" in da.dims:
+                # rearrange to (lev, sample, ncol) without copying if possible
+                da_view = da.transpose("lev", "sample", "ncol")
+                L = da_view.sizes["lev"]
+                var_feature_names = [f"{varname}_lev{i}" for i in range(0, L)]
+            else:
+                # create a fake lev dimension of length 1 -> (lev=1, sample, ncol)
+                da_view = da.expand_dims({"lev": [0]}).transpose(
+                    "lev", "sample", "ncol"
+                )
+                var_feature_names = [f"{varname}"]
+
+            # set lev coordinate to the feature names so concat produces a feature axis with labels
+            da_view = da_view.assign_coords({"lev": var_feature_names})
+            # rename lev into 'feature' so concat dims match across variables
+            da_view = da_view.rename({"lev": "feature"})
+            # now da_view dims: ("feature", "sample", "ncol")
+            da_list.append(da_view)
+            feature_names.extend(var_feature_names)
+
+        # Concatenate along feature dimension
+        combined = xr.concat(da_list, dim="feature")
+
+        # Ensure feature coordinate is the string list (concat usually does this)
+        combined = combined.assign_coords(feature=("feature", feature_names))
+
+        # desired order: sample, ncol, feature
+        combined = combined.transpose("sample", "ncol", "feature")
+
+        # convert to float32 and to numpy
+        combined = combined.astype("float32")
+        arr = combined.to_numpy()  # shape: (n_sample, ncol, n_feature)
+
+        # convert to torch tensor
+        tensor = torch.from_numpy(arr)
 
         # check for nans or infs
         if torch.isnan(tensor).any() or torch.isinf(tensor).any():

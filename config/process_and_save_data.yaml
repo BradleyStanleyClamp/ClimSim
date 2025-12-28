@@ -13,6 +13,6 @@ defaults:
 multirun_dir_name: process_and_save_data_${target_group}_${sample_rate}
 
 target_group: 'DJF'
-sample_rate: 100
+sample_rate: 1000
 
-save_processed_data_path: '/work/scratch-pw5/bradlesc/climsim/processed/group_by_months/${target_group}/sample_rate_${sample_rate}/'
+save_processed_data_path: '/work/scratch-pw5/bradlesc/climsim/processed/seasons_non_stacked/${target_group}/sample_rate_${sample_rate}/'

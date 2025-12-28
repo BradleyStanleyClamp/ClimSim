@@ -6,3 +6,4 @@ from .climsim_unet import *
 from .squeezeformer import *
 from .sparse_unet import *
 from .vib_unet import *
+from .vib_unet_no_skips import *

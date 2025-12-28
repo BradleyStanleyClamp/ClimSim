@@ -105,7 +105,7 @@ def main(cfg: DictConfig):
     logging.info(f"Selected {input_ds.sizes['lev']} levels from dataset.")
 
     input, target = climsim_from_raw._prepare_data(
-        None,
+        'no_stack',
         input_ds,
         target_ds,
     )

@@ -142,6 +142,7 @@ class ClimSimNpyDataset(Dataset):
                 self.model == "climsim_unet"
                 or self.model == "sparse_unet"
                 or self.model == "vib_unet"
+                or self.model == "vib_unet_no_skips"
             ):
                 reshaped_x = reshaped_x.permute(
                     1, 0, 2
