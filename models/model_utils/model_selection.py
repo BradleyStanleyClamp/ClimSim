@@ -60,6 +60,9 @@ def select_base_model(
             target_loss=model_params.target_loss,
         )
         return sparse_unet
+    elif model_name == "vib_unet":
+        vib_unet = models.VIBUNet(beta=model_params.beta)
+        return vib_unet
     else:
         raise ValueError(f"Model {model_name} not recognized.")
 

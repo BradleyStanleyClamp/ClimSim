@@ -79,11 +79,9 @@ class ClimSimNpyDataset(Dataset):
         # Apply feature wise normalization if specified
         self._feature_wise_normalization(normalisation_stats)
 
-
         # Convert to torch tensors
         self.input = torch.tensor(self.input, dtype=torch.float32)
         self.target = torch.tensor(self.target, dtype=torch.float32)
-
 
         # Convert input to required model format
         self._convert_input_model_format()
@@ -140,7 +138,11 @@ class ClimSimNpyDataset(Dataset):
                     ),
                 ]
             )
-            if self.model == "climsim_unet" or self.model == "sparse_unet":
+            if (
+                self.model == "climsim_unet"
+                or self.model == "sparse_unet"
+                or self.model == "vib_unet"
+            ):
                 reshaped_x = reshaped_x.permute(
                     1, 0, 2
                 )  # shape (batch, features, levels)

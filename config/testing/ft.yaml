@@ -13,8 +13,8 @@ dataset_testing_type: full
 epochs: 3
 plotting: True
 time_analysis: True
-num_workers: 6
-timeout_min: 720 
+num_workers: 7
+timeout_min: 1440 #720 
 mem_gb: 64
 checkpoint_folder_path: ''
 

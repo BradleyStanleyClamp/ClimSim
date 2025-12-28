@@ -72,8 +72,10 @@ def main(cfg: DictConfig):
     # path_to_results = "/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/11/unet_from_npy_multiseed_2025-12-10-09-35-41"
     # path_to_results = "/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/11/mlp_from_npy_multiseed_2025-12-10-15-08-48"
     # path_to_results = "/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/11/mlp_from_npy_multiseed_2025-12-10-15-08-48"
-    path_to_results = "/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/11/squeezeformer_from_npy_multiseed_2025-12-10-11-35-13"
-    
+    # path_to_results = "/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/11/squeezeformer_from_npy_multiseed_2025-12-10-11-35-13"
+    # path_to_results = "/home/users/bradlesc/projects/ClimSim/logs/p2.1.4/3/unet_from_npy_multiseed_2025-12-22-10-58-16"
+    path_to_results = '/home/users/bradlesc/projects/ClimSim/logs/p2.1.4/3/vib_unet_from_npy_multiseed_2025-12-22-10-58-42'
+    model = None
     for subfolder in os.listdir(path_to_results):
         full_path = os.path.join(path_to_results, subfolder)
         if os.path.isdir(full_path) and (
@@ -81,9 +83,12 @@ def main(cfg: DictConfig):
             or subfolder.startswith("climsim")
             or subfolder.startswith("squeezeformer")
             or subfolder.startswith("mlp")
+            or subfolder.startswith("vib")
+
 
         ):
             print(f"Processing folder: {subfolder}")
+            model = subfolder.split("_")[0]
             results_file = os.path.join(full_path, "test_results.json")
             with open(results_file, "r") as f:
                 results = json.load(f)
@@ -116,7 +121,7 @@ def main(cfg: DictConfig):
     ax.set_xticklabels(["DJF", "MAM", "JJA", "SON"])
     ax.set_xlabel("Training data group index")
     ax.set_ylabel("Test MSE Loss")
-    ax.set_title("Test MSE Loss vs Training Data Group Index")
+    ax.set_title(f"{model} Test MSE Loss vs Training Data Group Index")
     ax.grid(True)
     fig.tight_layout()
 

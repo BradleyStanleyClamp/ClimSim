@@ -6,7 +6,7 @@ import os
 import random
 import numpy as np
 import torch
-from lightning.pytorch import seed_everything
+from lightning.pytorch import seed_everything as lightning_seed_everything
 from hydra.core.hydra_config import HydraConfig
 
 
@@ -16,6 +16,7 @@ def seed_everything(seed: int):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
+    lightning_seed_everything(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
 

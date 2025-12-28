@@ -1,12 +1,7 @@
 """
-Script that implements a U-Net architecture based on description in [1] and code from [2].
+Unet architecture based on 'climsim_unet.py' with additional variational information bottleneck
 
-[1]: Stable Machine-Learning Parameterization of Subgrid Processes in a Comprehensive Atmospheric Model Learned From Embedded Convection-Permitting Simulations
-Zeyuan Hu, Akshay Subramaniam, Zhiming Kuang, Jerry Lin, Sungduk Yu, Walter M. Hannah, Noah D. Brenowitz, Josh Romero, Michael S. Pritchard
-https://arxiv.org/abs/2407.00124
-
-
-[2] https://github.com/g4vrel/sde_ddpm/tree/master
+VIB implementation based on https://github.com/udeepam/vib/blob/master/vib.ipynb
 """
 
 import logging
@@ -15,65 +10,7 @@ import torch
 import numpy as np
 from torch.nn import functional as F
 
-
-def make_residual_connection(in_channels: int, out_channels: int):
-    """
-    Creates a residual connection. If the number of input and output channels differ, a 1x1 convolution is used to match dimensions.
-    Args:
-        in_channels (int): Number of input channels.
-        out_channels (int): Number of output channels.
-    Returns:
-        nn.Module: A module representing the residual connection.
-    """
-    if in_channels != out_channels:
-        return nn.Conv1d(in_channels, out_channels, kernel_size=1, stride=1, padding=0)
-    else:
-        return nn.Identity()
-
-
-class ResBlock(nn.Module):
-    def __init__(self, in_channels: int, out_channels: int, num_groups: int = 32):
-        """
-        Classical residual block.
-        Note: this may differ slightly from [1]'s implementation, as it is unclear exactly what they choose to do, for example:
-        1. The second silu activation after conv, the paper seems to say 'y =Conv1D(GM(Conv1D(silu(GM(x))))) + x' but the standard approach seems to be two?
-
-        Args:
-            in_channels (int): Number of input channels.
-            out_channels (int): Number of output channels.
-            num_groups (int): Number of groups for GroupNorm.
-        """
-
-        super().__init__()
-        self.in_channels = in_channels
-        self.out_channels = out_channels
-
-        self.block0 = self._make_block(in_channels, out_channels, num_groups)
-        self.block1 = self._make_block(out_channels, out_channels, num_groups)
-        self.residual_connection = make_residual_connection(in_channels, out_channels)
-
-    def _make_block(self, in_channels: int, out_channels: int, num_groups: int = 32):
-        """
-        Creates a residual block consisting of GroupNorm, SiLU activation, and a 1D convolution.
-        Args:
-            channels (int): Number of input channels.
-            num_groups (int): Number of groups for GroupNorm.
-        Returns:
-            nn.Sequential: A sequential container of the residual block.
-        """
-        return nn.Sequential(
-            nn.GroupNorm(num_groups=num_groups, num_channels=in_channels),
-            nn.SiLU(),
-            nn.Conv1d(in_channels, out_channels, kernel_size=3, padding=1, stride=1),
-        )
-
-    def forward(self, x):
-        h = self.block0(x)
-        h = self.block1(h)
-        x = (self.residual_connection(x) + h) / np.sqrt(
-            2.0
-        )  # Residual connection with normalisation of the variance to improve stability
-        return x
+from models.climsim_unet import make_residual_connection, ResBlock
 
 
 class AttentionBlock(nn.Module):
@@ -105,23 +42,56 @@ class AttentionBlock(nn.Module):
         h = torch.nn.functional.scaled_dot_product_attention(
             q, k, v, attn_mask=None, dropout_p=0.0, is_causal=False
         )
-
         h = h.permute(0, 2, 1)  # (B, C, L)
 
         scale = torch.sqrt(torch.tensor(2.0, device=h.device, dtype=h.dtype))
 
         x = self.residual_connection(x) + h / scale
+        # Residual connection with normalisation of the variance to improve stability
 
         return x
 
 
-class ClimSimUNet(nn.Module):
-    def __init__(self):
+class Parameterize(nn.Module):
+    def __init__(self, in_channels: int, latent_dim: int):
         """
-        Initializes the ClimSimUNet model.
+        Parameterization layer for the variational information bottleneck.
+        Args:
+            in_channels (int): Number of input channels.
+            latent_dim (int): Dimension of the latent space.
         """
         super().__init__()
-        self.name = "climsim_unet"
+        self.mean_layer = nn.Conv1d(in_channels, latent_dim, kernel_size=1)
+        self.logvar_layer = nn.Conv1d(in_channels, latent_dim, kernel_size=1)
+
+    def forward(self, x):
+        mu = self.mean_layer(x)
+        # std = F.softplus(self.std_layer(x) - 5, beta=1)
+        logvar = self.logvar_layer(x)
+        return mu, logvar
+
+
+class Reparameterize(nn.Module):
+    def __init__(self):
+        """
+        Reparameterization layer for the variational information bottleneck.
+        """
+        super().__init__()
+
+    def forward(self, mu, logvar):
+        std = torch.exp(0.5 * logvar)
+        eps = torch.randn_like(logvar)
+        return mu + eps * std
+
+
+class VIBUNet(nn.Module):
+    def __init__(self, beta: float):
+        """
+        Initializes the VIBUNet model.
+        """
+        super().__init__()
+        self.name = "vib_unet"
+        self.beta = beta
         self.enc = nn.ModuleList()
         self.dec = nn.ModuleList()
 
@@ -147,9 +117,10 @@ class ClimSimUNet(nn.Module):
 
         # print(f"Bottom: {x.shape}")
         # Mid
-        # Mid
-        x = self.mid[0](x)  # Sparse Attention
-        x = self.mid[1](x)  # ResBlock
+        mu, logvar = self.mid[0](x)  # Parameterize
+        x = self.mid[1](mu, logvar)  # Reparameterize
+        x = self.mid[2](x)  # Sparse Attention
+        x = self.mid[3](x)  # ResBlock
         # print(f"After mid: {x.shape}")
 
         # Decoder
@@ -166,11 +137,8 @@ class ClimSimUNet(nn.Module):
 
         x = self.conv_out(x)
 
-        # Removing padded layers
-        # x = x[:, :, :-4]  # Remove last 4 levels added for padding to 64 levels
-
         x = self._reshape_to_standard_format(x)
-        return x
+        return x, mu, logvar
 
     def step(self, output, y, log, loss_metric, stage=None):
         """
@@ -181,11 +149,19 @@ class ClimSimUNet(nn.Module):
             stage (str, optional): Stage of the step ('train', 'val', 'test'). Default is None.
 
         """
-        y_hat = output
+        y_hat, mu, logvar = output
+        standard_loss = loss_metric(y_hat, y)
+        log(f"{stage}/loss", standard_loss)
+        # VIB KL Divergence Loss
+        # kl_loss = 0.5 * torch.sum(mu.pow(2) + std.pow(2) - 2 * std.log() - 1)
 
-        loss = loss_metric(y_hat, y)
-
-        log(f"{stage}/loss", loss)
+        # mu, std shaped (B, C, L) for example
+        kl_per_elem = mu.pow(2) + torch.exp(logvar) - 1 - logvar
+        kl_per_sample = 0.5 * torch.sum(kl_per_elem, dim=[1, 2])
+        kl_loss = kl_per_sample.mean()
+        loss = standard_loss + self.beta * kl_loss
+        log(f"{stage}/kl_loss", kl_loss)
+        log(f"{stage}/total_loss", loss)
 
         return loss
 
@@ -267,6 +243,8 @@ class ClimSimUNet(nn.Module):
 
         self.mid = nn.ModuleList(
             [
+                Parameterize(in_channels=256, latent_dim=256),
+                Reparameterize(),
                 AttentionBlock(in_channels=256, out_channels=256),
                 ResBlock(in_channels=256, out_channels=256),
             ]

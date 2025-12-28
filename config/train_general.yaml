@@ -4,7 +4,7 @@ defaults:
   - _self_
   - project: config
   - wandb/wkey: wkey
-  - model: sparse_unet #yus_mlp
+  - model: vib_unet #yus_mlp
   - dataset: climsim_from_npy #climsim_from_raw #sub_sampled_low_res
   - dataset/general_dataset_config: general_dataset_config
   - hydra: default
@@ -12,7 +12,7 @@ defaults:
   - override hydra/launcher: slurm_gpu
 
 # Naming 
-multirun_dir_name: ${model.name}_group_${dataset.group_by_months.target_group}
+multirun_dir_name: ${model.name}_group_${dataset.group_by_months.target_group} #_beta_${model.single_run_configuration.beta}_lr_${model.single_run_configuration.lr}
 
 target_group: MAM #None
 
