@@ -3,7 +3,7 @@ defaults:
   - _self_
   - project: config
   - wandb/wkey: wkey
-  - dataset: climsim_from_raw
+  - dataset: climsim_from_npy
   - model: mlp
   - dataset/general_dataset_config: general_dataset_config
   - evaluate: evaluate_metrics
@@ -15,11 +15,11 @@ multirun_dir_name: eval_data_groups #spatial_selection_method_${dataset.spatial_
 
 evaluation_options: 
   - multivariate
-  - marginals
-  - composition_metrics
+  # - marginals
+  # - composition_metrics
   # - vis_marginals
   
-metric_name: energy_distance #kl_divergence #
+metric_name: kl_divergence #energy_distance #
 
 permutation_test: False # whether to perform permutation test for statistical significance, if False, just computes metric once, if value > 1, permutation test is performed
 
