@@ -40,6 +40,6 @@ group_by_months:
     JJA: []
     SON: []
   test_group: 
-    SON: 
+    JJA: 
   val_group: 
-    SON: 
+    JJA: 

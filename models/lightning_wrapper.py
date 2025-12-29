@@ -37,9 +37,10 @@ class LightningWrapper(L.LightningModule):
 
         self.loss = loss
         self.optimizer = optimizer
-        self.scheduler_cfg = (
-            DictConfig(scheduler_cfg) if scheduler_cfg is not None else None
-        )
+        if scheduler_cfg is None or scheduler_cfg == "None":
+            self.scheduler_cfg = None
+        else:
+            self.scheduler_cfg = DictConfig(scheduler_cfg)
         self.lr = lr
 
     def forward(self, x):
