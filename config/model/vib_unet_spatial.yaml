@@ -28,7 +28,7 @@ sweep_configuration:
 single_run_configuration:
   lr: 7e-4
   beta: 3e-4
-  batch_size: 2048
+  batch_size: 4096 #2048
   optimizer: Adam
   scheduler: 
     name: step

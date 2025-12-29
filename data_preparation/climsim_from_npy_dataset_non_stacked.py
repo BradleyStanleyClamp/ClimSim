@@ -110,8 +110,10 @@ class ClimSimNpyDatasetNonStacked(Dataset):
         """
         Returns the total number of samples in the dataset.
         """
-
-        return len(self.input)
+        if self.model == "vib_unet_spatial":
+            return len(self.northern_hemisphere_input)
+        else:
+            return len(self.input)
 
     def __getitem__(self, idx):
         """

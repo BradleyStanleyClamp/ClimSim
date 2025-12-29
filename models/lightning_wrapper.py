@@ -68,6 +68,7 @@ class LightningWrapper(L.LightningModule):
         elif len(batch) == 4:
             xnh, xsh, ynh, ysh = batch
             output_nh = self(xnh)
+            # output_sh = output_nh
             output_sh = self(xsh)
             output = (output_nh, output_sh)
             y = (ynh, ysh)
