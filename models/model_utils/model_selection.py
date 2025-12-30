@@ -87,6 +87,14 @@ def select_base_model(
             beta=model_params.beta,
         )
         return my_model_1
+    elif model_name == "my_model_2":
+        my_model_2 = models.MyModel2(
+            model_params.input_dim,
+            model_params.emb_dim,
+            model_params.output_dim,
+            model_params.head_dim,
+        )
+        return my_model_2
     else:
         raise ValueError(f"Model {model_name} not recognized.")
 

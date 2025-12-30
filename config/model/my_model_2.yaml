@@ -1,0 +1,20 @@
+name: my_model_2
+
+
+single_run_configuration:
+  emb_dim: 256
+  head_dim: 2048
+  input_dim: 6
+  output_dim: 10
+  lr: 1e-4
+  batch_size: 1024
+  optimizer: AdamW
+  scheduler: 
+    name: lambda_lr
+    num_warmup_steps: 0
+    warmup_method: 'exp'
+    num_training_steps: ${testing.epochs}
+    num_cycles: 0.5
+
+  
+  
