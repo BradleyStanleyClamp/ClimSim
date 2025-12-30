@@ -12,7 +12,7 @@ defaults:
   - override hydra/launcher: slurm_gpu
 
 # Naming 
-multirun_dir_name: ${model.name}_group_${dataset.group_by_months.target_group} #_beta_${model.single_run_configuration.beta}_lr_${model.single_run_configuration.lr}
+multirun_dir_name: ${model.name}_group_${dataset.group_by_months.target_group}_beta_${model.single_run_configuration.beta} #_lr_${model.single_run_configuration.lr}
 
 target_group: MAM #None
 

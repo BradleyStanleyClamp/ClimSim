@@ -43,6 +43,12 @@ class ClimSimNpyDatasetNonStacked(Dataset):
         self.levels = dataset_cfg.levels
         self.model = model
 
+        self.keep_spatial_groups = (
+            True
+            if (self.model == "vib_unet_spatial" or self.model == "my_model_1")
+            else False
+        )
+
         self._get_group_idx()
 
         sample_rate = f"sample_rate_{self.dataset_cfg.dataset_testing_sample_rates[dataset_testing_type]}"
@@ -73,7 +79,7 @@ class ClimSimNpyDatasetNonStacked(Dataset):
         self.target = torch.tensor(self.target, dtype=torch.float32)
 
         # TODO: spatial grouping
-        if self.model == "vib_unet_spatial":
+        if self.keep_spatial_groups:
             northern_hemisphere_indices = self.latitudes.values >= 0
             southern_hemisphere_indices = self.latitudes.values < 0
             logging.info(
@@ -110,7 +116,7 @@ class ClimSimNpyDatasetNonStacked(Dataset):
         """
         Returns the total number of samples in the dataset.
         """
-        if self.model == "vib_unet_spatial":
+        if self.keep_spatial_groups:
             return len(self.northern_hemisphere_input)
         else:
             return len(self.input)
@@ -124,7 +130,7 @@ class ClimSimNpyDatasetNonStacked(Dataset):
         Returns:
             tuple: (input_tensor, target_tensor)
         """
-        if self.model == "vib_unet_spatial":
+        if self.keep_spatial_groups:
             return (
                 self.northern_hemisphere_input[idx],
                 self.southern_hemisphere_input[idx],
@@ -140,7 +146,7 @@ class ClimSimNpyDatasetNonStacked(Dataset):
         Converts the input and target data to the required model format.
         Currently assumes data is already in the correct shape.
         """
-        if self.model in [None, "mlp", "yus_mlp"]:
+        if self.model in [None, "mlp", "yus_mlp", "my_model_1"]:
             # Data is already in (samples, features) format
             logging.info("Data is in MLP format; no conversion needed.")
             return data
