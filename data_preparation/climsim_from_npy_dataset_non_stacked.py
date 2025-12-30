@@ -188,7 +188,7 @@ class ClimSimNpyDatasetNonStacked(Dataset):
                 data = torch.nn.functional.pad(
                     reshaped_x, (0, 3), mode="constant", value=0
                 )
-            elif self.model == "squeezeformer":
+            elif self.model == "squeezeformer" or self.model == "vib_squeezeformer":
                 data = reshaped_x.permute(1, 2, 0)  # shape (batch, levels, features)
 
         logging.info(f"Converted input shape: {data.shape}")

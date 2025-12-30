@@ -1,7 +1,7 @@
 project: p2.1.4
 
-task: '7'
-name: buidling_from_basics
+task: '8'
+name: vib_squeezeformer
 timestamp: ${now:%Y-%m-%d-%H-%M-%S}
 
 seed: 0 # High level seed for general code reproducibility, this will not be used for multiseed runs or sweeps
