@@ -63,9 +63,9 @@ class MyModel2(nn.Module):
         """
         Forward pass through the MLP.
         Args:
-            x (torch.Tensor): Input tensor of shape (batch_size, input_dim).
+            x (torch.Tensor): Input tensor of shape (batch_size, levels, in_dim).
         Returns:
-            torch.Tensor: Output tensor of shape (batch_size, output_dim).
+            torch.Tensor: Output tensor of shape (batch_size, variables).
         """
         # Embedding
         for layer in self.embedding:
@@ -75,6 +75,8 @@ class MyModel2(nn.Module):
         for block in self.encoder:
             x = block(x)
 
+        z = x  # latent representation (batch, levels, emb_dim)
+
         # Decoder
         for layer in self.decoder:
             x = layer(x)
@@ -83,7 +85,7 @@ class MyModel2(nn.Module):
         x = self.prediction_head(x)
 
         x = self._reshape_to_standard_format(x)
-        return x
+        return x, z
 
     def _reshape_to_standard_format(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -109,35 +111,142 @@ class MyModel2(nn.Module):
         output = torch.cat([first_two, means_2_to_9], dim=1)  # shape (n, 128)
         return output
 
-    # def step(self, output, y, log, loss_metric, stage=None):
-    #     """
-    #     Generic step for training, validation, and testing.
-    #     Args:
-    #         batch (tuple): A tuple containing input data and target labels.
-    #         batch_idx (int): Index of the batch.
-    #         stage (str, optional): Stage of the step ('train', 'val', 'test'). Default is None.
+    def step(self, output, y, log, loss_metric, stage=None):
+        """
+        Generic step for training, validation, and testing.
+        Args:
+            batch (tuple): A tuple containing input data and target labels.
+            batch_idx (int): Index of the batch.
+            stage (str, optional): Stage of the step ('train', 'val', 'test'). Default is None.
 
-    #     """
-    #     output_nh, output_sh = output
-    #     y_nh, y_sh = y
+        """
+        output_nh, output_sh = output
+        y_hat_nh, z_nh = output_nh
+        y_hat_sh, z_sh = output_sh
 
-    #     y_hat_nh, mu_nh, logvar_nh = output_nh
-    #     y_hat_sh, mu_sh, logvar_sh = output_sh
+        y_nh, y_sh = y
 
-    #     y_hat = torch.cat([y_hat_nh, y_hat_sh], dim=0)
-    #     y = torch.cat([y_nh, y_sh], dim=0)
-    #     standard_loss = loss_metric(y_hat, y)
-    #     log(f"{stage}/loss", standard_loss)
+        ed = energy_distance_per_level(z_nh, z_sh)  # shape [levels]
+        emd = sinkhorn_per_level(z_nh, z_sh)  # shape [levels]
+        # log(f"{stage}/energy_distance_levels", ed)
+        # log(f"{stage}/sinkhorn_distance_levels", emd)
+        log(f"{stage}/mean_energy_distance", ed.mean())
+        log(f"{stage}/mean_sinkhorn_distance", emd.mean())
 
-    #     log(f"{stage}/mu_nh_mean", mu_nh.mean())
-    #     log(f"{stage}/logvar_nh_mean", logvar_nh.mean())
-    #     log(f"{stage}/mu_sh_mean", mu_sh.mean())
-    #     log(f"{stage}/logvar_sh_mean", logvar_sh.mean())
+        y_hat = torch.cat([y_hat_nh, y_hat_sh], dim=0)
+        y = torch.cat([y_nh, y_sh], dim=0)
+        standard_loss = loss_metric(y_hat, y)
+        log(f"{stage}/loss", standard_loss)
 
-    #     kl_loss = self.kl_diag_gaussians_safe(mu_nh, logvar_nh, mu_sh, logvar_sh).mean()
+        nh_loss = loss_metric(y_hat_nh, y_nh)
+        sh_loss = loss_metric(y_hat_sh, y_sh)
+        log(f"{stage}/nh_loss", nh_loss)
+        log(f"{stage}/sh_loss", sh_loss)
 
-    #     loss = standard_loss + self.beta * kl_loss
-    #     log(f"{stage}/kl_loss", kl_loss)
-    #     log(f"{stage}/total_loss", loss)
+        loss = standard_loss
+        return loss
 
-    #     return loss
+
+def energy_distance_per_level(
+    z_nh: torch.Tensor, z_sh: torch.Tensor, eps: float = 1e-8
+) -> torch.Tensor:
+    """
+    Compute energy distance per level.
+
+    Args:
+      z_nh, z_sh: tensors of shape [samples, levels, emb_dim]
+    Returns:
+      ed: tensor of shape [levels] with the energy distance for each level
+    """
+    # move levels -> batch dim
+    # new shapes: [levels, samples, emb_dim]
+    z1 = z_nh.permute(1, 0, 2).contiguous()
+    z2 = z_sh.permute(1, 0, 2).contiguous()
+
+    # batched pairwise distances:
+    # d_xy: [levels, n, m]  (here n==m==samples typically)
+    d_xy = torch.cdist(z1, z2, p=2)  # batch-aware
+    d_xx = torch.cdist(z1, z1, p=2)
+    d_yy = torch.cdist(z2, z2, p=2)
+
+    # mean over the sample dims for each level
+    exy = d_xy.mean(dim=(-2, -1))  # shape [levels]
+    exx = d_xx.mean(dim=(-2, -1))
+    eyy = d_yy.mean(dim=(-2, -1))
+
+    ed2 = 2.0 * exy - exx - eyy
+    ed2 = torch.clamp(ed2, min=0.0)
+    return torch.sqrt(ed2 + eps)  # shape [levels]
+
+
+def sinkhorn_per_level(
+    z_nh: torch.Tensor,
+    z_sh: torch.Tensor,
+    reg: float = 0.1,
+    n_iters: int = 100,
+    eps: float = 1e-9,
+    use_squared_cost: bool = True,
+) -> torch.Tensor:
+    """
+    Batched Sinkhorn (entropic-regularized OT) per level.
+    Args:
+      z_nh, z_sh: [samples, levels, emb_dim]
+      reg: entropic regularization (epsilon in many papers)
+      n_iters: number of Sinkhorn iterations
+      eps: small numerical epsilon
+      use_squared_cost: if True use squared Euclidean cost; else L2 distances
+    Returns:
+      wass: [levels] approximate 1-Wasserstein cost (transport cost)
+    """
+    # move levels to batch dim: [L, n, d]
+    z1 = z_nh.permute(1, 0, 2).contiguous()
+    z2 = z_sh.permute(1, 0, 2).contiguous()
+    L, n, d = z1.shape
+    _, m, _ = z2.shape
+    assert (
+        n == m
+    ), "samples per level must match for this implementation; can be relaxed"
+
+    # uniform marginals
+    a = torch.full((L, n), 1.0 / n, device=z1.device, dtype=z1.dtype)  # [L, n]
+    b = torch.full((L, m), 1.0 / m, device=z1.device, dtype=z1.dtype)  # [L, m]
+
+    # cost matrix: squared euclidean distances
+    # shape -> [L, n, m]
+    if use_squared_cost:
+        # cdist squared: c(i,j) = ||x_i - y_j||^2
+        x_norm = (z1**2).sum(dim=-1, keepdim=True)  # [L, n, 1]
+        y_norm = (z2**2).sum(dim=-1, keepdim=True)  # [L, m, 1]
+        # compute pairwise: ||x-y||^2 = ||x||^2 + ||y||^2 - 2<x,y>
+        C = x_norm + y_norm.permute(0, 2, 1) - 2.0 * (z1 @ z2.permute(0, 2, 1))
+        C = torch.clamp(C, min=0.0)
+    else:
+        C = torch.cdist(z1, z2, p=2)  # [L, n, m]
+
+    # Kernel
+    K = torch.exp(-C / reg)  # [L, n, m]
+    K = torch.clamp(K, min=1e-100)  # avoid exact zeros
+
+    # Sinkhorn iterations with scaling vectors u, v (batched)
+    u = torch.ones((L, n), device=z1.device, dtype=z1.dtype) / n
+    v = torch.ones((L, m), device=z1.device, dtype=z1.dtype) / m
+
+    for _ in range(n_iters):
+        Kt_v = torch.matmul(K.transpose(1, 2), v.unsqueeze(-1)).squeeze(-1)  # [L, n]
+        u = a / (Kt_v + eps)
+
+        K_u = torch.matmul(K, u.unsqueeze(-1)).squeeze(-1)  # [L, m]
+        v = b / (K_u + eps)
+
+    # transport matrix T = diag(u) @ K @ diag(v)
+    # compute cost: sum_{i,j} T_ij * C_ij
+    # we can compute elementwise product and sum: (u[:,:,None] * K * v[:,None,:]) * C
+    u_col = u.unsqueeze(-1)  # [L, n, 1]
+    v_row = v.unsqueeze(1)  # [L, 1, m]
+    T = u_col * K * v_row  # [L, n, m]
+    cost = (T * C).sum(dim=(1, 2))  # [L]
+
+    # If C was squared distances and you want 1-Wasserstein (not squared),
+    # you could take sqrt(cost). However standard entropic OT returns expected cost
+    # with the chosen cost function. For cost=||x-y||, set use_squared_cost=False.
+    return cost  # [levels]

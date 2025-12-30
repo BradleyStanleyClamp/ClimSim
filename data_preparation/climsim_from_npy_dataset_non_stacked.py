@@ -45,7 +45,11 @@ class ClimSimNpyDatasetNonStacked(Dataset):
 
         self.keep_spatial_groups = (
             True
-            if (self.model == "vib_unet_spatial" or self.model == "my_model_1")
+            if (
+                self.model == "vib_unet_spatial"
+                or self.model == "my_model_1"
+                or self.model == "my_model_2"
+            )
             else False
         )
 
