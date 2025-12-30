@@ -22,6 +22,8 @@ class MyModel2(nn.Module):
         emb_dim: int,
         output_dim: int,
         head_dim: int,
+        beta: float,
+        invariant_levels: int,
     ):
         """
         Initializes the MyModel1 model.
@@ -38,6 +40,8 @@ class MyModel2(nn.Module):
         self.emb_dim = emb_dim
         self.output_dim = output_dim
         self.head_dim = head_dim
+        self.beta = beta
+        self.invariant_levels = invariant_levels
 
         self.embedding = nn.ModuleList(
             [nn.Linear(input_dim, emb_dim), nn.LayerNorm(emb_dim)]
@@ -75,7 +79,7 @@ class MyModel2(nn.Module):
         for block in self.encoder:
             x = block(x)
 
-        z = x  # latent representation (batch, levels, emb_dim)
+        z = x.clone()  # latent representation (batch, levels, emb_dim)
 
         # Decoder
         for layer in self.decoder:
@@ -126,12 +130,35 @@ class MyModel2(nn.Module):
 
         y_nh, y_sh = y
 
-        ed = energy_distance_per_level(z_nh, z_sh)  # shape [levels]
-        emd = sinkhorn_per_level(z_nh, z_sh)  # shape [levels]
-        # log(f"{stage}/energy_distance_levels", ed)
-        # log(f"{stage}/sinkhorn_distance_levels", emd)
-        log(f"{stage}/mean_energy_distance", ed.mean())
-        log(f"{stage}/mean_sinkhorn_distance", emd.mean())
+        z_nh_inv = z_nh[:, : self.invariant_levels, :]  # shape [samples, levels, emb_dim]
+        z_sh_inv = z_sh[:, : self.invariant_levels, :]  # shape [samples, levels, emb_dim]
+
+        ed_inv = energy_distance_per_level(z_nh_inv, z_sh_inv)  # shape [levels]
+        emd_inv = sinkhorn_per_level(z_nh_inv, z_sh_inv)  # shape [levels]
+
+        log(f"{stage}/energy_distance_invariant_levels", ed_inv.mean())
+        log(
+            f"{stage}/sinkhorn_distance_invariant_levels",
+            emd_inv.mean(),
+        )
+
+        z_nh_noninv = z_nh[:, self.invariant_levels :, :].detach()
+        z_sh_noninv = z_sh[:, self.invariant_levels :, :].detach()
+        ed_non_inv = energy_distance_per_level(z_nh_noninv, z_sh_noninv)  # shape [levels]
+        emd_non_inv = sinkhorn_per_level(z_nh_noninv, z_sh_noninv)
+        log(
+            f"{stage}/energy_distance_variant_levels",
+            ed_non_inv.mean(),
+        )
+        log(
+            f"{stage}/sinkhorn_distance_variant_levels",
+            emd_non_inv.mean(),
+        )
+
+        ed_full = energy_distance_per_level(z_nh.detach(), z_sh.detach())  # shape [levels]
+        emd_full = sinkhorn_per_level(z_nh.detach(), z_sh.detach())
+        log(f"{stage}/mean_energy_distance", ed_full.mean())
+        log(f"{stage}/mean_sinkhorn_distance", emd_full.mean())
 
         y_hat = torch.cat([y_hat_nh, y_hat_sh], dim=0)
         y = torch.cat([y_nh, y_sh], dim=0)
@@ -143,7 +170,8 @@ class MyModel2(nn.Module):
         log(f"{stage}/nh_loss", nh_loss)
         log(f"{stage}/sh_loss", sh_loss)
 
-        loss = standard_loss
+        loss = standard_loss + self.beta * ed_inv.mean()
+        log(f"{stage}/total_loss", loss)
         return loss
 
 
@@ -160,8 +188,8 @@ def energy_distance_per_level(
     """
     # move levels -> batch dim
     # new shapes: [levels, samples, emb_dim]
-    z1 = z_nh.permute(1, 0, 2).contiguous()
-    z2 = z_sh.permute(1, 0, 2).contiguous()
+    z1 = z_nh.permute(2, 0, 1).contiguous()
+    z2 = z_sh.permute(2, 0, 1).contiguous()
 
     # batched pairwise distances:
     # d_xy: [levels, n, m]  (here n==m==samples typically)

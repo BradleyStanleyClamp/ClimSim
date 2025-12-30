@@ -93,6 +93,8 @@ def select_base_model(
             model_params.emb_dim,
             model_params.output_dim,
             model_params.head_dim,
+            model_params.beta,
+            model_params.invariant_levels,
         )
         return my_model_2
     else:

@@ -6,6 +6,8 @@ single_run_configuration:
   head_dim: 2048
   input_dim: 6
   output_dim: 10
+  beta: 0.1
+  invariant_levels: 2
   lr: 1e-4
   batch_size: 1024
   optimizer: AdamW
