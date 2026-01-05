@@ -49,6 +49,7 @@ class ClimSimNpyDatasetNonStacked(Dataset):
                 self.model == "vib_unet_spatial"
                 or self.model == "my_model_1"
                 or self.model == "my_model_2"
+                or self.model == "my_model_3"
             )
             else False
         )
@@ -185,6 +186,7 @@ class ClimSimNpyDatasetNonStacked(Dataset):
                 or self.model == "vib_unet"
                 or self.model == "vib_unet_no_skips"
                 or self.model == "vib_unet_spatial"
+                or self.model == "my_model_3"
             ):
                 reshaped_x = reshaped_x.permute(
                     1, 0, 2

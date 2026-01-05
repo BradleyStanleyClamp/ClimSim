@@ -11,3 +11,4 @@ from .vib_unet_spatial import *
 from .my_model_1 import *
 from .vib_squeezeformer import *
 from .my_model_2 import *
+from .my_model_3 import *

@@ -17,7 +17,7 @@ account: orchid #iecdt
 
 gres: gpu:1
 
-exclude: gpuhost004,gpuhost009,gpuhost012,gpuhost007
+# exclude: gpuhost004,gpuhost009,gpuhost012,gpuhost007
 
 
 #additional_parameters:

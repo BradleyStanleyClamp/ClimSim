@@ -1,7 +1,7 @@
 project: p2.1.4
 
-task: '10'
-name: latent_alignment
+task: '9'
+name: analysis
 timestamp: ${now:%Y-%m-%d-%H-%M-%S}
 
 seed: 0 # High level seed for general code reproducibility, this will not be used for multiseed runs or sweeps

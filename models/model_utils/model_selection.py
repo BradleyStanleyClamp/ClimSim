@@ -97,6 +97,15 @@ def select_base_model(
             model_params.invariant_levels,
         )
         return my_model_2
+    elif model_name == "my_model_3":
+        my_model_3 = models.MyModel3(
+            model_params.input_dim,
+            model_params.emb_dim,
+            model_params.output_dim,
+            model_params.z_dim,
+            model_params.beta,
+        )
+        return my_model_3
     else:
         raise ValueError(f"Model {model_name} not recognized.")
 
