@@ -4,8 +4,8 @@ defaults:
   - _self_
   - project: config
   - wandb/wkey: wkey
-  - model: my_model_2 #vib_unet_spatial #yus_mlp
-  - dataset: climsim_from_npy_non_stacked #climsim_from_raw #sub_sampled_low_res
+  - model: squeezeformer #vib_unet_spatial #yus_mlp
+  - dataset: climsim_from_npy #climsim_from_raw #sub_sampled_low_res
   - dataset/general_dataset_config: general_dataset_config
   - hydra: default
   - testing: qt

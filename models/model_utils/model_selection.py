@@ -111,7 +111,7 @@ def select_base_model(
 
 
 def select_model(
-    model_name: str, model_params: dict, data_params: dict
+    model_name: str, model_params: dict, data_params: dict, normalisation_stats=None
 ) -> L.LightningModule:
     """
     Selects and returns a lightning wrapped model class based on the provided model name.
@@ -130,6 +130,7 @@ def select_model(
         optimizer=model_params.optimizer,
         lr=model_params.lr,
         scheduler_cfg=model_params.scheduler,
+        normalisation_stats=normalisation_stats,
     )
 
     return lightning_model
