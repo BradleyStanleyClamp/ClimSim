@@ -4,15 +4,15 @@ defaults:
   - _self_
   - project: config
   - wandb/wkey: wkey
-  - model: vib_unet_spatial #yus_mlp
-  - dataset: climsim_from_npy_non_stacked #climsim_from_raw #sub_sampled_low_res
+  - model: squeezeformer #vib_unet_spatial #yus_mlp
+  - dataset: climsim_from_npy #climsim_from_raw #sub_sampled_low_res
   - dataset/general_dataset_config: general_dataset_config
   - hydra: default
   - testing: qt
   - override hydra/launcher: slurm_gpu
 
 # Naming 
-multirun_dir_name: ${model.name}_group_${dataset.group_by_months.target_group}_beta_${model.single_run_configuration.beta}_lr_${model.single_run_configuration.lr}
+multirun_dir_name: ${model.name}_group_${dataset.group_by_months.target_group} #_beta_${model.single_run_configuration.beta} #_inv_levels_${model.single_run_configuration.invariant_levels} #_lr_${model.single_run_configuration.lr}
 
 target_group: MAM #None
 

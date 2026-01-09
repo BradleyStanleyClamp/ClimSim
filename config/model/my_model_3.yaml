@@ -1,0 +1,17 @@
+name: my_model_3
+
+
+single_run_configuration:
+  emb_dim: 1024
+  input_dim: 6
+  output_dim: 10
+  z_dim: 256
+  beta: 1.0
+  lr: 2.5e-4
+  batch_size: 3072
+  optimizer: RAdam
+  scheduler:
+    name: cyclic
+
+  
+  

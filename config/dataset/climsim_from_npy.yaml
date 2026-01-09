@@ -5,6 +5,7 @@ output_dim: 98 #128
 levels: 45
 
 normalize: True 
+normalize_targets: True
 
 target_group: ${target_group}
 

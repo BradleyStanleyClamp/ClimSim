@@ -21,6 +21,8 @@ class LightningWrapper(L.LightningModule):
         optimizer="Adam",
         scheduler_cfg=None,
         lr=1e-3,
+        normalisation_stats=None,
+        debug=False,
     ):
         """
         Initializes the LightningWrapper with a PyTorch model.
@@ -34,12 +36,32 @@ class LightningWrapper(L.LightningModule):
         super().__init__()
 
         self.model = model
+        # Keep a list of the buffer names so we can create a friendly dict accessor later.
+        self._norm_buffer_names = []
+
+        if normalisation_stats is not None:
+            for k, v in normalisation_stats.items():
+                # convert numpy -> tensor (preserve shape/dtype). Use as_tensor to avoid copy if possible.
+                t = torch.as_tensor(v)
+
+                # ensure float32 for floats (optional, but common for stats)
+                if t.is_floating_point():
+                    t = t.to(torch.float32)
+
+                # sanitize key for a valid attribute name if needed:
+                name = f"norm_{k}"
+                name = name.replace(".", "_").replace("-", "_")
+
+                # register buffer so Lightning moves it automatically to device
+                self.register_buffer(name, t, persistent=True)
+                self._norm_buffer_names.append(name)
 
         self.loss = loss
         self.optimizer = optimizer
-        self.scheduler_cfg = (
-            DictConfig(scheduler_cfg) if scheduler_cfg is not None else None
-        )
+        if scheduler_cfg is None or scheduler_cfg == "None":
+            self.scheduler_cfg = None
+        else:
+            self.scheduler_cfg = DictConfig(scheduler_cfg)
         self.lr = lr
 
     def forward(self, x):
@@ -65,11 +87,25 @@ class LightningWrapper(L.LightningModule):
         if len(batch) == 2:
             x, y = batch
             output = self(x)
+            output = (
+                self.unnormalize(output, self.normalisation_stats)
+                if self.unnorm
+                else output
+            )
         elif len(batch) == 4:
             xnh, xsh, ynh, ysh = batch
             output_nh = self(xnh)
-            # output_sh = output_nh
+            output_nh = (
+                self.unnormalize(output_nh, self.normalisation_stats)
+                if self.unnorm
+                else output_nh
+            )
             output_sh = self(xsh)
+            output_sh = (
+                self.unnormalize(output_sh, self.normalisation_stats)
+                if self.unnorm
+                else output_sh
+            )
             output = (output_nh, output_sh)
             y = (ynh, ysh)
 
@@ -95,6 +131,7 @@ class LightningWrapper(L.LightningModule):
         Returns:
             torch.Tensor: Loss value for the batch.
         """
+        self.unnorm = False
         return self.step(batch, batch_idx, stage="train")
 
     def validation_step(self, batch, batch_idx):
@@ -106,6 +143,7 @@ class LightningWrapper(L.LightningModule):
         Returns:
             torch.Tensor: Loss value for the batch.
         """
+        self.unnorm = True if self.normalisation_stats is not None else False
         return self.step(batch, batch_idx, stage="val")
 
     def test_step(self, batch, batch_idx):
@@ -117,6 +155,7 @@ class LightningWrapper(L.LightningModule):
         Returns:
             torch.Tensor: Loss value for the batch.
         """
+        self.unnorm = True if self.normalisation_stats is not None else False
         return self.step(batch, batch_idx, stage="test")
 
     def configure_optimizers(self):
@@ -138,146 +177,27 @@ class LightningWrapper(L.LightningModule):
         else:
             return optimizer
 
-    def check_gradients(
-        self,
-        high_threshold: float = 1e3,
-        low_threshold: float = 1e-6,
-        clip_grad_norm: float | None = None,
-        log_prefix: str = "",
-    ):
+    def unnormalize(self, data, normalisation_stats):
         """
-        Inspect gradients for exploding / vanishing behavior.
-
+        Unnormalizes the output data using the provided normalization statistics.
         Args:
-            high_threshold: if total norm or max element-wise grad > this -> possible exploding grads.
-            low_threshold: if total norm and max element-wise grad < this -> possible vanishing grads.
-            clip_grad_norm: if not None, apply torch.nn.utils.clip_grad_norm_ with this value.
-            log_prefix: optional prefix for logged keys (e.g. 'train' / 'val').
+            data (torch.Tensor): Normalized data.
+            normalisation_stats (dict): Dictionary containing 'mean' and 'std' for unnormalization.
         Returns:
-            dict of metrics: {'total_norm', 'max_grad', 'min_nonzero_grad', 'zero_frac', 'problem'}
+            torch.Tensor: Unnormalized data.
         """
-        grads = [p.grad.detach() for p in self.parameters() if p.grad is not None]
-        if len(grads) == 0:
-            # nothing to do
-            return {
-                "total_norm": 0.0,
-                "max_grad": 0.0,
-                "min_nonzero_grad": 0.0,
-                "zero_frac": 1.0,
-                "problem": None,
-            }
 
-        # total norm (sqrt of sum of squared param norms)
-        try:
-            norms = torch.stack([g.norm() for g in grads])
-            total_norm = torch.norm(norms).item()  # scalar
-        except Exception:
-            # fallback robust computation
-            total_norm = math.sqrt(
-                sum(float(g.float().norm().item()) ** 2 for g in grads)
-            )
-
-        # max absolute element-wise gradient
-        max_grad = max(float(g.abs().max().item()) for g in grads)
-
-        # min non-zero element-wise gradient across all params (if exists)
-        min_nonzero = None
-        for g in grads:
-            nonzero = g.abs().view(-1)[g.abs().view(-1) > 0]
-            if nonzero.numel() > 0:
-                cur_min = float(nonzero.min().item())
-                if min_nonzero is None or cur_min < min_nonzero:
-                    min_nonzero = cur_min
-        if min_nonzero is None:
-            min_nonzero = 0.0
-
-        # fraction of zero gradients
-        total_elements = sum(g.numel() for g in grads)
-        zero_elements = sum(int((g == 0).sum().item()) for g in grads)
-        zero_frac = zero_elements / total_elements if total_elements > 0 else 1.0
-
-        # optionally clip gradients to prevent explosions
-        if clip_grad_norm is not None:
-            torch.nn.utils.clip_grad_norm_(self.parameters(), clip_grad_norm)
-
-        # decide whether this looks like exploding / vanishing
-        problem = None
-        if total_norm > high_threshold or max_grad > high_threshold:
-            problem = "exploding"
-        elif total_norm < low_threshold and max_grad < low_threshold:
-            # also detect very many zeros which can indicate dead/vanishing grads
-            if zero_frac > 0.9:
-                problem = "vanishing_or_sparse"
-            else:
-                problem = "vanishing"
-
-        # Log scalars with Lightning so WandB (or other logger) captures them
-        # log_prefix can be 'train/' or 'val/' if you want to distinguish
-        pref = (
-            f"{log_prefix}grad/"
-            if log_prefix and not log_prefix.endswith("/")
-            else f"{log_prefix}grad/"
+        unnormalized_data = (
+            data
+            * (normalisation_stats["target_max"] - normalisation_stats["target_min"])
+            + normalisation_stats["target_mean"]
         )
-        # use self.log so Lightning routes it to the logger (WandB)
-        try:
-            self.log(
-                f"{pref}total_norm",
-                total_norm,
-                prog_bar=False,
-                on_step=False,
-                on_epoch=True,
-            )
-            self.log(
-                f"{pref}max_grad",
-                max_grad,
-                prog_bar=False,
-                on_step=False,
-                on_epoch=True,
-            )
-            self.log(
-                f"{pref}min_nonzero_grad",
-                min_nonzero,
-                prog_bar=False,
-                on_step=False,
-                on_epoch=True,
-            )
-            self.log(
-                f"{pref}zero_frac",
-                zero_frac,
-                prog_bar=False,
-                on_step=False,
-                on_epoch=True,
-            )
-        except Exception:
-            # if self.log not available for some reason, fallback to logging
-            logging.info(
-                f"Grad metrics: total_norm={total_norm:.3e}, max_grad={max_grad:.3e}, min_nonzero={min_nonzero:.3e}, zero_frac={zero_frac:.3f}"
-            )
+        return unnormalized_data
 
-        # For local debugging also emit a warning when problems detected
-        if problem is not None:
-            logging.warning(
-                f"[grad-check] detected '{problem}' grads: total_norm={total_norm:.3e}, max_grad={max_grad:.3e}, zero_frac={zero_frac:.3f}"
-            )
-
+    @property
+    def normalisation_stats(self):
+        """Return a dict view of the registered buffers."""
         return {
-            "total_norm": total_norm,
-            "max_grad": max_grad,
-            "min_nonzero_grad": min_nonzero,
-            "zero_frac": zero_frac,
-            "problem": problem,
+            name[len("norm_") :]: getattr(self, name)
+            for name in self._norm_buffer_names
         }
-
-    def on_after_backward(self) -> None:
-        """
-        Lightning hook called after backward() has been called.
-        We call check_gradients here to detect exploding / vanishing gradients early.
-        """
-        # choose thresholds appropriate for your model / scale
-        # Example: big networks might use high_threshold=1e2..1e3; low_threshold=1e-8..1e-6
-        self.check_gradients(
-            high_threshold=1e3,
-            low_threshold=1e-6,
-            clip_grad_norm=None,
-            log_prefix="train",
-        )

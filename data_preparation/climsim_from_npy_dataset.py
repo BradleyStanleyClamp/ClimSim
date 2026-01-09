@@ -240,6 +240,8 @@ class ClimSimNpyDataset(Dataset):
             normalisation_stats (dict, optional): Precomputed normalization statistics. If None, statistics will be computed from the data.
         """
         self.normalize = self.dataset_cfg.normalize
+        self.normalize_targets = self.dataset_cfg.normalize_targets
+
         if self.normalize:
             if normalisation_stats is not None:
                 logging.info("Using provided normalization statistics.")
@@ -255,12 +257,27 @@ class ClimSimNpyDataset(Dataset):
             self.input = (self.input - self.normalisation_stats["mean"]) / (
                 self.normalisation_stats["max"] - self.normalisation_stats["min"]
             )
-            out_scale = self._process_output_scaling(
-                self.dataset_cfg.output_scale_file_path,
-                self.dataset_cfg.v1_targets,
-                self.dataset_cfg.levels,
-            )
-            self.target = self.target * out_scale
+
+            if self.normalize_targets and self.mode == "train":
+                if normalisation_stats is not None:
+                    logging.info("Using provided normalization statistics for targets.")
+                    self.normalisation_stats = normalisation_stats
+                else:
+                    logging.info("Calculating normalization statistics from data for targets.")
+                    self.normalisation_stats["target_mean"] = self.target.mean(axis=0)
+                    self.normalisation_stats["target_max"] = self.target.max(axis=0)
+                    self.normalisation_stats["target_min"] = self.target.min(axis=0)
+
+                self.target = (self.target - self.normalisation_stats["target_mean"]) / (
+                    self.normalisation_stats["target_max"] - self.normalisation_stats["target_min"]
+                )
+            # else:
+            #     out_scale = self._process_output_scaling(
+            #         self.dataset_cfg.output_scale_file_path,
+            #         self.dataset_cfg.v1_targets,
+            #         self.dataset_cfg.levels,
+            #     )
+            #     self.target = self.target * out_scale
 
         else:
             logging.info("Normalization not applied as per configuration.")

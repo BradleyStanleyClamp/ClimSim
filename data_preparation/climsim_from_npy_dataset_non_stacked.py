@@ -43,6 +43,17 @@ class ClimSimNpyDatasetNonStacked(Dataset):
         self.levels = dataset_cfg.levels
         self.model = model
 
+        self.keep_spatial_groups = (
+            True
+            if (
+                self.model == "vib_unet_spatial"
+                or self.model == "my_model_1"
+                or self.model == "my_model_2"
+                or self.model == "my_model_3"
+            )
+            else False
+        )
+
         self._get_group_idx()
 
         sample_rate = f"sample_rate_{self.dataset_cfg.dataset_testing_sample_rates[dataset_testing_type]}"
@@ -73,7 +84,7 @@ class ClimSimNpyDatasetNonStacked(Dataset):
         self.target = torch.tensor(self.target, dtype=torch.float32)
 
         # TODO: spatial grouping
-        if self.model == "vib_unet_spatial":
+        if self.keep_spatial_groups:
             northern_hemisphere_indices = self.latitudes.values >= 0
             southern_hemisphere_indices = self.latitudes.values < 0
             logging.info(
@@ -110,7 +121,7 @@ class ClimSimNpyDatasetNonStacked(Dataset):
         """
         Returns the total number of samples in the dataset.
         """
-        if self.model == "vib_unet_spatial":
+        if self.keep_spatial_groups:
             return len(self.northern_hemisphere_input)
         else:
             return len(self.input)
@@ -124,7 +135,7 @@ class ClimSimNpyDatasetNonStacked(Dataset):
         Returns:
             tuple: (input_tensor, target_tensor)
         """
-        if self.model == "vib_unet_spatial":
+        if self.keep_spatial_groups:
             return (
                 self.northern_hemisphere_input[idx],
                 self.southern_hemisphere_input[idx],
@@ -140,7 +151,7 @@ class ClimSimNpyDatasetNonStacked(Dataset):
         Converts the input and target data to the required model format.
         Currently assumes data is already in the correct shape.
         """
-        if self.model in [None, "mlp", "yus_mlp"]:
+        if self.model in [None, "mlp", "yus_mlp", "my_model_1"]:
             # Data is already in (samples, features) format
             logging.info("Data is in MLP format; no conversion needed.")
             return data
@@ -175,6 +186,7 @@ class ClimSimNpyDatasetNonStacked(Dataset):
                 or self.model == "vib_unet"
                 or self.model == "vib_unet_no_skips"
                 or self.model == "vib_unet_spatial"
+                or self.model == "my_model_3"
             ):
                 reshaped_x = reshaped_x.permute(
                     1, 0, 2
@@ -182,7 +194,11 @@ class ClimSimNpyDatasetNonStacked(Dataset):
                 data = torch.nn.functional.pad(
                     reshaped_x, (0, 3), mode="constant", value=0
                 )
-            elif self.model == "squeezeformer":
+            elif (
+                self.model == "squeezeformer"
+                or self.model == "vib_squeezeformer"
+                or self.model == "my_model_2"
+            ):
                 data = reshaped_x.permute(1, 2, 0)  # shape (batch, levels, features)
 
         logging.info(f"Converted input shape: {data.shape}")
