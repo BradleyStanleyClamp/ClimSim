@@ -1,0 +1,39 @@
+name: vib_unet_spatial
+
+sweep_configuration:
+  name: ${model.name}_sweep_${target_group}
+  method: bayes
+  metric:
+    name: val/loss
+    goal: minimize
+  parameters:
+    lr:
+      distribution: log_uniform_values
+      min: 0.0004
+      max: 0.004
+    beta:
+      distribution: log_uniform_values
+      min: 1e-4
+      max: 1e-3
+    batch_size:
+      distribution: constant
+      value: 2048
+    optimizer:
+      distribution: constant
+      value: "Adam"
+    scheduler:
+      distribution: constant
+      value: {name: step, step_size: 3, gamma: 0.5}
+
+single_run_configuration:
+  lr: 7e-4
+  beta: 3e-4
+  batch_size: 4096 #2048
+  optimizer: Adam
+  scheduler: 
+    name: step
+    step_size: 3 # epochs
+    gamma: 0.5
+
+  
+  

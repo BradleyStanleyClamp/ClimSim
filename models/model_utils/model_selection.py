@@ -48,8 +48,21 @@ def select_base_model(
             head_dim=model_params.head_dim,
             num_heads=model_params.num_heads,
             num_encoder_blocks=model_params.num_encoder_blocks,
+            debug=model_params.debug,
         )
         return squeezeformer
+    elif model_name == "vib_squeezeformer":
+
+        vib_squeezeformer = models.VIBSqueezeFormer(
+            in_dim=6,  # data_params.input_dim,
+            embed_dim=model_params.embed_dim,
+            out_dim=10,  # data_params.output_dim,
+            head_dim=model_params.head_dim,
+            beta=model_params.beta,
+            num_heads=model_params.num_heads,
+            num_encoder_blocks=model_params.num_encoder_blocks,
+        )
+        return vib_squeezeformer
     elif model_name == "sparse_unet":
         sparse_unet = models.SparseUNet(
             in_channels=data_params.input_dim,
@@ -63,15 +76,43 @@ def select_base_model(
     elif model_name == "vib_unet":
         vib_unet = models.VIBUNet(beta=model_params.beta)
         return vib_unet
-    elif model_name == "vib_unet_no_skips":
-        vib_unet_no_skips = models.VIBUNetNoSkips(beta=model_params.beta)
-        return vib_unet_no_skips
+    elif model_name == "vib_unet_spatial":
+        vib_unet_spatial = models.VIBUNetSpatial(beta=model_params.beta)
+        return vib_unet_spatial
+    elif model_name == "my_model_1":
+        my_model_1 = models.my_model_1.MyModel1(
+            input_dim=model_params.input_dim,
+            emb_dim=model_params.emb_dim,
+            output_dim=model_params.output_dim,
+            z_dim=model_params.z_dim,
+            beta=model_params.beta,
+        )
+        return my_model_1
+    elif model_name == "my_model_2":
+        my_model_2 = models.MyModel2(
+            model_params.input_dim,
+            model_params.emb_dim,
+            model_params.output_dim,
+            model_params.head_dim,
+            model_params.beta,
+            model_params.invariant_levels,
+        )
+        return my_model_2
+    elif model_name == "my_model_3":
+        my_model_3 = models.MyModel3(
+            model_params.input_dim,
+            model_params.emb_dim,
+            model_params.output_dim,
+            model_params.z_dim,
+            model_params.beta,
+        )
+        return my_model_3
     else:
         raise ValueError(f"Model {model_name} not recognized.")
 
 
 def select_model(
-    model_name: str, model_params: dict, data_params: dict
+    model_name: str, model_params: dict, data_params: dict, normalisation_stats=None
 ) -> L.LightningModule:
     """
     Selects and returns a lightning wrapped model class based on the provided model name.
@@ -90,13 +131,14 @@ def select_model(
         optimizer=model_params.optimizer,
         lr=model_params.lr,
         scheduler_cfg=model_params.scheduler,
+        normalisation_stats=normalisation_stats,
     )
 
     return lightning_model
 
 
 def load_model_from_checkpoint(
-    checkpoint_path: str, model_name: str, model_params: dict, data_params: dict
+    checkpoint_path: str, model_name: str, model_params: dict, data_params: dict, normalisation_stats=None
 ):
     """
     Loads a model from a checkpoint file.
@@ -115,5 +157,6 @@ def load_model_from_checkpoint(
         optimizer=model_params.optimizer,
         lr=model_params.lr,
         scheduler=model_params.scheduler,
+        normalisation_stats=normalisation_stats,
     )
     return model

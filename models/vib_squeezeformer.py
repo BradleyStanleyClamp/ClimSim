@@ -1,5 +1,5 @@
 """
-Script that implements the ClimSim Kaggle competition SqueezeFormer model.
+Script that implements the ClimSim Kaggle competition SqueezeFormer model with additional Variational Information Bottleneck.
 
 [second attempt]
 
@@ -281,16 +281,47 @@ class ResidualGluMlp(nn.Module):
         return x
 
 
-class SqueezeFormer(nn.Module):
+class Parameterize(nn.Module):
+    def __init__(self, in_channels: int, latent_dim: int):
+        """
+        Parameterization layer for the variational information bottleneck.
+        Args:
+            in_channels (int): Number of input channels.
+            latent_dim (int): Dimension of the latent space.
+        """
+        super().__init__()
+        self.mean_layer = nn.Linear(in_channels, latent_dim)
+        self.logvar_layer = nn.Linear(in_channels, latent_dim)
+
+    def forward(self, x):
+        mu = self.mean_layer(x)
+        logvar = self.logvar_layer(x)
+        return mu, logvar
+
+
+class Reparameterize(nn.Module):
+    def __init__(self):
+        """
+        Reparameterization layer for the variational information bottleneck.
+        """
+        super().__init__()
+
+    def forward(self, mu, logvar):
+        std = torch.exp(0.5 * logvar)
+        eps = torch.randn_like(logvar)
+        return mu + eps * std
+
+
+class VIBSqueezeFormer(nn.Module):
     def __init__(
         self,
         in_dim: int,
         embed_dim: int,
         head_dim: int,
         out_dim: int,
+        beta: float,
         num_heads: int = 8,
         num_encoder_blocks: int = 12,
-        debug: bool = False,
     ):
         """
         Implementation of the SqueezeFormer model, based on the ClimSim Kaggle competition winnder [1].
@@ -313,10 +344,9 @@ class SqueezeFormer(nn.Module):
 
         super().__init__()
         logging.info(
-            f"Initializing SqueezeFormer with in_dim={in_dim}, embed_dim={embed_dim}, out_dim={out_dim}"
+            f"Initializing VIBSqueezeFormer with in_dim={in_dim}, embed_dim={embed_dim}, out_dim={out_dim}"
         )
-
-        self.debug = debug
+        self.beta = beta
 
         # Embedding
         self.embedding = nn.ModuleList(
@@ -333,6 +363,9 @@ class SqueezeFormer(nn.Module):
 
             self.encoder.append(SelfAttentionBlock(embed_dim, num_heads=num_heads))
             self.encoder.append(ResidualGluMlp(embed_dim, expanded_dim=embed_dim * 4))
+
+        self.parameterize = Parameterize(embed_dim, embed_dim)
+        self.reparameterize = Reparameterize()
 
         # Decoder
         self.decoder = nn.ModuleList(
@@ -365,7 +398,9 @@ class SqueezeFormer(nn.Module):
         for block in self.encoder:
             x = block(x)
 
-        z = x  # for debugging
+        # VIB bottleneck
+        mu, logvar = self.parameterize(x)
+        x = self.reparameterize(mu, logvar)
 
         # Decoder
         for layer in self.decoder:
@@ -375,11 +410,36 @@ class SqueezeFormer(nn.Module):
         x = self.prediction_head(x)
 
         x = self._reshape_to_standard_format(x)
+        return x, mu, logvar
 
-        if self.debug:
-            return x, z
-        else:
-            return x
+    def step(self, output, y, log, loss_metric, stage=None):
+        """
+        Generic step for training, validation, and testing.
+        Args:
+            batch (tuple): A tuple containing input data and target labels.
+            batch_idx (int): Index of the batch.
+            stage (str, optional): Stage of the step ('train', 'val', 'test'). Default is None.
+
+        """
+        y_hat, mu, logvar = output
+
+        log(f"{stage}/mu_mean", mu.mean())
+        log(f"{stage}/logvar_mean", logvar.mean())
+
+        standard_loss = loss_metric(y_hat, y)
+        log(f"{stage}/loss", standard_loss)
+        # VIB KL Divergence Loss
+        # kl_loss = 0.5 * torch.sum(mu.pow(2) + std.pow(2) - 2 * std.log() - 1)
+
+        # mu, std shaped (B, C, L) for example
+        kl_per_elem = mu.pow(2) + torch.exp(logvar) - 1 - logvar
+        kl_per_sample = torch.sum(kl_per_elem, dim=[1, 2])
+        kl_loss = kl_per_sample.mean()
+        loss = standard_loss + self.beta * kl_loss
+        log(f"{stage}/kl_loss", kl_loss)
+        log(f"{stage}/total_loss", loss)
+
+        return loss
 
     def _reshape_from_standard_format(self, x: torch.Tensor) -> torch.Tensor:
         """

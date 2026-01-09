@@ -18,7 +18,7 @@ models_results_paths = {
     # "yus_mlp": "/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/11/yus_mlp_from_npy_multiseed_2025-12-10-09-37-03",
     "squeezeformer": "/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/11/squeezeformer_from_npy_multiseed_2025-12-10-11-35-13",
     "mlp": "/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/11/mlp_from_npy_multiseed_2025-12-10-15-08-48",
-    "old_climsim_unet": "/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/11/unet_from_npy_multiseed_2025-12-10-09-35-41",
+    # "old_climsim_unet": "/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/11/unet_from_npy_multiseed_2025-12-10-09-35-41",
 }
 
 distribution_shift_path = "/home/users/bradlesc/projects/ClimSim/logs/p2.1.3/10/subsample_7_seasonality_energy_distance_2025-12-28-11-07-18/eval_data_groups/multivariate_energy_distance.json"

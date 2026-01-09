@@ -60,21 +60,21 @@ def standard_training_from_cfg(
         logging.info("Data loaders obtained")
 
         # Load model
-        sample_input, sample_output = next(iter(trainloader))
         if cfg.model.name == "squeezeformer":
             cfg.dataset.input_dim, cfg.dataset.output_dim = (
                 6,
                 10,
             )
-        else:
-            cfg.dataset.input_dim, cfg.dataset.output_dim = (
-                sample_input.shape[-1],
-                sample_output.shape[-1],
-            )
+        # else:
+        #     batch = next(iter(trainloader))
+        #     cfg.dataset.input_dim, cfg.dataset.output_dim = (
+        #         sample_input.shape[-1],
+        #         sample_output.shape[-1],
+        #     )
         logging.info(
             f"Input dim: {cfg.dataset.input_dim}, Output dim: {cfg.dataset.output_dim}"
         )
-        model = models.select_model(cfg.model.name, run.config, cfg.dataset)
+        model = models.select_model(cfg.model.name, run.config, cfg.dataset, normalisation_stats=datasets[0].normalisation_stats)
         logging.info(f"Model {cfg.model.name} loaded")
 
         # Get call backs
