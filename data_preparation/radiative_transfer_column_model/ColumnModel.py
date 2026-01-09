@@ -3,7 +3,7 @@ Radiative Transfer Column Model from Brian Rose's Climate Modeling class https:/
 
 Changes I have made:
 - Set shortwave absorptivity to a small fraction of longwave emissivity by default (changed from zero)
-
+- Import details
 """
 
 # Version 1.4
