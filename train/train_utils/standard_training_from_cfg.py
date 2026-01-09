@@ -74,7 +74,7 @@ def standard_training_from_cfg(
         logging.info(
             f"Input dim: {cfg.dataset.input_dim}, Output dim: {cfg.dataset.output_dim}"
         )
-        model = models.select_model(cfg.model.name, run.config, cfg.dataset)
+        model = models.select_model(cfg.model.name, run.config, cfg.dataset, normalisation_stats=datasets[0].normalisation_stats)
         logging.info(f"Model {cfg.model.name} loaded")
 
         # Get call backs

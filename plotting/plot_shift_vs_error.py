@@ -79,5 +79,5 @@ def plot_distribution_shift_vs_error(
     ax.legend()
     ax.grid(True)
     plt.tight_layout()
-    plt.savefig("distribution_shift_vs_error.png", dpi=200)
+    plt.savefig("distribution_shift_vs_error.png", dpi=200, transparent=True)
     plt.close()

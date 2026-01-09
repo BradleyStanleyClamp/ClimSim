@@ -1,12 +1,12 @@
-name: squeezeformer
+name: vib_squeezeformer
 
 
 single_run_configuration:
-  debug: False
   num_encoder_blocks: 12
   num_heads: 8
   embed_dim: 256
   head_dim: 2048
+  beta: 0.001
   lr: 1e-4
   batch_size: 1024
   optimizer: AdamW

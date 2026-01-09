@@ -45,7 +45,12 @@ class ClimSimNpyDatasetNonStacked(Dataset):
 
         self.keep_spatial_groups = (
             True
-            if (self.model == "vib_unet_spatial" or self.model == "my_model_1")
+            if (
+                self.model == "vib_unet_spatial"
+                or self.model == "my_model_1"
+                or self.model == "my_model_2"
+                or self.model == "my_model_3"
+            )
             else False
         )
 
@@ -181,6 +186,7 @@ class ClimSimNpyDatasetNonStacked(Dataset):
                 or self.model == "vib_unet"
                 or self.model == "vib_unet_no_skips"
                 or self.model == "vib_unet_spatial"
+                or self.model == "my_model_3"
             ):
                 reshaped_x = reshaped_x.permute(
                     1, 0, 2
@@ -188,7 +194,11 @@ class ClimSimNpyDatasetNonStacked(Dataset):
                 data = torch.nn.functional.pad(
                     reshaped_x, (0, 3), mode="constant", value=0
                 )
-            elif self.model == "squeezeformer":
+            elif (
+                self.model == "squeezeformer"
+                or self.model == "vib_squeezeformer"
+                or self.model == "my_model_2"
+            ):
                 data = reshaped_x.permute(1, 2, 0)  # shape (batch, levels, features)
 
         logging.info(f"Converted input shape: {data.shape}")
