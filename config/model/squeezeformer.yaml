@@ -2,6 +2,7 @@ name: squeezeformer
 
 
 single_run_configuration:
+  debug: False
   num_encoder_blocks: 12
   num_heads: 8
   embed_dim: 256

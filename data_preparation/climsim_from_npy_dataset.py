@@ -259,11 +259,6 @@ class ClimSimNpyDataset(Dataset):
             )
 
             if self.normalize_targets and self.mode == "train":
-                # out_scale = self._process_output_scaling(
-                #     self.dataset_cfg.output_scale_file_path,
-                #     self.dataset_cfg.v1_targets,
-                #     self.dataset_cfg.levels,
-                # )
                 if normalisation_stats is not None:
                     logging.info("Using provided normalization statistics for targets.")
                     self.normalisation_stats = normalisation_stats
@@ -276,8 +271,13 @@ class ClimSimNpyDataset(Dataset):
                 self.target = (self.target - self.normalisation_stats["target_mean"]) / (
                     self.normalisation_stats["target_max"] - self.normalisation_stats["target_min"]
                 )
-
-                # self.target = self.target * out_scale
+            # else:
+            #     out_scale = self._process_output_scaling(
+            #         self.dataset_cfg.output_scale_file_path,
+            #         self.dataset_cfg.v1_targets,
+            #         self.dataset_cfg.levels,
+            #     )
+            #     self.target = self.target * out_scale
 
         else:
             logging.info("Normalization not applied as per configuration.")

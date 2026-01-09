@@ -290,6 +290,7 @@ class SqueezeFormer(nn.Module):
         out_dim: int,
         num_heads: int = 8,
         num_encoder_blocks: int = 12,
+        debug: bool = False,
     ):
         """
         Implementation of the SqueezeFormer model, based on the ClimSim Kaggle competition winnder [1].
@@ -314,6 +315,8 @@ class SqueezeFormer(nn.Module):
         logging.info(
             f"Initializing SqueezeFormer with in_dim={in_dim}, embed_dim={embed_dim}, out_dim={out_dim}"
         )
+
+        self.debug = debug
 
         # Embedding
         self.embedding = nn.ModuleList(
@@ -362,6 +365,8 @@ class SqueezeFormer(nn.Module):
         for block in self.encoder:
             x = block(x)
 
+        z = x  # for debugging
+
         # Decoder
         for layer in self.decoder:
             x = layer(x)
@@ -370,7 +375,11 @@ class SqueezeFormer(nn.Module):
         x = self.prediction_head(x)
 
         x = self._reshape_to_standard_format(x)
-        return x
+
+        if self.debug:
+            return x, z
+        else:
+            return x
 
     def _reshape_from_standard_format(self, x: torch.Tensor) -> torch.Tensor:
         """

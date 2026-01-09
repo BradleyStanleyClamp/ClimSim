@@ -48,6 +48,7 @@ def select_base_model(
             head_dim=model_params.head_dim,
             num_heads=model_params.num_heads,
             num_encoder_blocks=model_params.num_encoder_blocks,
+            debug=model_params.debug,
         )
         return squeezeformer
     elif model_name == "vib_squeezeformer":
@@ -137,7 +138,7 @@ def select_model(
 
 
 def load_model_from_checkpoint(
-    checkpoint_path: str, model_name: str, model_params: dict, data_params: dict
+    checkpoint_path: str, model_name: str, model_params: dict, data_params: dict, normalisation_stats=None
 ):
     """
     Loads a model from a checkpoint file.
@@ -156,5 +157,6 @@ def load_model_from_checkpoint(
         optimizer=model_params.optimizer,
         lr=model_params.lr,
         scheduler=model_params.scheduler,
+        normalisation_stats=normalisation_stats,
     )
     return model

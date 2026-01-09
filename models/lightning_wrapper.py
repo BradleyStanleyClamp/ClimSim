@@ -22,6 +22,7 @@ class LightningWrapper(L.LightningModule):
         scheduler_cfg=None,
         lr=1e-3,
         normalisation_stats=None,
+        debug=False,
     ):
         """
         Initializes the LightningWrapper with a PyTorch model.
@@ -196,4 +197,7 @@ class LightningWrapper(L.LightningModule):
     @property
     def normalisation_stats(self):
         """Return a dict view of the registered buffers."""
-        return {name[len("norm_"):]: getattr(self, name) for name in self._norm_buffer_names}
+        return {
+            name[len("norm_") :]: getattr(self, name)
+            for name in self._norm_buffer_names
+        }
