@@ -63,3 +63,35 @@ def plot_convective_adjustment_dataset_factors_with_outputs(
     if save_path:
         plt.savefig(save_path)
         plt.close()
+
+
+def plot_convective_adjustment_dataset_inputs(datasets: dict, save_path: str = None):
+    """
+    Plots the distributions of convective adjustment dataset inputs.
+
+    """
+    num_levels = datasets[list(datasets.keys())[0]].num_levels
+    colors = ["blue", "orange", "green", "red", "purple"]
+
+    fig, axes = plt.subplots(2, num_levels + 1, figsize=(20, 12), sharex=False)
+    for wt in [0, 1]:
+        for lvl in range(num_levels + 1):
+            ax = axes[wt, lvl]
+            for idx, (dataset_name, dataset) in enumerate(datasets.items()):
+                color = colors[idx]
+                data_X = dataset.input.numpy()
+                ax.hist(
+                    data_X[:, wt, lvl],
+                    bins=30,
+                    alpha=0.5,
+                    label=dataset_name,
+                    color=color,
+                )
+
+            ax.set_title(f"wave type {wt} level {lvl}")
+            ax.set_ylabel("Count")
+            ax.legend()
+    plt.tight_layout()
+    if save_path:
+        plt.savefig(save_path)
+        plt.close()

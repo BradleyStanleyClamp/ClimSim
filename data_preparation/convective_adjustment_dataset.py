@@ -31,7 +31,13 @@ class ConvectiveAdjustmentDataset(Dataset):
     - test, extrapolation
     """
 
-    def __init__(self, dataset_mode: str, dataset_type: str, dataset_cfg):
+    def __init__(
+        self,
+        dataset_mode: str,
+        dataset_type: str,
+        dataset_cfg: dict,
+        normalization_stats: dict = None,
+    ):
         """
         Initilise the dataset.
 
@@ -43,6 +49,7 @@ class ConvectiveAdjustmentDataset(Dataset):
                 - num_samples_per_factor_group (int): number of samples to collect per factor group
                 - num_levels (int): number of atmospheric levels in the column
                 - ood_percent (float): percentage to extend the target range for ood samples
+            normalization_stats (dict): dictionary containing the mean and std for input and target normalization
 
         """
         super().__init__()
@@ -68,6 +75,11 @@ class ConvectiveAdjustmentDataset(Dataset):
         # Filter samples based on mode
         self.input, self.target, self.params = self.filter_dataset_by_mode(
             self.input, self.target, self.params, dataset_mode, dataset_type
+        )
+
+        # Normalize inputs and targets
+        self.input, self.target, self.normalization_stats = self.normalize_data(
+            self.input, self.target, dataset_mode, normalization_stats
         )
 
         # Convert to torch tensors
@@ -140,7 +152,9 @@ class ConvectiveAdjustmentDataset(Dataset):
                     param_per_sample[split_index:],
                 )
             else:
-                raise ValueError(f"Invalid dataset_mode {dataset_mode} for in_domain dataset.")
+                raise ValueError(
+                    f"Invalid dataset_mode {dataset_mode} for in_domain dataset."
+                )
         elif dataset_type == "composition":
             # Shuffle data
             indices = np.arange(len(data_X))
@@ -163,8 +177,10 @@ class ConvectiveAdjustmentDataset(Dataset):
                     param_per_sample[split_index:],
                 )
             else:
-                raise ValueError(f"Invalid dataset_mode {dataset_mode} for composition dataset.")
-            
+                raise ValueError(
+                    f"Invalid dataset_mode {dataset_mode} for composition dataset."
+                )
+
         elif dataset_mode == "test" and dataset_type == "ood":
             return data_X, data_Y, param_per_sample
         else:
@@ -188,7 +204,7 @@ class ConvectiveAdjustmentDataset(Dataset):
                 - albedo (float): surface albedo
                 - Q (float): global mean incoming solar radiation (i think)
         Returns:
-            x (np.ndarray): array of shape (num_samples, 3, num_levels+1) containing the inputs to the convective adjustment step
+            x (np.ndarray): array of shape (num_samples, 2, num_levels+1) containing the inputs to the convective adjustment step
             y (np.ndarray): array of shape (num_samples, num_levels+1) containing the outputs of the convective adjustment step
         """
         column = ColumnModel.column(params=params)
@@ -198,15 +214,22 @@ class ConvectiveAdjustmentDataset(Dataset):
 
         col_lw_abs = np.concatenate(([column.LW_absorbed_sfc], column.LW_absorbed_atm))
         col_sw_abs = np.concatenate(([column.SW_absorbed_sfc], column.SW_absorbed_atm))
-        x = np.stack((col_t, col_lw_abs, col_sw_abs), axis=0)
+        x = np.stack((col_lw_abs, col_sw_abs), axis=0)
 
         column.Step_Forward()
-        y = np.concatenate(([column.Ts], column.Tatm))
+
+        col_t_new = np.concatenate(([column.Ts], column.Tatm))
+
+        y = (col_t_new - col_t) / column.params["timestep"]  # temperature tendency
 
         return x, y
 
     def build_column_model_params(
-        self, sample_factor_values: dict, indx: int, num_levels: int
+        self,
+        sample_factor_values: dict,
+        indx: int,
+        num_levels: int,
+        adj_lapse_rate: int = 6.5,
     ) -> dict:
         """
         Builds the parameters dictionary to initialize the ColumnModel.column
@@ -214,6 +237,7 @@ class ConvectiveAdjustmentDataset(Dataset):
             sample_factor_values (dict): dictionary containing the sampled values for each factor
             indx (int): index of the sample to use
             num_levels (int): number of atmospheric levels in the column
+            adj_lapse_rate (int): lapse rate for convective adjustment (default: 6.5 K/km) (needed to be set to activate convective adjustment in ColumnModel)
 
         Returns:
             params (dict): parameters to initialize the ColumnModel.column consisting of:
@@ -224,6 +248,7 @@ class ConvectiveAdjustmentDataset(Dataset):
         """
         return {
             "num_levels": num_levels,
+            "adj_lapse_rate": adj_lapse_rate,
             "abs_coeff": sample_factor_values["abs_coeff"][indx],
             "albedo": sample_factor_values["albedo"][indx],
             "Q": sample_factor_values["Q"][indx],
@@ -291,10 +316,12 @@ class ConvectiveAdjustmentDataset(Dataset):
             sample_factor_values = {}
 
             for target_factor in factor_ranges.keys():
+                
                 sample_factor_values[target_factor] = self.uniform_sample(
                     factor_ranges[target_factor]["range_target"],
                     size=num_samples_per_factor_group,
                 )
+            
                 for support_factor in factor_ranges.keys():
                     if target_factor != support_factor:
                         sample_factor_values[support_factor] = self.uniform_sample(
@@ -312,6 +339,31 @@ class ConvectiveAdjustmentDataset(Dataset):
             data_X = np.concatenate(data_X, axis=0)
             data_Y = np.concatenate(data_Y, axis=0)
             return data_X, data_Y, param_per_sample
+
+
+            # X, Y, params = self.collect_data_from_sampled_factors(
+            #     sample_factor_values, num_samples_per_factor_group, num_levels
+            # )
+            # for i in range(num_samples_per_factor_group):
+            #     for target_factor in factor_ranges.keys():
+            #         keep = True
+            #         for support_factor in factor_ranges.keys():
+            #             if target_factor != support_factor:
+            #                 if sample_factor_values[support_factor][i] > factor_ranges[support_factor]["range_support"][1]:
+            #                     keep = False
+            #         if keep:
+            #             data_X.append(X[i])
+            #             data_Y.append(Y[i])
+            #             param_per_sample.append(params[i])
+            #             break
+
+            # data_X = np.array(data_X)
+            # data_Y = np.array(data_Y)
+            # return data_X, data_Y, param_per_sample
+                    
+
+
+
 
         elif dataset_type == "composition":
             sample_factor_values = {}
@@ -345,6 +397,50 @@ class ConvectiveAdjustmentDataset(Dataset):
         else:
             raise ValueError(f"Invalid dataset_type {dataset_type} specified.")
 
+    def normalize_data(
+        self,
+        input_data: np.ndarray,
+        target_data: np.ndarray,
+        mode: str,
+        normalization_stats,
+    ) -> tuple[np.ndarray, np.ndarray, dict]:
+        """
+        Normalizes the input and target data using the provided normalization statistics.
+        If no statistics are provided, returns the data as is.
+
+        Args:
+            input_data (np.ndarray): input data to normalize
+            target_data (np.ndarray): target data to normalize
+            mode (str): dataset mode ('train', 'val', 'test')
+            normalization_stats (dict): dictionary containing the mean and std for input and target normalization
+
+        Returns:
+            tuple: normalized input and target data, and normalization statistics used
+
+        """
+        if normalization_stats is None:
+            if mode != "train":
+                raise ValueError(
+                    "Normalization statistics must be provided for val and test modes."
+                )
+
+            normalization_stats = {
+                "input_mean": np.mean(input_data, axis=0),
+                "input_std": np.std(input_data, axis=0) + 1e-8,
+                "target_mean": np.mean(target_data, axis=0),
+                "target_std": np.std(target_data, axis=0) + 1e-8,
+            }
+
+        input_mean = normalization_stats.get("input_mean")
+        input_std = normalization_stats.get("input_std")
+        target_mean = normalization_stats.get("target_mean")
+        target_std = normalization_stats.get("target_std")
+
+        input_data = (input_data - input_mean) / input_std
+        target_data = (target_data - target_mean) / target_std
+
+        return input_data, target_data, normalization_stats
+
     def uniform_sample(self, range_tuple, size=1):
         return np.random.uniform(range_tuple[0], range_tuple[1], size=size)
 
@@ -369,41 +465,61 @@ if __name__ == "__main__":
         dataset_type="in_domain",
         dataset_cfg=dataset_cfg,
     )
-    print(f"Train dataset size: {len(train_dataset)}")
+    print(
+        f"Train dataset size: {len(train_dataset)}, input: {train_dataset[0][0].shape}, target: {train_dataset[0][1].shape}"
+    )
+    normalization_stats = train_dataset.normalization_stats
+
     in_domain_test_dataset = ConvectiveAdjustmentDataset(
         dataset_mode="test",
         dataset_type="in_domain",
         dataset_cfg=dataset_cfg,
+        normalization_stats=normalization_stats,
     )
-    print(f"In-domain test dataset size: {len(in_domain_test_dataset)}")
+    print(
+        f"In-domain test dataset size: {len(in_domain_test_dataset)}, input: {in_domain_test_dataset[0][0].shape}, target: {in_domain_test_dataset[0][1].shape}"
+    )
     composition_val_dataset = ConvectiveAdjustmentDataset(
         dataset_mode="val",
         dataset_type="composition",
         dataset_cfg=dataset_cfg,
+        normalization_stats=normalization_stats,
     )
-    print(f"Composition val dataset size: {len(composition_val_dataset)}")
+    print(
+        f"Composition val dataset size: {len(composition_val_dataset)}, input: {composition_val_dataset[0][0].shape}, target: {composition_val_dataset[0][1].shape}"
+    )
     composition_test_dataset = ConvectiveAdjustmentDataset(
         dataset_mode="test",
         dataset_type="composition",
         dataset_cfg=dataset_cfg,
+        normalization_stats=normalization_stats,
     )
-    print(f"Composition test dataset size: {len(composition_test_dataset)}")
+    print(
+        f"Composition test dataset size: {len(composition_test_dataset)}, input: {composition_test_dataset[0][0].shape}, target: {composition_test_dataset[0][1].shape}"
+    )
     ood_test_dataset = ConvectiveAdjustmentDataset(
         dataset_mode="test",
         dataset_type="ood",
         dataset_cfg=dataset_cfg,
+        normalization_stats=normalization_stats,
     )
-    print(f"OOD test dataset size: {len(ood_test_dataset)}")
+    print(
+        f"OOD test dataset size: {len(ood_test_dataset)}, input: {ood_test_dataset[0][0].shape}, target: {ood_test_dataset[0][1].shape}"
+    )
 
     datasets = {
         "train": train_dataset,
-        "in_domain_test": in_domain_test_dataset,
-        "composition_val": composition_val_dataset,
-        "composition_test": composition_test_dataset,
-        "ood_test": ood_test_dataset,
+        # "in_domain_test": in_domain_test_dataset,
+        # "composition_val": composition_val_dataset,
+        # "composition_test": composition_test_dataset,
+        # "ood_test": ood_test_dataset,
     }
 
     plotting.plot_convective_adjustment_dataset_factors_with_outputs(
         datasets=datasets, save_path="convective_adjustment_factors_outputs.png"
     )
+    plotting.plot_convective_adjustment_dataset_inputs(
+        datasets=datasets, save_path="convective_adjustment_inputs.png"
+    )
+
     print("Plot saved to convective_adjustment_factors_outputs.png")

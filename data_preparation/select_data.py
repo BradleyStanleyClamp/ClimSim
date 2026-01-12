@@ -73,6 +73,22 @@ def get_dataset(
             model=model,
             normalisation_stats=normalisation_stats,
         )
+    elif dataset_cfg.dataset_name == "convective_adjustment":
+        # Set default dataset_type if 'none'
+        if dataset_cfg.dataset_type == "none":
+            if mode == "train":
+                dataset_cfg.dataset_type = "in_domain"
+            elif mode == "val" or mode == "test":
+                dataset_cfg.dataset_type = "composition"
+            else:
+                raise ValueError(f"Mode {mode} not recognized.")
+
+        return data_preparation.ConvectiveAdjustmentDataset(
+            mode,
+            dataset_cfg.dataset_type,
+            dataset_cfg,
+            normalization_stats=normalisation_stats,
+        )
     else:
         raise ValueError(
             f"Dataset {dataset_cfg.dataset_name} not recognized. Available datasets are: subsampled_low_res, climsim_from_raw, climsim_from_npy, climsim_from_npy_non_stacked"
