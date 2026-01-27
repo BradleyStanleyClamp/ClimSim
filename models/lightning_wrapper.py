@@ -84,41 +84,44 @@ class LightningWrapper(L.LightningModule):
             stage (str, optional): Stage of the step ('train', 'val', 'test'). Default is None.
 
         """
-        if len(batch) == 2:
-            x, y = batch
-            output = self(x)
-            output = (
-                self.unnormalize(output, self.normalisation_stats)
-                if self.unnorm
-                else output
-            )
-        elif len(batch) == 4:
-            xnh, xsh, ynh, ysh = batch
-            output_nh = self(xnh)
-            output_nh = (
-                self.unnormalize(output_nh, self.normalisation_stats)
-                if self.unnorm
-                else output_nh
-            )
-            output_sh = self(xsh)
-            output_sh = (
-                self.unnormalize(output_sh, self.normalisation_stats)
-                if self.unnorm
-                else output_sh
-            )
-            output = (output_nh, output_sh)
-            y = (ynh, ysh)
+        # if len(batch) == 2:
+        #     x, y = batch
+        #     output = self(x)
+        #     output = (
+        #         self.unnormalize(output, self.normalisation_stats)
+        #         if self.unnorm
+        #         else output
+        #     )
+        # elif len(batch) == 4:
+        #     xnh, xsh, ynh, ysh = batch
+        #     output_nh = self(xnh)
+        #     output_nh = (
+        #         self.unnormalize(output_nh, self.normalisation_stats)
+        #         if self.unnorm
+        #         else output_nh
+        #     )
+        #     output_sh = self(xsh)
+        #     output_sh = (
+        #         self.unnormalize(output_sh, self.normalisation_stats)
+        #         if self.unnorm
+        #         else output_sh
+        #     )
+        #     output = (output_nh, output_sh)
+        #     y = (ynh, ysh)
 
-        if hasattr(self.model, "step"):
-            loss = self.model.step(output, y, self.log, self.loss, stage)
+        # if hasattr(self.model, "step"):
+        #     loss = self.model.step(output, y, self.log, self.loss, stage)
 
-        else:
+        # else:
 
-            y_hat = output
+        x, y = batch
+        output = self(x)
+        
+        y_hat = output
 
-            loss = self.loss(y_hat, y)
+        loss = self.loss(y_hat, y)
 
-            self.log(f"{stage}/loss", loss)
+        self.log(f"{stage}/loss", loss)
 
         return loss
 

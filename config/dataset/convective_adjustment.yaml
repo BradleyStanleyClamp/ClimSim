@@ -4,15 +4,24 @@ dataset_type: none # Options: 'none', 'in_domain', 'composition', 'ood'
 
 factor_ranges:
   abs_coeff:
-    range_target: (1.229e-4, 2.259e-4)
-    range_support: (1.229e-4, 1.744e-4)
+    range_target: [1.229e-4, 2.259e-4]
+    range_support: [1.229e-4, 1.744e-4]
   albedo:
-    range_target: (0.001, 0.999)
-    range_support: (0.001, 0.5)
+    range_target: [0.001, 0.999]
+    range_support: [0.001, 0.5]
   Q:
-    range_target: (341.3, 500)
-    range_support: (341.3, 420.65)
+    range_target: [341.3, 500]
+    range_support: [341.3, 420.65]
   
-num_samples_per_factor_group: 1000
+# num_samples_per_factor_group: ${num_samples_per_factor_group_options.${testing.dataset_testing_type}}
+
+num_samples_per_factor_group:
+  quick: 1000
+  reduced: 10000
+  full: 100000
+
 num_levels: 3
 ood_percent: 1.05
+
+input_dim: 8 #2 #
+output_dim: 4 #1 #

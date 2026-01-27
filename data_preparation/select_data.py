@@ -77,17 +77,21 @@ def get_dataset(
         # Set default dataset_type if 'none'
         if dataset_cfg.dataset_type == "none":
             if mode == "train":
-                dataset_cfg.dataset_type = "in_domain"
+                dataset_type = "in_domain"
+
             elif mode == "val" or mode == "test":
-                dataset_cfg.dataset_type = "composition"
+                dataset_type = "composition"
+
             else:
                 raise ValueError(f"Mode {mode} not recognized.")
 
         return data_preparation.ConvectiveAdjustmentDataset(
             mode,
-            dataset_cfg.dataset_type,
+            dataset_type,
             dataset_cfg,
-            normalization_stats=normalisation_stats,
+            dataset_testing_type,
+            normalisation_stats=normalisation_stats,
+            model=model,
         )
     else:
         raise ValueError(

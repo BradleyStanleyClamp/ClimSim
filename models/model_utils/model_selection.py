@@ -107,6 +107,12 @@ def select_base_model(
             model_params.beta,
         )
         return my_model_3
+    elif model_name == "unet":
+        unet = models.UNet(
+            in_dim=data_params.input_dim,
+            out_dim=data_params.output_dim,
+        )
+        return unet
     else:
         raise ValueError(f"Model {model_name} not recognized.")
 
@@ -138,7 +144,11 @@ def select_model(
 
 
 def load_model_from_checkpoint(
-    checkpoint_path: str, model_name: str, model_params: dict, data_params: dict, normalisation_stats=None
+    checkpoint_path: str,
+    model_name: str,
+    model_params: dict,
+    data_params: dict,
+    normalisation_stats=None,
 ):
     """
     Loads a model from a checkpoint file.

@@ -8,6 +8,7 @@ import torch
 from torch.utils.data import Dataset
 from data_preparation.radiative_transfer_column_model import ColumnModel
 import plotting
+import logging
 
 
 class ConvectiveAdjustmentDataset(Dataset):
@@ -36,7 +37,9 @@ class ConvectiveAdjustmentDataset(Dataset):
         dataset_mode: str,
         dataset_type: str,
         dataset_cfg: dict,
-        normalization_stats: dict = None,
+        dataset_testing_type: str = None,
+        normalisation_stats: dict = None,
+        model: str = None,
     ):
         """
         Initilise the dataset.
@@ -49,16 +52,19 @@ class ConvectiveAdjustmentDataset(Dataset):
                 - num_samples_per_factor_group (int): number of samples to collect per factor group
                 - num_levels (int): number of atmospheric levels in the column
                 - ood_percent (float): percentage to extend the target range for ood samples
-            normalization_stats (dict): dictionary containing the mean and std for input and target normalization
+            normalisation_stats (dict): dictionary containing the mean and std for input and target normalization
 
         """
         super().__init__()
         self.dataset_mode = dataset_mode
         self.dataset_type = dataset_type
         self.factor_ranges = dataset_cfg["factor_ranges"]
-        self.num_samples_per_factor_group = dataset_cfg["num_samples_per_factor_group"]
+        self.num_samples_per_factor_group = dataset_cfg["num_samples_per_factor_group"][dataset_testing_type]
         self.num_levels = dataset_cfg["num_levels"]
         self.ood_percent = dataset_cfg["ood_percent"]
+        self.model = model
+        logging.info(f"Building Convective Adjustment Dataset: mode={dataset_mode}, type={dataset_type}, model={model}")
+
 
         # seed
         np.random.seed(0)
@@ -78,8 +84,13 @@ class ConvectiveAdjustmentDataset(Dataset):
         )
 
         # Normalize inputs and targets
-        self.input, self.target, self.normalization_stats = self.normalize_data(
-            self.input, self.target, dataset_mode, normalization_stats
+        self.input, self.target, self.normalisation_stats = self.normalize_data(
+            self.input, self.target, dataset_mode, normalisation_stats
+        )
+
+        # Reshape based on model input
+        self.input, self.target = self.reshape_data_for_model(
+            self.input, self.target, model
         )
 
         # Convert to torch tensors
@@ -316,12 +327,12 @@ class ConvectiveAdjustmentDataset(Dataset):
             sample_factor_values = {}
 
             for target_factor in factor_ranges.keys():
-                
+
                 sample_factor_values[target_factor] = self.uniform_sample(
                     factor_ranges[target_factor]["range_target"],
                     size=num_samples_per_factor_group,
                 )
-            
+
                 for support_factor in factor_ranges.keys():
                     if target_factor != support_factor:
                         sample_factor_values[support_factor] = self.uniform_sample(
@@ -339,7 +350,6 @@ class ConvectiveAdjustmentDataset(Dataset):
             data_X = np.concatenate(data_X, axis=0)
             data_Y = np.concatenate(data_Y, axis=0)
             return data_X, data_Y, param_per_sample
-
 
             # X, Y, params = self.collect_data_from_sampled_factors(
             #     sample_factor_values, num_samples_per_factor_group, num_levels
@@ -360,10 +370,6 @@ class ConvectiveAdjustmentDataset(Dataset):
             # data_X = np.array(data_X)
             # data_Y = np.array(data_Y)
             # return data_X, data_Y, param_per_sample
-                    
-
-
-
 
         elif dataset_type == "composition":
             sample_factor_values = {}
@@ -402,7 +408,7 @@ class ConvectiveAdjustmentDataset(Dataset):
         input_data: np.ndarray,
         target_data: np.ndarray,
         mode: str,
-        normalization_stats,
+        normalisation_stats,
     ) -> tuple[np.ndarray, np.ndarray, dict]:
         """
         Normalizes the input and target data using the provided normalization statistics.
@@ -412,34 +418,54 @@ class ConvectiveAdjustmentDataset(Dataset):
             input_data (np.ndarray): input data to normalize
             target_data (np.ndarray): target data to normalize
             mode (str): dataset mode ('train', 'val', 'test')
-            normalization_stats (dict): dictionary containing the mean and std for input and target normalization
+            normalisation_stats (dict): dictionary containing the mean and std for input and target normalization
 
         Returns:
             tuple: normalized input and target data, and normalization statistics used
 
         """
-        if normalization_stats is None:
+        if normalisation_stats is None:
             if mode != "train":
                 raise ValueError(
                     "Normalization statistics must be provided for val and test modes."
                 )
 
-            normalization_stats = {
+            normalisation_stats = {
                 "input_mean": np.mean(input_data, axis=0),
                 "input_std": np.std(input_data, axis=0) + 1e-8,
                 "target_mean": np.mean(target_data, axis=0),
                 "target_std": np.std(target_data, axis=0) + 1e-8,
             }
 
-        input_mean = normalization_stats.get("input_mean")
-        input_std = normalization_stats.get("input_std")
-        target_mean = normalization_stats.get("target_mean")
-        target_std = normalization_stats.get("target_std")
+        input_mean = normalisation_stats.get("input_mean")
+        input_std = normalisation_stats.get("input_std")
+        target_mean = normalisation_stats.get("target_mean")
+        target_std = normalisation_stats.get("target_std")
 
         input_data = (input_data - input_mean) / input_std
         target_data = (target_data - target_mean) / target_std
 
-        return input_data, target_data, normalization_stats
+        return input_data, target_data, normalisation_stats
+
+    def reshape_data_for_model(self, input_data, target_data, model=None):
+        """
+        Reshapes the input and target data based on the model requirements.
+        For MLP model, flattens the input, the target data doesnt need reshaping.
+
+        Args:
+            input_data (np.ndarray): input data of shape (num_samples, 3, num_levels+1)
+            target_data (np.ndarray): target data of shape (num_samples, num_levels+1)
+            model (str): model type ('mlp' or None)
+        Returns:
+            reshaped_input (np.ndarray): reshaped input data
+            reshaped_target (np.ndarray): reshaped target data
+        """
+        if model == "mlp":
+            reshaped_input = input_data.reshape(input_data.shape[0], -1)
+            logging.info(f"Reshaped input data to {reshaped_input.shape} for MLP model.")
+            return reshaped_input, target_data
+        else:
+            return input_data, target_data
 
     def uniform_sample(self, range_tuple, size=1):
         return np.random.uniform(range_tuple[0], range_tuple[1], size=size)
@@ -468,13 +494,13 @@ if __name__ == "__main__":
     print(
         f"Train dataset size: {len(train_dataset)}, input: {train_dataset[0][0].shape}, target: {train_dataset[0][1].shape}"
     )
-    normalization_stats = train_dataset.normalization_stats
+    normalisation_stats = train_dataset.normalisation_stats
 
     in_domain_test_dataset = ConvectiveAdjustmentDataset(
         dataset_mode="test",
         dataset_type="in_domain",
         dataset_cfg=dataset_cfg,
-        normalization_stats=normalization_stats,
+        normalisation_stats=normalisation_stats,
     )
     print(
         f"In-domain test dataset size: {len(in_domain_test_dataset)}, input: {in_domain_test_dataset[0][0].shape}, target: {in_domain_test_dataset[0][1].shape}"
@@ -483,7 +509,7 @@ if __name__ == "__main__":
         dataset_mode="val",
         dataset_type="composition",
         dataset_cfg=dataset_cfg,
-        normalization_stats=normalization_stats,
+        normalisation_stats=normalisation_stats,
     )
     print(
         f"Composition val dataset size: {len(composition_val_dataset)}, input: {composition_val_dataset[0][0].shape}, target: {composition_val_dataset[0][1].shape}"
@@ -492,7 +518,7 @@ if __name__ == "__main__":
         dataset_mode="test",
         dataset_type="composition",
         dataset_cfg=dataset_cfg,
-        normalization_stats=normalization_stats,
+        normalisation_stats=normalisation_stats,
     )
     print(
         f"Composition test dataset size: {len(composition_test_dataset)}, input: {composition_test_dataset[0][0].shape}, target: {composition_test_dataset[0][1].shape}"
@@ -501,7 +527,7 @@ if __name__ == "__main__":
         dataset_mode="test",
         dataset_type="ood",
         dataset_cfg=dataset_cfg,
-        normalization_stats=normalization_stats,
+        normalisation_stats=normalisation_stats,
     )
     print(
         f"OOD test dataset size: {len(ood_test_dataset)}, input: {ood_test_dataset[0][0].shape}, target: {ood_test_dataset[0][1].shape}"

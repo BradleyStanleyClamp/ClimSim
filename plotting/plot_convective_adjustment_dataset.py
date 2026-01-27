@@ -63,6 +63,8 @@ def plot_convective_adjustment_dataset_factors_with_outputs(
     if save_path:
         plt.savefig(save_path)
         plt.close()
+    else:
+        plt.show()
 
 
 def plot_convective_adjustment_dataset_inputs(datasets: dict, save_path: str = None):
@@ -95,3 +97,5 @@ def plot_convective_adjustment_dataset_inputs(datasets: dict, save_path: str = N
     if save_path:
         plt.savefig(save_path)
         plt.close()
+    else:
+        plt.show()
