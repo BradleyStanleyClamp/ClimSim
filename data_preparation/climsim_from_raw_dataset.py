@@ -288,7 +288,7 @@ class ClimSimFromRawDataset(Dataset):
         v1_targets: list,
         *,
         chunk_size=None,
-        parallel=True,
+        parallel=False,
     ) -> tuple:
         """ """
         combined_input_ds = xr.open_mfdataset(

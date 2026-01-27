@@ -8,7 +8,7 @@ submitit_folder: ${hydra.sweep.dir}/.submitit/%j
 
 timeout_min: 1440 #60 #${testing.timeout_min}
 mem_gb: 64 #${testing.mem_gb}
-cpus_per_task: 5 #${dataset.general_dataset_config.num_workers}
+cpus_per_task: 20 #5 #${dataset.general_dataset_config.num_workers}
 
 # timeout_min: 60 #${testing.timeout_min}
 # mem_gb: ${testing.mem_gb}

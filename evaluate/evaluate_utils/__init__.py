@@ -6,3 +6,4 @@ from .energy_distance import *
 from .general_metric_utils import *
 from .output_weighting import *
 from .metrics_calculator import *
+from .earth_mover_distance import *
